@@ -1,0 +1,145 @@
+@model GorevFormu
+@{
+    ViewData["Title"] = "Görev Formu Detayı";
+}
+
+<div class="row justify-content-center">
+    <div class="col-xl-7 col-lg-9">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-slate-900 text-white p-4 d-flex align-items-center justify-content-between">
+                <div>
+                    <span class="text-slate-400 extra-small text-uppercase tracking-wider font-monospace d-block mb-1">GÖREV TAKİP KODU</span>
+                    <span class="badge bg-amber-500 text-slate-950 font-monospace fs-4 px-3 py-1 fw-bold border border-amber-400">@Model.TakipKodu</span>
+                </div>
+                <div>
+                    @if (Model.Durum == GorevDurumu.Beklemede)
+                    {
+                        <span class="badge badge-pending fs-6 px-3 py-2"><i class="bi bi-hourglass-split me-1"></i>Onay Bekliyor</span>
+                    }
+                    else if (Model.Durum == GorevDurumu.Onaylandi && Model.GercekDonusZamani == null)
+                    {
+                        <span class="badge badge-approved fs-6 px-3 py-2"><i class="bi bi-car-front-fill me-1"></i>Araç Dışarıda</span>
+                    }
+                    else if (Model.Durum == GorevDurumu.TamamlandiDondu)
+                    {
+                        <span class="badge badge-completed fs-6 px-3 py-2"><i class="bi bi-check-circle-fill me-1"></i>Tamamlandı</span>
+                    }
+                    else if (Model.Durum == GorevDurumu.Reddedildi)
+                    {
+                        <span class="badge badge-rejected fs-6 px-3 py-2"><i class="bi bi-x-circle-fill me-1"></i>Reddedildi</span>
+                    }
+                </div>
+            </div>
+
+            <div class="card-body p-4">
+                <!-- Banner Warnings -->
+                @if (Model.Durum == GorevDurumu.Beklemede)
+                {
+                    <div class="alert alert-warning border-0 d-flex align-items-center gap-2 mb-4">
+                        <i class="bi bi-hourglass-split fs-5 text-amber-700"></i>
+                        <span class="fw-semibold text-amber-900">Talebiniz henüz yetkili yönetici tarafından inceleme aşamasındadır. Lütfen onay bekleyiniz.</span>
+                    </div>
+                }
+                else if (Model.Durum == GorevDurumu.Reddedildi)
+                {
+                    <div class="alert alert-danger border-0 mb-4">
+                        <div class="fw-bold mb-1"><i class="bi bi-x-circle me-1"></i>Talebiniz Reddedildi</div>
+                        @if (!string.IsNullOrEmpty(Model.RedNedeni))
+                        {
+                            <div class="small"><strong>Gerekçe:</strong> @Model.RedNedeni</div>
+                        }
+                    </div>
+                }
+                else if (Model.AracDisarida)
+                {
+                    <div class="alert alert-info border-0 d-flex align-items-center justify-content-between mb-4">
+                        <div class="d-flex align-items-center gap-2">
+                            <i class="bi bi-car-front-fill fs-5 text-blue-600"></i>
+                            <span class="fw-semibold">Talebiniz onaylanmış olup araç şu anda görevde/kullanımdadır.</span>
+                        </div>
+                    </div>
+                }
+                else if (Model.Durum == GorevDurumu.TamamlandiDondu)
+                {
+                    <div class="alert alert-success border-0 d-flex align-items-center gap-2 mb-4">
+                        <i class="bi bi-check-circle-fill fs-5 text-emerald-600"></i>
+                        <span class="fw-semibold">Araç teslim alınmış ve görev başarıyla tamamlanmıştır.</span>
+                    </div>
+                }
+
+                <!-- Details Grid -->
+                <div class="row g-4">
+                    <div class="col-md-6">
+                        <div class="p-3 bg-slate-50 rounded-3 border">
+                            <span class="text-slate-500 extra-small text-uppercase fw-bold d-block mb-1">Araç Bilgisi</span>
+                            <span class="plate-chip mb-2">@Model.AracPlaka</span>
+                            <div class="fw-bold text-slate-900">@Model.AracMarka @Model.AracModel</div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="p-3 bg-slate-50 rounded-3 border">
+                            <span class="text-slate-500 extra-small text-uppercase fw-bold d-block mb-1">Kullanan Personel</span>
+                            <div class="fw-bold text-slate-900">@Model.KullananAdSoyad</div>
+                            <div class="text-slate-600 small"><i class="bi bi-telephone me-1"></i>@Model.KullananTelefon</div>
+                            @if (!string.IsNullOrEmpty(Model.Departman))
+                            {
+                                <div class="text-slate-500 extra-small mt-1">Birim: @Model.Departman</div>
+                            }
+                        </div>
+                    </div>
+
+                    <div class="col-12">
+                        <div class="p-3 bg-slate-50 rounded-3 border">
+                            <span class="text-slate-500 extra-small text-uppercase fw-bold d-block mb-1">Görev Amacı ve Güzergah</span>
+                            <div class="text-slate-800 fw-medium">@Model.GorevAmaci</div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="p-3 border rounded-3">
+                            <span class="text-slate-500 extra-small text-uppercase fw-bold d-block mb-1">Planlanan Çıkış</span>
+                            <div class="fw-bold text-slate-900">@Model.CikisZamani.ToString("dd.MM.yyyy HH:mm")</div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="p-3 border rounded-3">
+                            <span class="text-slate-500 extra-small text-uppercase fw-bold d-block mb-1">Planlanan Dönüş</span>
+                            <div class="fw-bold text-slate-900">@Model.PlanlananDonusZamani.ToString("dd.MM.yyyy HH:mm")</div>
+                        </div>
+                    </div>
+
+                    @if (Model.GercekDonusZamani != null)
+                    {
+                        <div class="col-12">
+                            <div class="p-3 bg-emerald-50 border border-emerald-200 rounded-3">
+                                <span class="text-emerald-700 extra-small text-uppercase fw-bold d-block mb-1">Gerçekleşen Araç Teslim Tarihi</span>
+                                <div class="fw-bold text-emerald-900">@Model.GercekDonusZamani.Value.ToString("dd.MM.yyyy HH:mm")</div>
+                            </div>
+                        </div>
+                    }
+                </div>
+
+                <!-- Action Button for Return -->
+                @if (Model.AracDisarida)
+                {
+                    <form asp-controller="Form" asp-action="DonusBildir" method="post" class="mt-4 pt-3 border-top">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="takipKodu" value="@Model.TakipKodu" />
+                        <button type="submit" class="btn btn-accent btn-lg w-100">
+                            <i class="bi bi-box-arrow-in-left me-1"></i>Aracı Şirkete Teslim Ettim / Dönüş Bildir
+                        </button>
+                    </form>
+                }
+
+                <div class="mt-4 pt-3 border-top d-flex justify-content-between align-items-center">
+                    <a asp-controller="Form" asp-action="Sorgula" class="btn btn-outline-secondary btn-sm">
+                        <i class="bi bi-arrow-left me-1"></i>Yeni Sorgulama Yap
+                    </a>
+                    <span class="text-slate-500 small">Form Tarihi: @Model.OlusturmaTarihi.ToString("dd.MM.yyyy HH:mm")</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

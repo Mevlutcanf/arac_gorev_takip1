@@ -1,0 +1,99 @@
+@model SorgulaViewModel
+@{
+    ViewData["Title"] = "Görev Formu Sorgula";
+}
+
+<div class="row justify-content-center">
+    <div class="col-xl-7 col-lg-9">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-slate-900 text-white p-4">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="p-2 bg-amber-500 bg-opacity-20 rounded-3 text-amber-500 fs-4">
+                        <i class="bi bi-search"></i>
+                    </div>
+                    <div>
+                        <h1 class="h5 fw-bold mb-1 text-white">Görev Formu Durum Sorgulama</h1>
+                        <p class="text-slate-400 small mb-0">Takip kodunuz veya ad-soyad bilgileriniz ile formunuzun durumunu anında öğrenin.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card-body p-4">
+                <!-- Tab Switching for Query Type -->
+                <ul class="nav nav-tabs nav-fill mb-4 fw-bold" id="sorguTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active py-3" id="tab-kod-btn" data-bs-toggle="tab" data-bs-target="#tab-kod" type="button" role="tab">
+                            <i class="bi bi-key-fill text-amber-500 me-2"></i>1. Takip Kodu ile Sorgula
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link py-3" id="tab-isim-btn" data-bs-toggle="tab" data-bs-target="#tab-isim" type="button" role="tab">
+                            <i class="bi bi-person-bounding-box text-primary me-2"></i>2. Ad Soyad & Telefon ile Sorgula
+                        </button>
+                    </li>
+                </ul>
+
+                <div class="tab-content" id="sorguTabsContent">
+                    <!-- Tab 1: Takip Kodu ile Sorgulama -->
+                    <div class="tab-pane fade show active" id="tab-kod" role="tabpanel">
+                        <form asp-action="Sorgula" method="post">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="SorgulamaTipi" value="kod" />
+
+                            <div class="mb-4 text-center">
+                                <label asp-for="TakipKodu" class="form-label fs-6 fw-bold text-slate-900 mb-2">
+                                    <i class="bi bi-ticket-perforated text-amber-500 me-1"></i>Form Görev Takip Kodunuz
+                                </label>
+                                <div class="max-w-md mx-auto">
+                                    <input asp-for="TakipKodu" class="form-control form-control-lg text-center font-monospace uppercase fw-bold tracking-widest text-amber-900 bg-amber-50 border-amber-300"
+                                           placeholder="GF-XXXXXX (Örn: GF-871466)" required autocomplete="off" />
+                                    <span asp-validation-for="TakipKodu" class="text-danger small d-block mt-1"></span>
+                                    <small class="text-slate-500 extra-small d-block mt-2">Form oluşturulduğunda ekranınızda verilen GF- ile başlayan takip kodunu giriniz.</small>
+                                </div>
+                            </div>
+
+                            <div class="text-center">
+                                <button type="submit" class="btn btn-accent btn-lg px-5">
+                                    <i class="bi bi-search me-1"></i>Form Durumunu Sorgula
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Tab 2: Ad Soyad ile Sorgulama -->
+                    <div class="tab-pane fade" id="tab-isim" role="tabpanel">
+                        <form asp-action="Sorgula" method="post">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="SorgulamaTipi" value="isim" />
+
+                            <div class="row g-3 mb-4">
+                                <div class="col-md-6">
+                                    <label asp-for="AdSoyad" class="form-label">Ad Soyad <span class="text-danger">*</span></label>
+                                    <input asp-for="AdSoyad" class="form-control form-control-lg" placeholder="Formdaki ad soyadınız" required />
+                                    <span asp-validation-for="AdSoyad" class="text-danger small"></span>
+                                </div>
+                                <div class="col-md-6">
+                                    <label asp-for="Telefon" class="form-label">Telefon Numarası (Opsiyonel)</label>
+                                    <input asp-for="Telefon" class="form-control form-control-lg" placeholder="05XX XXX XX XX" />
+                                </div>
+                            </div>
+
+                            <div class="text-center">
+                                <button type="submit" class="btn btn-primary btn-lg px-5">
+                                    <i class="bi bi-search me-1"></i>En Son Aktif Formu Getir
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                @if (!ViewData.ModelState.IsValid)
+                {
+                    <div class="alert alert-danger border-0 mt-4 mb-0">
+                        <div asp-validation-summary="All" class="small mb-0"></div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>

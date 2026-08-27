@@ -1,0 +1,118 @@
+@model Vehicle
+@{
+    ViewData["Title"] = "Araç & Ruhsat Düzenle";
+}
+
+<div class="row justify-content-center">
+    <div class="col-xl-8 col-lg-10">
+        <div class="card shadow-sm border mb-4">
+            <div class="card-header bg-slate-900 text-white d-flex align-items-center gap-2">
+                <i class="bi bi-pencil-square text-amber-500"></i>
+                <span>Araç ve Ruhsat Bilgilerini Düzenle</span>
+            </div>
+            <div class="card-body p-4">
+                <form asp-action="AracDuzenle" method="post" enctype="multipart/form-data">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" asp-for="Id" />
+                    <div asp-validation-summary="ModelOnly" class="text-danger small mb-3"></div>
+
+                    <!-- Temel Araç Bilgileri -->
+                    <h6 class="fw-bold text-slate-900 mb-3 border-bottom pb-2">
+                        <i class="bi bi-car-front-fill me-1 text-slate-600"></i>Temel Araç ve Atama Bilgileri
+                    </h6>
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-6">
+                            <label asp-for="Plaka" class="form-label">Araç Plakası <span class="text-danger">*</span></label>
+                            <input asp-for="Plaka" class="form-control font-monospace fw-bold" placeholder="06 AB 123" />
+                            <span asp-validation-for="Plaka" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="SahiplikTuru" class="form-label">Sahiplik Türü <span class="text-danger">*</span></label>
+                            <select asp-for="SahiplikTuru" class="form-select">
+                                <option value="Şirket Öz Malı">🏢 Şirket Öz Malı</option>
+                                <option value="Kiralık Araç">🔑 Kiralık Araç (Rent a Car)</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="Marka" class="form-label">Marka <span class="text-danger">*</span></label>
+                            <input asp-for="Marka" class="form-control" placeholder="Ford, VW, Renault..." />
+                            <span asp-validation-for="Marka" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="Model" class="form-label">Model <span class="text-danger">*</span></label>
+                            <input asp-for="Model" class="form-control" placeholder="Transit, Caddy, Clio..." />
+                            <span asp-validation-for="Model" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="Renk" class="form-label">Renk</label>
+                            <input asp-for="Renk" class="form-control" placeholder="Beyaz, Siyah, Gri..." />
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="Lokasyon" class="form-label">Araç Bulunduğu Şehir / Şube</label>
+                            <input asp-for="Lokasyon" class="form-control" placeholder="Ankara Genel Merkez, İstanbul Şube..." />
+                        </div>
+                        <div class="col-12">
+                            <label asp-for="SabitSurucu" class="form-label">Zimmetli / Sabit Personel (Şahsa Özel Atama)</label>
+                            <input asp-for="SabitSurucu" class="form-control" placeholder="Örn: Ahmet Yılmaz (İstanbul Bölge Satış Müdürü)" />
+                            <div class="form-text extra-small text-slate-500">Araç başka bir ilde veya uzaktan çalışan belirli bir personele zimmetlendiyse adını yazınız.</div>
+                        </div>
+                        <div class="col-12">
+                            <div class="form-check form-switch">
+                                <input asp-for="Aktif" class="form-check-input" type="checkbox" id="aktifAracSwitch" />
+                                <label class="form-check-label fw-semibold" for="aktifAracSwitch">Araç Görev İçin Aktif Kullanımda</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Ruhsat ve Yasal Muayene Bilgileri -->
+                    <h6 class="fw-bold text-slate-900 mb-3 border-bottom pb-2">
+                        <i class="bi bi-card-heading me-1 text-slate-600"></i>Ruhsat, Muayene ve Sigorta Bilgileri
+                    </h6>
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-6">
+                            <label asp-for="SasiNo" class="form-label">Şasi Numarası (VIN)</label>
+                            <input asp-for="SasiNo" class="form-control font-monospace uppercase" placeholder="WF0XXXTTFX1234567" />
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="MotorNo" class="form-label">Motor Numarası</label>
+                            <input asp-for="MotorNo" class="form-control font-monospace uppercase" placeholder="20DTH987654" />
+                        </div>
+                        <div class="col-md-4">
+                            <label asp-for="TescilTarihi" class="form-label">Trafik Tescil Tarihi</label>
+                            <input asp-for="TescilTarihi" class="form-control" type="date" value='@(Model.TescilTarihi?.ToString("yyyy-MM-dd"))' />
+                        </div>
+                        <div class="col-md-4">
+                            <label asp-for="MuayeneBitisTarihi" class="form-label">Trafik Muayene Bitiş Tarihi</label>
+                            <input asp-for="MuayeneBitisTarihi" class="form-control" type="date" value='@(Model.MuayeneBitisTarihi?.ToString("yyyy-MM-dd"))' />
+                        </div>
+                        <div class="col-md-4">
+                            <label asp-for="SigortaBitisTarihi" class="form-label">Kasko / Sigorta Bitiş Tarihi</label>
+                            <input asp-for="SigortaBitisTarihi" class="form-control" type="date" value='@(Model.SigortaBitisTarihi?.ToString("yyyy-MM-dd"))' />
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Ruhsat Belge Yükle (Görsel / PDF)</label>
+                            <input type="file" name="ruhsatDosya" class="form-control" accept="image/*,.pdf" />
+                            @if (!string.IsNullOrEmpty(Model.RuhsatDosyaYolu))
+                            {
+                                <div class="mt-2">
+                                    <a href="@Model.RuhsatDosyaYolu" target="_blank" class="btn btn-outline-primary btn-sm">
+                                        <i class="bi bi-file-earmark-arrow-down me-1"></i>Yüklü Ruhsat Belgesini Görüntüle
+                                    </a>
+                                </div>
+                            }
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-end gap-2 border-top pt-3">
+                        <a asp-action="Araclar" class="btn btn-outline-secondary">Vazgeç</a>
+                        <button type="submit" class="btn btn-accent px-4"><i class="bi bi-check-lg me-1"></i>Araç ve Ruhsatı Kaydet</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

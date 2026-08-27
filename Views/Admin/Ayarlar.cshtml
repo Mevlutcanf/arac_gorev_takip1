@@ -1,0 +1,300 @@
+@model SistemAyarlariPageViewModel
+@{
+    ViewData["Title"] = "Sistem Ayarları";
+    string activeTab = Model.AktifTab ?? "yoneticiler";
+}
+
+<div class="d-flex align-items-center justify-content-between mb-4">
+    <div>
+        <h1 class="h4 fw-bold text-slate-900 mb-1">
+            <i class="bi bi-gear-wide-connected me-2 text-indigo-600"></i>Sistem ve Yönetim Ayarları
+        </h1>
+        <p class="text-slate-500 small mb-0">Hesap profiliniz, yöneticiler, e-posta bildirimleri ve Arvento araç takip yapılandırması.</p>
+    </div>
+</div>
+
+<!-- Settings Navigation Tabs -->
+<ul class="nav nav-pills custom-settings-tabs mb-4 bg-white p-2 rounded-3 border shadow-sm">
+    <li class="nav-item">
+        <a class="nav-link @(activeTab == "yoneticiler" ? "active" : "")" href="#tab-yoneticiler" data-bs-toggle="tab">
+            <i class="bi bi-people-fill me-1"></i>Yöneticiler (@Model.Yoneticiler.Count)
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link @(activeTab == "smtp" ? "active" : "")" href="#tab-smtp" data-bs-toggle="tab">
+            <i class="bi bi-envelope-fill me-1"></i>E-Posta (SMTP)
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link @(activeTab == "arvento" ? "active" : "")" href="#tab-arvento" data-bs-toggle="tab">
+            <i class="bi bi-geo-alt-fill me-1"></i>Arvento GPS
+        </a>
+    </li>
+</ul>
+
+<div class="tab-content">
+
+    <!-- TAB 2: YÖNETİCİLER & YENİ EKLEME -->
+    <div class="tab-pane fade @(activeTab == "yoneticiler" ? "show active" : "")" id="tab-yoneticiler">
+        <div class="row g-4">
+            <!-- Left: Yönetici Listesi -->
+            <div class="col-lg-7">
+                <div class="card shadow-sm border">
+                    <div class="card-header bg-slate-900 text-white d-flex align-items-center justify-content-between">
+                        <span><i class="bi bi-people-fill me-1 text-amber-500"></i>Kayıtlı Yöneticiler</span>
+                        <span class="badge badge-role-admin">@Model.Yoneticiler.Count Hesap</span>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table align-middle mb-0">
+                            <thead>
+                                <tr>
+                                    <th class="ps-3">Kullanıcı Adı</th>
+                                    <th>Ad Soyad</th>
+                                    <th>Yetki Rolü</th>
+                                    <th class="text-end pe-3">İşlem</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var admin in Model.Yoneticiler)
+                                {
+                                    <tr>
+                                        <td class="ps-3 font-monospace fw-bold text-slate-900">@admin.KullaniciAdi</td>
+                                        <td class="fw-semibold text-slate-800">@admin.AdSoyad</td>
+                                        <td>
+                                            @if (admin.AnaYonetici)
+                                            {
+                                                <span class="badge badge-role-main"><i class="bi bi-shield-lock-fill me-1"></i>Ana Yönetici</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge badge-role-admin"><i class="bi bi-person-badge me-1"></i>@(admin.Rol ?? "Yönetici")</span>
+                                            }
+                                        </td>
+                                        <td class="text-end pe-3">
+                                            @if (!admin.AnaYonetici)
+                                            {
+                                                <form asp-action="AyarlarYoneticiSil" asp-route-id="@admin.Id" method="post" class="d-inline"
+                                                      onsubmit="return confirm('Bu yönetici hesabını silmek istediğinize emin misiniz?');">
+                                                    @Html.AntiForgeryToken()
+                                                    <button type="submit" class="btn btn-outline-danger btn-sm">
+                                                        <i class="bi bi-trash"></i>Sil
+                                                    </button>
+                                                </form>
+                                            }
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right: Yeni Yönetici Ekleme Formu -->
+            <div class="col-lg-5">
+                <div class="card shadow-sm border">
+                    <div class="card-header bg-slate-900 text-white">
+                        <i class="bi bi-person-plus-fill me-1 text-amber-500"></i>Yeni Yönetici Hesabı Oluştur
+                    </div>
+                    <div class="card-body p-4">
+                        <form asp-action="AyarlarYoneticiEkle" method="post">
+                            @Html.AntiForgeryToken()
+
+                            <div class="mb-3">
+                                <label asp-for="YeniYoneticiModel.KullaniciAdi" class="form-label">Kullanıcı Adı <span class="text-danger">*</span></label>
+                                <input asp-for="YeniYoneticiModel.KullaniciAdi" class="form-control" placeholder="Örn: ahmet" required />
+                            </div>
+
+                            <div class="mb-3">
+                                <label asp-for="YeniYoneticiModel.AdSoyad" class="form-label">Ad Soyad <span class="text-danger">*</span></label>
+                                <input asp-for="YeniYoneticiModel.AdSoyad" class="form-control" placeholder="Örn: Ahmet Yılmaz" required />
+                            </div>
+
+                            <!-- Rol Seçim Dropdown -->
+                            <div class="mb-3">
+                                <label asp-for="YeniYoneticiModel.Rol" class="form-label">Yetki Rolü <span class="text-danger">*</span></label>
+                                <select asp-for="YeniYoneticiModel.Rol" class="form-select">
+                                    <option value="Yönetici">Yönetici (Tam Yetkili)</option>
+                                    <option value="Filo Yöneticisi">Filo Yöneticisi</option>
+                                    <option value="Operatör">Operatör / İzleyici</option>
+                                </select>
+                            </div>
+
+                            <div class="mb-4">
+                                <label asp-for="YeniYoneticiModel.Sifre" class="form-label">Giriş Şifresi <span class="text-danger">*</span></label>
+                                <input asp-for="YeniYoneticiModel.Sifre" class="form-control" placeholder="En az 6 karakter" required minlength="6" />
+                            </div>
+
+                            <button type="submit" class="btn btn-accent w-100">
+                                <i class="bi bi-check-lg me-1"></i>Yönetici Hesabını Kaydet
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TAB 3: E-POSTA (SMTP) AYARLARI -->
+    <div class="tab-pane fade @(activeTab == "smtp" ? "show active" : "")" id="tab-smtp">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="card shadow-sm border mb-4">
+                    <div class="card-header bg-slate-900 text-white d-flex align-items-center justify-content-between">
+                        <span><i class="bi bi-envelope-paper-fill me-1 text-amber-500"></i>SMTP Sunucu & Bildirim Ayarları</span>
+                        <span class="badge @(Model.SmtpModel.Aktif ? "badge-ruhsat-var" : "badge-ruhsat-yok")">
+                            @(Model.SmtpModel.Aktif ? "Bildirimler Aktif" : "Bildirimler Pasif")
+                        </span>
+                    </div>
+                    <div class="card-body p-4">
+                        <form asp-action="AyarlarSmtp" method="post">
+                            @Html.AntiForgeryToken()
+
+                            <div class="row g-3 mb-3">
+                                <div class="col-md-7">
+                                    <label asp-for="SmtpModel.SmtpServer" class="form-label">SMTP Sunucu (Host)</label>
+                                    <input asp-for="SmtpModel.SmtpServer" class="form-control font-monospace" placeholder="smtp.gmail.com" />
+                                </div>
+                                <div class="col-md-3">
+                                    <label asp-for="SmtpModel.Port" class="form-label">Port</label>
+                                    <input asp-for="SmtpModel.Port" class="form-control font-monospace" />
+                                </div>
+                                <div class="col-md-2 d-flex align-items-end mb-2">
+                                    <div class="form-check">
+                                        <input asp-for="SmtpModel.EnableSsl" class="form-check-input" type="checkbox" id="smtpSsl" />
+                                        <label class="form-check-label fw-bold text-slate-800" for="smtpSsl">SSL/TLS</label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row g-3 mb-3">
+                                <div class="col-md-6">
+                                    <label asp-for="SmtpModel.SenderEmail" class="form-label">Gönderen E-Posta</label>
+                                    <input asp-for="SmtpModel.SenderEmail" class="form-control" placeholder="bildirim@sirketiniz.com" />
+                                </div>
+                                <div class="col-md-6">
+                                    <label asp-for="SmtpModel.SenderPassword" class="form-label">E-Posta / Uygulama Şifresi</label>
+                                    <input asp-for="SmtpModel.SenderPassword" class="form-control" type="password" placeholder="••••••••" autocomplete="new-password" />
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label asp-for="SmtpModel.NotificationEmails" class="form-label">Bildirim Gönderilecek Adresler (Virgülle Ayırın)</label>
+                                <input asp-for="SmtpModel.NotificationEmails" class="form-control" placeholder="yonetici1@tatlici.com, yonetici2@tatlici.com" />
+                            </div>
+
+                            <div class="form-check form-switch mb-4">
+                                <input asp-for="SmtpModel.Aktif" class="form-check-input" type="checkbox" id="smtpActiveSwitch" />
+                                <label class="form-check-label fw-bold text-slate-800" for="smtpActiveSwitch">Yeni form doldurulduğunda otomatik e-posta gönder</label>
+                            </div>
+
+                            <div class="d-flex gap-2">
+                                <button type="submit" class="btn btn-primary flex-fill"><i class="bi bi-save me-1"></i>Ayarları Kaydet</button>
+                                <button type="submit" name="aksiyon" value="test" class="btn btn-outline-secondary"><i class="bi bi-send me-1"></i>Test Et</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TAB 4: ARVENTO GPS HARİTASI -->
+    <div class="tab-pane fade @(activeTab == "arvento" ? "show active" : "")" id="tab-arvento">
+        <div class="row g-4">
+            <div class="col-lg-5">
+                <div class="card shadow-sm border">
+                    <div class="card-header bg-slate-900 text-white">
+                        <i class="bi bi-sliders me-1 text-amber-500"></i>Arvento API Yapılandırması
+                    </div>
+                    <div class="card-body p-4">
+                        <form asp-action="AyarlarArvento" method="post">
+                            @Html.AntiForgeryToken()
+
+                            <div class="mb-3">
+                                <label asp-for="ArventoModel.ApiUrl" class="form-label">API URL</label>
+                                <input asp-for="ArventoModel.ApiUrl" class="form-control font-monospace" />
+                            </div>
+
+                            <div class="mb-3">
+                                <label asp-for="ArventoModel.KullaniciAdi" class="form-label">API Kullanıcı Adı</label>
+                                <input asp-for="ArventoModel.KullaniciAdi" class="form-control" />
+                            </div>
+
+                            <div class="mb-3">
+                                <label asp-for="ArventoModel.Sifre" class="form-label">API Şifresi</label>
+                                <input asp-for="ArventoModel.Sifre" class="form-control" />
+                            </div>
+
+                            <div class="mb-3">
+                                <label asp-for="ArventoModel.ApiKey" class="form-label">API Key</label>
+                                <input asp-for="ArventoModel.ApiKey" class="form-control font-monospace" />
+                            </div>
+
+                            <div class="form-check form-switch mb-4">
+                                <input asp-for="ArventoModel.Aktif" class="form-check-input" type="checkbox" id="arventoSwitch" />
+                                <label class="form-check-label fw-bold text-slate-800" for="arventoSwitch">Arvento GPS Akışını Etkinleştir</label>
+                            </div>
+
+                            <div class="d-flex gap-2">
+                                <button type="submit" class="btn btn-primary flex-fill"><i class="bi bi-save me-1"></i>Kaydet</button>
+                                <button type="submit" name="aksiyon" value="test" class="btn btn-outline-secondary"><i class="bi bi-wifi me-1"></i>Test Et</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-7">
+                <div class="card shadow-sm border h-100">
+                    <div class="card-header bg-slate-900 text-white d-flex align-items-center justify-content-between">
+                        <span><i class="bi bi-geo-alt-fill me-1 text-amber-500"></i>Canlı GPS Haritası</span>
+                        <span class="badge badge-role-admin">Live GPS</span>
+                    </div>
+                    <div class="card-body p-3">
+                        <div id="arvento-map"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Leaflet OpenStreetMap Init
+            var map = L.map('arvento-map').setView([39.9334, 32.8597], 11);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 19,
+                attribution: '&copy; OpenStreetMap contributors'
+            }).addTo(map);
+
+            var vehicles = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(
+                ((List<Vehicle>)(ViewBag.Araclar ?? new List<Vehicle>())).Select((v, idx) => new {
+                    lat = 39.9334 + (idx * 0.02 - 0.02),
+                    lng = 32.8597 + ((idx % 2 == 0 ? 1 : -1) * (idx + 1) * 0.018),
+                    plate = v.Plaka,
+                    model = v.Marka + " " + v.Model,
+                    status = v.Aktif ? "Aktif Filo Aracı (" + (v.Lokasyon ?? "Genel Merkez") + ")" : "Serviste / Pasif",
+                    driver = string.IsNullOrEmpty(v.SabitSurucu) ? "Havuz Aracı (Serbest)" : v.SabitSurucu
+                })
+            ));
+
+            vehicles.forEach(function(v) {
+                var marker = L.marker([v.lat, v.lng]).addTo(map);
+                marker.bindPopup("<b>" + v.plate + "</b><br>" + v.model + "<br>Durum: " + v.status + "<br>Sürücü: " + v.driver);
+            });
+
+            // Re-render map when Arvento tab is clicked
+            document.querySelectorAll('a[data-bs-toggle="tab"]').forEach(function(tab) {
+                tab.addEventListener('shown.bs.tab', function(e) {
+                    if (e.target.getAttribute('href') === '#tab-arvento') {
+                        setTimeout(function() { map.invalidateSize(); }, 200);
+                    }
+                });
+            });
+        });
+    </script>
+}

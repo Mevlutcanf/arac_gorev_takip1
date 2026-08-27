@@ -1,0 +1,421 @@
+@using AracGorevFormu.Services
+@model FiloHgsDashboardViewModel
+@{
+    ViewData["Title"] = "Filo HGS & Ceza Takip Paneli";
+    var araclar = ViewBag.Araclar as List<Vehicle> ?? new List<Vehicle>();
+    var seciliAracOzet = Model.AracOzetleri.FirstOrDefault(a => a.Plaka == Model.SeciliPlaka);
+}
+
+<div class="d-flex flex-column flex-sm-row align-items-sm-center justify-content-between gap-3 mb-4">
+    <div>
+        <h1 class="h4 fw-bold text-slate-900 mb-1">
+            <i class="bi bi-credit-card-2-front-fill text-amber-500 me-2"></i>Filo HGS & Ceza Yönetim Paneli
+        </h1>
+        <p class="text-slate-500 small mb-0">Tüm filo araçlarının HGS geçişleri, borç bakiyeleri ve ihlalli geçiş cezaları tek ekranda.</p>
+    </div>
+    <div class="d-flex gap-2">
+        @if (!string.IsNullOrEmpty(Model.SeciliPlaka))
+        {
+            <a asp-action="HgsBorc" class="btn btn-outline-slate shadow-sm fw-bold">
+                <i class="bi bi-arrow-left me-1"></i>Tüm Filo Listesine Dön
+            </a>
+        }
+        <button type="button" class="btn btn-accent shadow-sm" data-bs-toggle="modal" data-bs-target="#hgsEkleModal">
+            <i class="bi bi-plus-circle me-1"></i>Yeni HGS / Ceza Kaydı Ekle
+        </button>
+    </div>
+</div>
+
+<!-- Canlı API Entegrasyon Bilgi Kartı -->
+<div class="card shadow-sm border mb-4" style="background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%); color: #ffffff;">
+    <div class="card-body p-3 d-flex align-items-center justify-content-between flex-wrap gap-3">
+        <div class="d-flex align-items-center gap-3">
+            <div class="p-2 bg-amber-500 text-slate-900 rounded-3 fs-4">
+                <i class="bi bi-bank2"></i>
+            </div>
+            <div>
+                <h6 class="fw-bold mb-0 text-white">İşbank & Karayolları Canlı HGS API Entegrasyonu</h6>
+                <p class="small text-slate-300 mb-0">Anlık geçiş kayıtları (instant-transits) ve son 15 günlük otomatik borç taraması aktif.</p>
+            </div>
+        </div>
+        <span class="badge bg-emerald-500 text-white px-3 py-2 fw-bold">
+            <i class="bi bi-wifi me-1"></i>Canlı Servis Aktif
+        </span>
+    </div>
+</div>
+
+<!-- Üst İstatistik Kartları -->
+<div class="row g-3 mb-4">
+    <div class="col-xl-3 col-sm-6">
+        <div class="card p-3 shadow-sm border border-red-200 bg-red-50 h-100">
+            <div class="d-flex align-items-center justify-content-between">
+                <div>
+                    <span class="text-red-700 extra-small fw-bold text-uppercase">
+                        @(string.IsNullOrEmpty(Model.SeciliPlaka) ? "Tüm Filo Toplam Borcu" : "Araç Toplam Borcu")
+                    </span>
+                    <div class="fs-2 fw-bold text-red-900 mt-1">@Model.ToplamFiloBorcu.ToString("C2")</div>
+                </div>
+                <div class="p-3 bg-red-200 text-red-700 rounded-circle fs-4"><i class="bi bi-exclamation-octagon-fill"></i></div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-sm-6">
+        <div class="card p-3 shadow-sm border h-100">
+            <div class="d-flex align-items-center justify-content-between">
+                <div>
+                    <span class="text-slate-500 extra-small fw-bold text-uppercase">
+                        @(string.IsNullOrEmpty(Model.SeciliPlaka) ? "Borçlu Araç Sayısı" : "Sorgulanan Plaka")
+                    </span>
+                    <div class="fs-2 fw-bold text-slate-900 mt-1">
+                        @if (!string.IsNullOrEmpty(Model.SeciliPlaka))
+                        {
+                            <span class="plate-chip">@Model.SeciliPlaka</span>
+                        }
+                        else
+                        {
+                            @:@Model.BorcluAracSayisi / @Model.ToplamAracSayisi Araç
+                        }
+                    </div>
+                </div>
+                <div class="p-3 bg-amber-100 text-amber-700 rounded-circle fs-4"><i class="bi bi-car-front-fill"></i></div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-sm-6">
+        <div class="card p-3 shadow-sm border h-100">
+            <div class="d-flex align-items-center justify-content-between">
+                <div>
+                    <span class="text-slate-500 extra-small fw-bold text-uppercase">Bekleyen Ödenmemiş Geçiş</span>
+                    <div class="fs-2 fw-bold text-slate-900 mt-1">@Model.ToplamOdenmeyenGecisSayisi Adet</div>
+                </div>
+                <div class="p-3 bg-blue-100 text-blue-700 rounded-circle fs-4"><i class="bi bi-clock-history"></i></div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-sm-6">
+        <div class="card p-3 shadow-sm border h-100">
+            <div class="d-flex align-items-center justify-content-between">
+                <div>
+                    <span class="text-slate-500 extra-small fw-bold text-uppercase">İhlalli / Cezalı Geçişler</span>
+                    <div class="fs-2 fw-bold text-slate-900 mt-1">@Model.ToplamCezaSayisi Adet</div>
+                </div>
+                <div class="p-3 bg-purple-100 text-purple-700 rounded-circle fs-4"><i class="bi bi-shield-slash-fill"></i></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filtreleme ve Canlı Sorgulama Çubuğu -->
+<div class="card shadow-sm border mb-4">
+    <div class="card-body p-3">
+        <form method="post" asp-action="HgsSorgula" class="row g-2 align-items-center" onsubmit="return showLoading(this);">
+            @Html.AntiForgeryToken()
+            <div class="col-md-6 col-lg-5">
+                <div class="input-group">
+                    <span class="input-group-text bg-slate-100 border-slate-300 text-slate-600"><i class="bi bi-car-front-fill"></i></span>
+                    <select name="plaka" class="form-select" id="seciliPlakaSelect">
+                        <option value="">-- Tüm Filo Araçları (Veya Sorgulanacak Aracı Seçiniz) --</option>
+                        @foreach (var v in araclar)
+                        {
+                            <option value="@v.Plaka" selected="@(Model.SeciliPlaka == v.Plaka)">@v.Plaka — @v.Marka @v.Model</option>
+                        }
+                    </select>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <button type="submit" class="btn btn-accent w-100 fw-bold">
+                    <i class="bi bi-search me-1"></i>Seçili Aracı Sorgula (API)
+                </button>
+            </div>
+            @if (!string.IsNullOrEmpty(Model.SeciliPlaka))
+            {
+                <div class="col-md-3">
+                    <a asp-action="HgsBorc" class="btn btn-outline-secondary w-100">
+                        <i class="bi bi-x-circle me-1"></i>Filtreyi Temizle (Tüm Filo)
+                    </a>
+                </div>
+            }
+        </form>
+    </div>
+</div>
+
+@if (string.IsNullOrEmpty(Model.SeciliPlaka))
+{
+    <!-- TÜM FİLO ARAÇLARI TABLOSU (Sadece plaka sorgulanmadığında gösterilir) -->
+    <div class="card shadow-sm border mb-4">
+        <div class="card-header bg-slate-900 text-white d-flex align-items-center justify-content-between py-3">
+            <div class="d-flex align-items-center gap-2">
+                <i class="bi bi-grid-3x3-gap-fill text-amber-500"></i>
+                <span>Tüm Filo Araçları HGS Borç & Bakiye Özeti</span>
+            </div>
+            <span class="badge bg-slate-700 text-white fw-bold">@Model.AracOzetleri.Count Araç</span>
+        </div>
+        <div class="table-responsive">
+            <table class="table align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th class="ps-3">Plaka</th>
+                        <th>Marka / Model</th>
+                        <th>Zimmetli Sürücü / Lokasyon</th>
+                        <th>Bekleyen Geçiş Sayısı</th>
+                        <th>Cezalı Geçiş Sayısı</th>
+                        <th>Toplam HGS Borcu</th>
+                        <th>Durum</th>
+                        <th class="text-end pe-3">İşlem</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var a in Model.AracOzetleri)
+                    {
+                        <tr>
+                            <td class="ps-3">
+                                <span class="plate-chip">@a.Plaka</span>
+                            </td>
+                            <td class="fw-semibold text-slate-900">@a.MarkaModel</td>
+                            <td class="small text-slate-600">
+                                <div>@(string.IsNullOrEmpty(a.Sürücü) ? "Havuz Aracı" : a.Sürücü)</div>
+                                <div class="extra-small text-slate-400">@(a.Lokasyon ?? "Genel Merkez")</div>
+                            </td>
+                            <td class="fw-bold text-slate-800">
+                                @if (a.OdenmeyenAdet > 0)
+                                {
+                                    <span class="badge badge-hgs-bekliyor">@a.OdenmeyenAdet Adet</span>
+                                }
+                                else
+                                {
+                                    <span class="text-slate-400 fw-bold">0</span>
+                                }
+                            </td>
+                            <td>
+                                @if (a.CezaAdet > 0)
+                                {
+                                    <span class="badge badge-hgs-ceza"><i class="bi bi-exclamation-triangle me-1"></i>@a.CezaAdet Ceza</span>
+                                }
+                                else
+                                {
+                                    <span class="text-slate-400 fw-bold">0</span>
+                                }
+                            </td>
+                            <td class="fw-bold fs-6 @(a.ToplamBorc > 0 ? "text-red-600" : "text-emerald-600")">
+                                @a.ToplamBorc.ToString("C2")
+                            </td>
+                            <td>
+                                @if (a.ToplamBorc > 0)
+                                {
+                                    <span class="badge badge-hgs-ceza"><i class="bi bi-exclamation-diamond-fill me-1"></i>Borç Bekliyor</span>
+                                }
+                                else
+                                {
+                                    <span class="badge badge-hgs-odendi"><i class="bi bi-check-circle-fill me-1"></i>Temiz (Borç Yok)</span>
+                                }
+                            </td>
+                            <td class="text-end pe-3">
+                                <div class="d-inline-flex gap-1">
+                                    <form asp-action="HgsSorgula" asp-route-plaka="@a.Plaka" method="post" class="d-inline" onsubmit="return showLoading(this);">
+                                        @Html.AntiForgeryToken()
+                                        <button type="submit" class="btn btn-sm btn-accent text-nowrap">
+                                            <i class="bi bi-search me-1"></i>Sorgula (API)
+                                        </button>
+                                    </form>
+                                    <a asp-action="HgsBorc" asp-route-plaka="@a.Plaka" class="btn btn-sm btn-outline-primary text-nowrap">
+                                        <i class="bi bi-eye me-1"></i>Geçişleri Gör
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}
+else if (seciliAracOzet != null)
+{
+    <!-- SORGULANAN SPESİFİK ARACIN DETAY ÖZET KARTI -->
+    <div class="card shadow-sm border mb-4 border-amber-400" style="background: linear-gradient(135deg, #ffffff 0%, #fffbeb 100%);">
+        <div class="card-body p-4">
+            <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+                <div class="d-flex align-items-center gap-3">
+                    <span class="plate-chip fs-4 px-3 py-2">@seciliAracOzet.Plaka</span>
+                    <div>
+                        <h4 class="h5 fw-bold text-slate-900 mb-1">@seciliAracOzet.MarkaModel</h4>
+                        <div class="small text-slate-600">
+                            <i class="bi bi-person me-1"></i>Sürücü: <b>@(seciliAracOzet.Sürücü ?? "Havuz Aracı")</b> — 
+                            <i class="bi bi-geo-alt me-1"></i>Lokasyon: <b>@(seciliAracOzet.Lokasyon ?? "Genel Merkez")</b>
+                        </div>
+                    </div>
+                </div>
+                <div class="d-flex align-items-center gap-4">
+                    <div class="text-end">
+                        <span class="extra-small text-slate-500 fw-bold text-uppercase d-block">Toplam Ödenmeyen Borç</span>
+                        <span class="fs-3 fw-bold @(seciliAracOzet.ToplamBorc > 0 ? "text-red-600" : "text-emerald-600")">
+                            @seciliAracOzet.ToplamBorc.ToString("C2")
+                        </span>
+                    </div>
+                    <div class="text-end">
+                        <span class="extra-small text-slate-500 fw-bold text-uppercase d-block">Durum</span>
+                        @if (seciliAracOzet.ToplamBorc > 0)
+                        {
+                            <span class="badge badge-hgs-ceza fs-6 px-3 py-2"><i class="bi bi-exclamation-diamond-fill me-1"></i>Borç Bekliyor</span>
+                        }
+                        else
+                        {
+                            <span class="badge badge-hgs-odendi fs-6 px-3 py-2"><i class="bi bi-check-circle-fill me-1"></i>Temiz (Borç Yok)</span>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- HGS GEÇİŞ HAREKETLERİ TABLOSU -->
+<div class="card shadow-sm border">
+    <div class="card-header bg-slate-900 text-white d-flex align-items-center justify-content-between py-3">
+        <div class="d-flex align-items-center gap-2">
+            <i class="bi bi-receipt-cutoff text-amber-500 fs-5"></i>
+            <span class="fs-6 text-white fw-bold">
+                @if (!string.IsNullOrEmpty(Model.SeciliPlaka))
+                {
+                    <span class="plate-chip me-2">@Model.SeciliPlaka</span>
+                    @:Aracına Ait Canlı HGS Otoban & Köprü Geçiş Detayları (Son 15 Gün)
+                }
+                else
+                {
+                    @:Tüm Filo HGS Otoban & Köprü Geçiş Detayları
+                }
+            </span>
+        </div>
+        <span class="badge bg-amber-500 text-slate-900 fw-bold fs-6">@Model.TumGecisler.Count Hareket</span>
+    </div>
+    <div class="table-responsive">
+        <table class="table align-middle mb-0">
+            <thead>
+                <tr>
+                    <th class="ps-3">Geçiş Tarihi</th>
+                    <th>Araç Plakası</th>
+                    <th>Gişe / Otoyol Noktası</th>
+                    <th>Geçiş Türü</th>
+                    <th>Tutar</th>
+                    <th class="text-end pe-3">Ödeme Durumu & İşlem</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var g in Model.TumGecisler)
+                {
+                    <tr>
+                        <td class="ps-3 fw-semibold text-slate-800">@g.GecisTarihi.ToString("dd.MM.yyyy HH:mm")</td>
+                        <td><span class="plate-chip">@g.Plaka</span></td>
+                        <td class="fw-bold text-slate-900">@g.GiseAdı</td>
+                        <td>
+                            @if (g.CezaMi)
+                            {
+                                <span class="badge badge-hgs-ceza"><i class="bi bi-exclamation-triangle me-1"></i>İhlalli Geçiş (Cezalı)</span>
+                            }
+                            else
+                            {
+                                <span class="badge badge-hgs-standart"><i class="bi bi-check me-1"></i>Standart Otoyol Geçişi</span>
+                            }
+                        </td>
+                        <td class="fw-bold text-slate-900 fs-6">@g.Tutar.ToString("C2")</td>
+                        <td class="text-end pe-3">
+                            @if (g.OdediMi)
+                            {
+                                <span class="badge badge-hgs-odendi"><i class="bi bi-check-circle-fill me-1"></i>Ödendi</span>
+                            }
+                            else
+                            {
+                                <div class="d-inline-flex flex-column align-items-end gap-1">
+                                    <span class="badge badge-hgs-bekliyor mb-1"><i class="bi bi-hourglass-split me-1"></i>Ödeme Bekliyor</span>
+                                    <div class="d-flex gap-1">
+                                        <a href="https://webihlaltakip.kgm.gov.tr/WebIhlalSorgulama/Sayfalar/Sorgulama.aspx?lang=tr" target="_blank" class="btn btn-sm btn-primary py-1 px-2 text-nowrap fw-bold" title="KGM Web İhlal Takip sayfasında ödeme yap">
+                                            <i class="bi bi-credit-card-fill me-1"></i>Resmî Ödeme Yap
+                                        </a>
+                                        <form asp-action="HgsOde" asp-route-id="@g.Id" asp-route-plaka="@(Model.SeciliPlaka ?? g.Plaka)" method="post" class="d-inline"
+                                              onsubmit="return confirm('Bu borcu sistemde ödendi olarak kapatmak istiyor musunuz?');">
+                                            @Html.AntiForgeryToken()
+                                            <button type="submit" class="btn btn-sm btn-outline-success py-1 px-2 text-nowrap fw-bold" title="Sistemde ödendi olarak işaretle">
+                                                <i class="bi bi-check2-all"></i>
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                            }
+                        </td>
+                    </tr>
+                }
+                @if (!Model.TumGecisler.Any())
+                {
+                    <tr>
+                        <td colspan="6" class="text-center py-5 text-slate-400">
+                            <i class="bi bi-inbox fs-2 d-block mb-2"></i>
+                            Kayıtlı HGS borç veya geçiş hareketi bulunmuyor.
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Modal: Yeni HGS Geçişi / Ceza Ekle -->
+<div class="modal fade" id="hgsEkleModal" tabindex="-1" aria-labelledby="hgsEkleModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-slate-900 text-white">
+                <h5 class="modal-title" id="hgsEkleModalLabel"><i class="bi bi-plus-circle me-2 text-amber-500"></i>Yeni HGS / Ceza Kaydı Ekle</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Kapat"></button>
+            </div>
+            <form asp-action="HgsGecisEkle" method="post">
+                @Html.AntiForgeryToken()
+                <div class="modal-body p-4">
+                    <div class="mb-3">
+                        <label class="form-label">Araç Plakası <span class="text-danger">*</span></label>
+                        <select name="Plaka" class="form-select" required>
+                            @foreach (var v in araclar)
+                            {
+                                <option value="@v.Plaka" selected="@(Model.SeciliPlaka == v.Plaka)">@v.Plaka — @v.Marka @v.Model</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Gişe / Otoyol Noktası <span class="text-danger">*</span></label>
+                        <input name="GiseAdı" class="form-control" placeholder="Örn: Akıncı Gişeleri veya Çamlıca Gişeleri" required />
+                    </div>
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Geçiş Tarihi/Saati <span class="text-danger">*</span></label>
+                            <input name="GecisTarihi" type="datetime-local" class="form-control" value="@DateTime.Now.ToString("yyyy-MM-ddTHH:mm")" required />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Tutar (TL) <span class="text-danger">*</span></label>
+                            <input name="Tutar" type="number" step="0.01" class="form-control" placeholder="45.50" required />
+                        </div>
+                    </div>
+                    <div class="form-check form-switch mb-3">
+                        <input name="CezaMi" value="true" class="form-check-input" type="checkbox" id="cezaSwitch" />
+                        <label class="form-check-label fw-semibold text-slate-800" for="cezaSwitch">İhlalli Geçiş / İdari Ceza Mı?</label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
+                    <button type="submit" class="btn btn-accent"><i class="bi bi-save me-1"></i>Kaydı Ekle</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function showLoading(form) {
+            var btn = $(form).find('button[type="submit"]');
+            var originalText = btn.html();
+            btn.prop('disabled', true);
+            btn.html('<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Sorgulanıyor...');
+            
+            // Return true allows form to submit naturally
+            return true;
+        }
+    </script>
+}

@@ -1,0 +1,179 @@
+@model List<AracBakim>
+@{
+    ViewData["Title"] = "Araç Bakım & Servis Takibi";
+    var araclar = ViewBag.Araclar as List<Vehicle> ?? new List<Vehicle>();
+    int? seciliVehicleId = ViewBag.SeciliVehicleId as int?;
+}
+
+<div class="d-flex flex-column flex-sm-row align-items-sm-center justify-content-between gap-3 mb-4">
+    <div>
+        <h1 class="h4 fw-bold text-slate-900 mb-1">
+            <i class="bi bi-tools text-amber-500 me-2"></i>Araç Bakım & Servis Takibi
+        </h1>
+        <p class="text-slate-500 small mb-0">Filodaki araçların periyodik bakımları, değişen parçaları, tamir ve km takip kayıtları.</p>
+    </div>
+    <div class="d-flex gap-2">
+        <button onclick="window.print()" class="btn btn-outline-secondary">
+            <i class="bi bi-printer me-1"></i>Yazdır
+        </button>
+        <button type="button" class="btn btn-accent" data-bs-toggle="modal" data-bs-target="#yeniBakimModal">
+            <i class="bi bi-plus-lg me-1"></i>Yeni Bakım Kaydı Ekle
+        </button>
+    </div>
+</div>
+
+<div class="card shadow-sm border mb-4">
+    <div class="card-header bg-slate-900 text-white d-flex align-items-center justify-content-between py-3">
+        <div class="d-flex align-items-center gap-2">
+            <i class="bi bi-list-stars text-amber-500"></i>
+            <span>Servis Geçmişi ve Planlanan Bakımlar</span>
+        </div>
+        <div>
+            <form method="get" asp-action="Bakimlar" class="d-flex align-items-center gap-2">
+                <select name="vehicleId" class="form-select form-select-sm bg-slate-800 text-white border-slate-700" onchange="this.form.submit()">
+                    <option value="">-- Tüm Araçlar --</option>
+                    @foreach (var v in araclar)
+                    {
+                        <option value="@v.Id" selected="@(seciliVehicleId == v.Id)">@v.Plaka — @v.Marka @v.Model</option>
+                    }
+                </select>
+            </form>
+        </div>
+    </div>
+    <div class="table-responsive">
+        <table class="table align-middle mb-0">
+            <thead>
+                <tr>
+                    <th class="ps-3">Plaka / Araç</th>
+                    <th>Bakım Türü</th>
+                    <th>Bakım Tarihi</th>
+                    <th>Servis Km</th>
+                    <th>Yapılan İşlemler</th>
+                    <th>Servis Adı</th>
+                    <th>Maliyet</th>
+                    <th>Sonraki Bakım</th>
+                    <th class="text-end pe-3 no-print">İşlemler</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var b in Model)
+                {
+                    <tr>
+                        <td class="ps-3">
+                            <span class="plate-chip">@b.Plaka</span>
+                        </td>
+                        <td>
+                            <span class="badge badge-bakim-turu">
+                                <i class="bi bi-wrench me-1"></i>@b.BakimTuru
+                            </span>
+                        </td>
+                        <td class="fw-semibold text-slate-800">@b.BakimTarihi.ToString("dd.MM.yyyy")</td>
+                        <td class="font-monospace text-slate-700">@b.Km.ToString("N0") km</td>
+                        <td class="text-slate-800 small max-w-xs">@b.YapilanIslemler</td>
+                        <td class="text-slate-600 small">@(b.ServisAdi ?? "—")</td>
+                        <td class="fw-bold text-slate-900">@b.Maliyet.ToString("C2")</td>
+                        <td class="small">
+                            @if (b.SonrakiBakimTarihi != null)
+                            {
+                                <div class="text-emerald-700 fw-semibold"><i class="bi bi-calendar-check me-1"></i>@b.SonrakiBakimTarihi.Value.ToString("dd.MM.yyyy")</div>
+                            }
+                            @if (b.SonrakiBakimKm != null)
+                            {
+                                <div class="text-slate-500 font-monospace extra-small">@b.SonrakiBakimKm.Value.ToString("N0") km</div>
+                            }
+                        </td>
+                        <td class="text-end pe-3 no-print">
+                            <a asp-action="BakimDuzenle" asp-route-id="@b.Id" class="btn btn-sm btn-outline-primary" title="Detay / Düzenle">
+                                <i class="bi bi-pencil-square"></i>
+                            </a>
+                            <form asp-action="BakimSil" method="post" class="d-inline" onsubmit="return confirm('Bu bakım kaydını silmek istediğinize emin misiniz?');">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="id" value="@b.Id" />
+                                <button type="submit" class="btn btn-sm btn-outline-danger" title="Sil">
+                                    <i class="bi bi-trash3"></i>
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+                @if (!Model.Any())
+                {
+                    <tr>
+                        <td colspan="9" class="text-center py-5 text-slate-400">Henüz bakım kaydı bulunmuyor.</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Modal: Yeni Bakım Kaydı -->
+<div class="modal fade" id="yeniBakimModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-slate-900 text-white">
+                <h5 class="modal-title fs-6 fw-bold"><i class="bi bi-tools text-amber-500 me-2"></i>Yeni Araç Bakım Kaydı</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form asp-action="BakimEkle" method="post">
+                @Html.AntiForgeryToken()
+                <div class="modal-body p-4">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Araç Seçimi <span class="text-danger">*</span></label>
+                            <select name="VehicleId" class="form-select" required>
+                                <option value="">-- Araç Seçiniz --</option>
+                                @foreach (var v in araclar)
+                                {
+                                    <option value="@v.Id">@v.Plaka — @v.Marka @v.Model</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Bakım Türü <span class="text-danger">*</span></label>
+                            <select name="BakimTuru" class="form-select" required>
+                                <option value="Periyodik Yağ Bakımı">Periyodik Yağ Bakımı</option>
+                                <option value="Fren & Lastik Değişimi">Fren & Lastik Değişimi</option>
+                                <option value="Trafik Muayenesi">Trafik Muayenesi</option>
+                                <option value="Ağır Bakım / Triger">Ağır Bakım / Triger</option>
+                                <option value="Arıza / Onarım">Arıza / Onarım</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Bakım Tarihi <span class="text-danger">*</span></label>
+                            <input name="BakimTarihi" type="date" class="form-control" value="@DateTime.Now.ToString("yyyy-MM-dd")" required />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Bakım Anındaki Km <span class="text-danger">*</span></label>
+                            <input name="Km" type="number" class="form-control" placeholder="Örn: 45000" required />
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Yapılan İşlemler ve Değişen Parçalar <span class="text-danger">*</span></label>
+                            <textarea name="YapilanIslemler" class="form-control" rows="3" placeholder="Motor yağı, filtreler, fren balatası vb..." required></textarea>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Servis / Tamirhane Adı</label>
+                            <input name="ServisAdi" type="text" class="form-control" placeholder="Yetkili veya Özel Servis Adı" />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Toplam Maliyet (TL)</label>
+                            <input name="Maliyet" type="number" step="0.01" class="form-control" placeholder="0.00" />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Sonraki Tahmini Bakım Tarihi</label>
+                            <input name="SonrakiBakimTarihi" type="date" class="form-control" />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Sonraki Bakım Km</label>
+                            <input name="SonrakiBakimKm" type="number" class="form-control" placeholder="Örn: 60000" />
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer bg-slate-50">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">İptal</button>
+                    <button type="submit" class="btn btn-accent px-4"><i class="bi bi-save me-1"></i>Bakım Kaydını Gönder</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

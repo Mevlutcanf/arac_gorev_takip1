@@ -1,0 +1,186 @@
+@model GorevFormu
+@{
+    ViewData["Title"] = "Görev Formu Detayı";
+}
+
+<div class="d-flex align-items-center justify-content-between mb-4 no-print">
+    <div>
+        <h1 class="h4 fw-bold text-slate-900 mb-1">Görev Formu Detayı</h1>
+        <p class="text-slate-500 small mb-0">Form Kodu: <span class="font-monospace fw-bold text-amber-600">@Model.TakipKodu</span></p>
+    </div>
+    <div class="d-flex gap-2">
+        <a asp-action="ResmiTutanak" asp-route-id="@Model.Id" target="_blank" class="btn btn-dark btn-sm">
+            <i class="bi bi-file-earmark-pdf-fill me-1"></i>Resmî Çıktı & Islak İmza Tutanağı
+        </a>
+        <a asp-action="Formlar" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-arrow-left me-1"></i>Listeye Dön
+        </a>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Left Column: Form Details & Info Grid -->
+    <div class="col-lg-8">
+        <div class="card shadow-sm border mb-4">
+            <div class="card-header bg-slate-900 text-white d-flex align-items-center justify-content-between py-3">
+                <div class="d-flex align-items-center gap-2">
+                    <i class="bi bi-file-earmark-text-fill text-amber-500"></i>
+                    <span>Talep ve Görev Bilgileri</span>
+                </div>
+                <div>
+                    @if (Model.Durum == GorevDurumu.Beklemede)
+                    {
+                        <span class="badge-status badge-pending fs-6 px-3 py-1"><span class="badge-status-dot"></span>Onay Bekliyor</span>
+                    }
+                    else if (Model.Durum == GorevDurumu.Onaylandi && Model.GercekDonusZamani == null)
+                    {
+                        <span class="badge-status badge-approved fs-6 px-3 py-1"><span class="badge-status-dot"></span>Araç Dışarıda</span>
+                    }
+                    else if (Model.Durum == GorevDurumu.TamamlandiDondu)
+                    {
+                        <span class="badge-status badge-completed fs-6 px-3 py-1"><span class="badge-status-dot"></span>Tamamlandı</span>
+                    }
+                    else if (Model.Durum == GorevDurumu.Reddedildi)
+                    {
+                        <span class="badge-status badge-rejected fs-6 px-3 py-1"><span class="badge-status-dot"></span>Reddedildi</span>
+                    }
+                </div>
+            </div>
+
+            <div class="card-body p-4">
+                <div class="row g-3">
+                    <!-- Araç -->
+                    <div class="col-md-6">
+                        <div class="p-3 bg-slate-50 rounded-3 border h-100">
+                            <span class="text-slate-500 extra-small fw-bold text-uppercase d-block mb-1">Tahsis Edilen Araç</span>
+                            <span class="plate-chip mb-2">@Model.AracPlaka</span>
+                            <div class="fw-bold text-slate-900 fs-6">@Model.AracMarka @Model.AracModel</div>
+                        </div>
+                    </div>
+
+                    <!-- Kullanan -->
+                    <div class="col-md-6">
+                        <div class="p-3 bg-slate-50 rounded-3 border h-100">
+                            <span class="text-slate-500 extra-small fw-bold text-uppercase d-block mb-1">Kullanan Personel</span>
+                            <div class="fw-bold text-slate-900 fs-6">@Model.KullananAdSoyad</div>
+                            <div class="text-slate-600 small mt-1"><i class="bi bi-telephone me-1"></i>@Model.KullananTelefon</div>
+                            @if (!string.IsNullOrEmpty(Model.Departman))
+                            {
+                                <div class="text-slate-500 extra-small mt-1">Birim: @Model.Departman</div>
+                            }
+                        </div>
+                    </div>
+
+                    <!-- Görev Amacı -->
+                    <div class="col-12">
+                        <div class="p-3 bg-slate-50 rounded-3 border">
+                            <span class="text-slate-500 extra-small fw-bold text-uppercase d-block mb-1">Görev Amacı ve Gidilecek Yer</span>
+                            <div class="text-slate-900 fw-medium">@Model.GorevAmaci</div>
+                        </div>
+                    </div>
+
+                    <!-- Çıkış Zamanı -->
+                    <div class="col-md-6">
+                        <div class="p-3 border rounded-3">
+                            <span class="text-slate-500 extra-small fw-bold text-uppercase d-block mb-1">Planlanan Çıkış Tarihi</span>
+                            <div class="fw-bold text-slate-900"><i class="bi bi-calendar-event me-2 text-slate-500"></i>@Model.CikisZamani.ToString("dd.MM.yyyy HH:mm")</div>
+                        </div>
+                    </div>
+
+                    <!-- Dönüş Zamanı -->
+                    <div class="col-md-6">
+                        <div class="p-3 border rounded-3">
+                            <span class="text-slate-500 extra-small fw-bold text-uppercase d-block mb-1">Planlanan Dönüş Tarihi</span>
+                            <div class="fw-bold text-slate-900"><i class="bi bi-calendar-check me-2 text-slate-500"></i>@Model.PlanlananDonusZamani.ToString("dd.MM.yyyy HH:mm")</div>
+                        </div>
+                    </div>
+
+                    @if (Model.GercekDonusZamani != null)
+                    {
+                        <div class="col-12">
+                            <div class="p-3 bg-emerald-50 border border-emerald-200 rounded-3">
+                                <span class="text-emerald-700 extra-small fw-bold text-uppercase d-block mb-1">Gerçekleşen Araç Teslim Zamanı</span>
+                                <div class="fw-bold text-emerald-900 fs-6"><i class="bi bi-check-circle-fill me-2 text-emerald-600"></i>@Model.GercekDonusZamani.Value.ToString("dd.MM.yyyy HH:mm")</div>
+                            </div>
+                        </div>
+                    }
+
+                    @if (!string.IsNullOrEmpty(Model.RedNedeni))
+                    {
+                        <div class="col-12">
+                            <div class="p-3 bg-red-50 border border-red-200 rounded-3">
+                                <span class="text-red-700 extra-small fw-bold text-uppercase d-block mb-1">Ret Gerekçesi</span>
+                                <div class="fw-bold text-red-900"><i class="bi bi-x-circle-fill me-2 text-red-600"></i>@Model.RedNedeni</div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Column: Admin Actions & Audit Trail -->
+    <div class="col-lg-4">
+        <!-- Action Card -->
+        <div class="card shadow-sm border mb-4 no-print">
+            <div class="card-header bg-slate-900 text-white">
+                <i class="bi bi-gear-fill me-1 text-amber-500"></i>Yönetici İşlemleri
+            </div>
+            <div class="card-body p-3">
+                @if (Model.Durum == GorevDurumu.Beklemede)
+                {
+                    <div class="d-grid gap-2">
+                        <form asp-action="FormOnayla" asp-route-id="@Model.Id" method="post">
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="btn btn-success btn-lg w-100">
+                                <i class="bi bi-check-lg me-1"></i>Görevi Onayla
+                            </button>
+                        </form>
+                        <a asp-action="FormReddet" asp-route-id="@Model.Id" class="btn btn-danger btn-lg w-100">
+                            <i class="bi bi-x-lg me-1"></i>Görevi Reddet
+                        </a>
+                    </div>
+                }
+                else if (Model.AracDisarida)
+                {
+                    <form asp-action="FormDonusIsaretle" asp-route-id="@Model.Id" method="post" class="d-grid">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="btn btn-primary btn-lg w-100">
+                            <i class="bi bi-box-arrow-in-left me-1"></i>Araç Dönüşünü İşaretle
+                        </button>
+                    </form>
+                }
+                else
+                {
+                    <div class="alert alert-secondary border-0 mb-0 small text-center">
+                        <i class="bi bi-info-circle me-1"></i>Bu form için yapılabilecek ek işlem bulunmuyor.
+                    </div>
+                }
+            </div>
+        </div>
+
+        <!-- Audit Card -->
+        <div class="card shadow-sm border">
+            <div class="card-header bg-slate-900 text-white">
+                <i class="bi bi-clock-history me-1 text-amber-500"></i>Kayıt Geçmişi
+            </div>
+            <div class="card-body p-3 small">
+                <div class="d-flex align-items-center justify-content-between py-2 border-bottom">
+                    <span class="text-slate-500">Form Oluşturma:</span>
+                    <span class="fw-semibold text-slate-800">@Model.OlusturmaTarihi.ToString("dd.MM.yyyy HH:mm")</span>
+                </div>
+                @if (Model.OnayTarihi != null)
+                {
+                    <div class="d-flex align-items-center justify-content-between py-2 border-bottom">
+                        <span class="text-slate-500">Onay/Ret İşlemi:</span>
+                        <span class="fw-semibold text-slate-800">@Model.OnayTarihi.Value.ToString("dd.MM.yyyy HH:mm")</span>
+                    </div>
+                    <div class="d-flex align-items-center justify-content-between py-2 border-bottom">
+                        <span class="text-slate-500">İşlemi Yapan:</span>
+                        <span class="fw-bold text-slate-900">@Model.OnaylayanKullaniciAdi</span>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,109 @@
+@model List<GorevFormu>
+@{
+    ViewData["Title"] = "Görev Formları";
+    string? seciliDurum = ViewBag.SeciliDurum;
+}
+
+<div class="d-flex flex-column flex-sm-row align-items-sm-center justify-content-between gap-3 mb-4">
+    <div>
+        <h1 class="h4 fw-bold text-slate-900 mb-1">Tüm Görev Formları</h1>
+        <p class="text-slate-500 small mb-0">Sistemde oluşturulan tüm araç görev talepleri ve durum geçmişi.</p>
+    </div>
+    <div class="d-flex gap-1 bg-slate-200 p-1 rounded-3">
+        <a asp-action="Formlar" class="btn btn-sm @(seciliDurum == null ? "btn-white shadow-sm text-slate-900 fw-bold" : "text-slate-600")">Tümü</a>
+        <a asp-action="Formlar" asp-route-durum="Beklemede" class="btn btn-sm @(seciliDurum == "Beklemede" ? "btn-white shadow-sm text-amber-600 fw-bold" : "text-slate-600")">Bekleyen</a>
+        <a asp-action="Formlar" asp-route-durum="Onaylandi" class="btn btn-sm @(seciliDurum == "Onaylandi" ? "btn-white shadow-sm text-blue-600 fw-bold" : "text-slate-600")">Onaylı</a>
+        <a asp-action="Formlar" asp-route-durum="TamamlandiDondu" class="btn btn-sm @(seciliDurum == "TamamlandiDondu" ? "btn-white shadow-sm text-emerald-600 fw-bold" : "text-slate-600")">Tamamlanan</a>
+        <a asp-action="Formlar" asp-route-durum="Reddedildi" class="btn btn-sm @(seciliDurum == "Reddedildi" ? "btn-white shadow-sm text-red-600 fw-bold" : "text-slate-600")">Reddedilen</a>
+    </div>
+</div>
+
+<div class="card shadow-sm border-0">
+    <div class="table-responsive">
+        <table class="table align-middle mb-0">
+            <thead>
+                <tr>
+                    <th>Takip Kodu</th>
+                    <th>Araç Bilgisi</th>
+                    <th>Kullanan Personel</th>
+                    <th>Çıkış Tarihi</th>
+                    <th>Planlanan Dönüş</th>
+                    <th>Durum</th>
+                    <th class="text-end">İşlem</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var form in Model)
+                {
+                    <tr>
+                        <td>
+                            <span class="font-monospace fw-bold text-amber-600">@form.TakipKodu</span>
+                        </td>
+                        <td>
+                            <span class="plate-chip">@form.AracPlaka</span>
+                            <div class="text-slate-500 small mt-1">@form.AracMarka @form.AracModel</div>
+                        </td>
+                        <td>
+                            <div class="fw-semibold text-slate-900">@form.KullananAdSoyad</div>
+                            <div class="text-slate-500 small">@form.KullananTelefon</div>
+                        </td>
+                        <td>
+                            <div class="text-slate-700">@form.CikisZamani.ToString("dd.MM.yyyy")</div>
+                            <div class="text-slate-500 small">@form.CikisZamani.ToString("HH:mm")</div>
+                        </td>
+                        <td>
+                            <div class="text-slate-700">@form.PlanlananDonusZamani.ToString("dd.MM.yyyy")</div>
+                            <div class="text-slate-500 small">@form.PlanlananDonusZamani.ToString("HH:mm")</div>
+                        </td>
+                        <td>
+                            @if (form.Durum == GorevDurumu.Beklemede)
+                            {
+                                <span class="badge-status badge-pending"><span class="badge-status-dot"></span>Onay Bekliyor</span>
+                            }
+                            else if (form.Durum == GorevDurumu.Onaylandi && form.GercekDonusZamani == null)
+                            {
+                                <span class="badge-status badge-approved"><span class="badge-status-dot"></span>Araç Dışarıda</span>
+                            }
+                            else if (form.Durum == GorevDurumu.TamamlandiDondu)
+                            {
+                                <span class="badge-status badge-completed"><span class="badge-status-dot"></span>Tamamlandı</span>
+                            }
+                            else if (form.Durum == GorevDurumu.Reddedildi)
+                            {
+                                <span class="badge-status badge-rejected"><span class="badge-status-dot"></span>Reddedildi</span>
+                            }
+                        </td>
+                        <td class="text-end">
+                            <div class="d-flex justify-content-end gap-1">
+                                <a asp-action="FormDetay" asp-route-id="@form.Id" class="btn btn-outline-secondary btn-sm" title="Detay">
+                                    <i class="bi bi-eye"></i>Detay
+                                </a>
+                                @if (form.Durum == GorevDurumu.Beklemede)
+                                {
+                                    <form asp-action="FormOnayla" asp-route-id="@form.Id" method="post" class="d-inline">
+                                        @Html.AntiForgeryToken()
+                                        <button type="submit" class="btn btn-success btn-sm"><i class="bi bi-check-lg"></i>Onayla</button>
+                                    </form>
+                                    <a asp-action="FormReddet" asp-route-id="@form.Id" class="btn btn-danger btn-sm"><i class="bi bi-x-lg"></i>Reddet</a>
+                                }
+                                @if (form.AracDisarida)
+                                {
+                                    <form asp-action="FormDonusIsaretle" asp-route-id="@form.Id" method="post" class="d-inline">
+                                        @Html.AntiForgeryToken()
+                                        <button type="submit" class="btn btn-primary btn-sm"><i class="bi bi-box-arrow-in-left"></i>Dönüş</button>
+                                    </form>
+                                }
+                            </div>
+                        </td>
+                    </tr>
+                }
+                @if (!Model.Any())
+                {
+                    <tr>
+                        <td colspan="7" class="text-center py-5 text-slate-400">Aranan filtrelere uygun görev formu kaydı bulunamadı.</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

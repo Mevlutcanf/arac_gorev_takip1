@@ -1,0 +1,219 @@
+@model AdminDashboardViewModel
+@{
+    ViewData["Title"] = "Yönetim Paneli";
+}
+
+<div class="d-flex align-items-center justify-content-between mb-4">
+    <div>
+        <h1 class="h4 fw-bold text-slate-900 mb-1">Filo ve Görev Dashboard</h1>
+        <p class="text-slate-500 small mb-0">Şirket araç filosu kullanım durumları ve anlık onay süreçleri.</p>
+    </div>
+    <div>
+        <a asp-action="Formlar" class="btn btn-primary btn-sm">
+            <i class="bi bi-list-task"></i>Tüm Görev Formları
+        </a>
+    </div>
+</div>
+
+<!-- Metric Stat Cards Row -->
+<div class="row g-3 mb-4">
+    <div class="col-12 col-sm-6 col-md-4 col-xl-2">
+        <div class="card shadow-sm border h-100 p-3">
+            <div class="d-flex align-items-center justify-content-between mb-2">
+                <span class="text-slate-500 extra-small fw-bold text-uppercase tracking-wider">Toplam Araç</span>
+                <div class="p-2 bg-blue-50 text-blue-600 rounded-3"><i class="bi bi-car-front-fill fs-5"></i></div>
+            </div>
+            <div class="fs-2 fw-bold text-slate-900 mb-1">@Model.ToplamArac</div>
+            <div class="text-slate-500 extra-small">@Model.AktifArac aktif araç</div>
+        </div>
+    </div>
+
+    <div class="col-12 col-sm-6 col-md-4 col-xl-2">
+        <div class="card shadow-sm border h-100 p-3">
+            <div class="d-flex align-items-center justify-content-between mb-2">
+                <span class="text-slate-500 extra-small fw-bold text-uppercase tracking-wider">Onay Bekleyen</span>
+                <div class="p-2 bg-amber-50 text-amber-600 rounded-3"><i class="bi bi-hourglass-split fs-5"></i></div>
+            </div>
+            <div class="fs-2 fw-bold text-slate-900 mb-1">@Model.BekleyenOnaySayisi</div>
+            <div class="text-slate-500 extra-small">İnceleme bekleyen form</div>
+        </div>
+    </div>
+
+    <div class="col-12 col-sm-6 col-md-4 col-xl-2">
+        <div class="card shadow-sm border h-100 p-3">
+            <div class="d-flex align-items-center justify-content-between mb-2">
+                <span class="text-slate-500 extra-small fw-bold text-uppercase tracking-wider">Şu An Dışarıda</span>
+                <div class="p-2 bg-red-50 text-red-600 rounded-3"><i class="bi bi-arrow-up-right-circle-fill fs-5"></i></div>
+            </div>
+            <div class="fs-2 fw-bold text-slate-900 mb-1">@Model.SuAndaDisaridaOlan</div>
+            <div class="text-slate-500 extra-small">Görevde olan araç</div>
+        </div>
+    </div>
+
+    <div class="col-12 col-sm-6 col-md-4 col-xl-2">
+        <div class="card shadow-sm border h-100 p-3">
+            <div class="d-flex align-items-center justify-content-between mb-2">
+                <span class="text-slate-500 extra-small fw-bold text-uppercase tracking-wider">Şirkette (İçeride)</span>
+                <div class="p-2 bg-emerald-50 text-emerald-600 rounded-3"><i class="bi bi-building-check fs-5"></i></div>
+            </div>
+            <div class="fs-2 fw-bold text-slate-900 mb-1">@Model.SuAndaIcerideOlan</div>
+            <div class="text-slate-500 extra-small">Park alanında hazır</div>
+        </div>
+    </div>
+
+    <div class="col-12 col-sm-6 col-md-4 col-xl-2">
+        <div class="card shadow-sm border h-100 p-3">
+            <div class="d-flex align-items-center justify-content-between mb-2">
+                <span class="text-slate-500 extra-small fw-bold text-uppercase tracking-wider">Bugün Oluşturulan</span>
+                <div class="p-2 bg-slate-100 text-slate-700 rounded-3"><i class="bi bi-calendar-event fs-5"></i></div>
+            </div>
+            <div class="fs-2 fw-bold text-slate-900 mb-1">@Model.BugunCikanSayisi</div>
+            <div class="text-slate-500 extra-small">Bugünkü yeni talepler</div>
+        </div>
+    </div>
+
+    <div class="col-12 col-sm-6 col-md-4 col-xl-2">
+        <div class="card shadow-sm border h-100 p-3">
+            <div class="d-flex align-items-center justify-content-between mb-2">
+                <span class="text-slate-500 extra-small fw-bold text-uppercase tracking-wider">Müsaitlik Oranı</span>
+                <div class="p-2 bg-slate-100 text-slate-700 rounded-3"><i class="bi bi-pie-chart-fill fs-5"></i></div>
+            </div>
+            <div class="fs-2 fw-bold text-slate-900 mb-1">@(Model.AktifArac > 0 ? Math.Round((double)Model.SuAndaIcerideOlan / Model.AktifArac * 100) : 0)%</div>
+            <div class="text-slate-500 extra-small">Filo müsaitlik yüzdesi</div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Left Column: Son Görev Formları -->
+    <div class="col-lg-7">
+        <div class="card shadow-sm border h-100">
+            <div class="card-header bg-white d-flex align-items-center justify-content-between py-3">
+                <div class="d-flex align-items-center gap-2">
+                    <i class="bi bi-clock-history text-slate-600 fs-5"></i>
+                    <span class="fw-bold text-slate-900">Son Görev Formları</span>
+                </div>
+                <a asp-action="Formlar" class="btn btn-outline-secondary btn-sm">Tümünü Gör</a>
+            </div>
+            <div class="table-responsive">
+                <table class="table align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>Plaka / Araç</th>
+                            <th>Kullanan Personel</th>
+                            <th>Oluşturma Tarihi</th>
+                            <th>Durum</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var form in Model.SonFormlar)
+                        {
+                            <tr>
+                                <td>
+                                    <span class="plate-chip">@form.AracPlaka</span>
+                                    <div class="text-slate-500 small mt-1">@form.AracMarka @form.AracModel</div>
+                                </td>
+                                <td>
+                                    <div class="fw-semibold text-slate-900">@form.KullananAdSoyad</div>
+                                    <div class="text-slate-500 small">@form.KullananTelefon</div>
+                                </td>
+                                <td>
+                                    <div class="text-slate-700">@form.OlusturmaTarihi.ToString("dd.MM.yyyy")</div>
+                                    <div class="text-slate-500 small">@form.OlusturmaTarihi.ToString("HH:mm")</div>
+                                </td>
+                                <td>
+                                    @if (form.Durum == GorevDurumu.Beklemede)
+                                    {
+                                        <span class="badge-status badge-pending"><span class="badge-status-dot"></span>Onay Bekliyor</span>
+                                    }
+                                    else if (form.Durum == GorevDurumu.Onaylandi && form.GercekDonusZamani == null)
+                                    {
+                                        <span class="badge-status badge-approved"><span class="badge-status-dot"></span>Araç Dışarıda</span>
+                                    }
+                                    else if (form.Durum == GorevDurumu.TamamlandiDondu)
+                                    {
+                                        <span class="badge-status badge-completed"><span class="badge-status-dot"></span>Tamamlandı</span>
+                                    }
+                                    else if (form.Durum == GorevDurumu.Reddedildi)
+                                    {
+                                        <span class="badge-status badge-rejected"><span class="badge-status-dot"></span>Reddedildi</span>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                        @if (!Model.SonFormlar.Any())
+                        {
+                            <tr>
+                                <td colspan="4" class="text-center py-4 text-slate-400">Henüz kayıtlı görev formu bulunmuyor.</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Column: İçeride & Dışarıda Araç Durumları -->
+    <div class="col-lg-5">
+        <div class="d-flex flex-column gap-4">
+            <!-- Dışarıda olanlar -->
+            <div class="card shadow-sm border">
+                <div class="card-header bg-white border-bottom d-flex align-items-center justify-content-between py-3">
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="spinner-grow spinner-grow-sm text-danger" role="status"></span>
+                        <span class="text-danger fw-bold">Şu An Dışarıda Olan Araçlar</span>
+                    </div>
+                    <span class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-20 fw-semibold">@Model.DisaridakiAraclar.Count Araç</span>
+                </div>
+                <div class="card-body p-0">
+                    <div class="list-group list-group-flush">
+                        @foreach (var form in Model.DisaridakiAraclar)
+                        {
+                            <div class="list-group-item p-3">
+                                <div class="d-flex align-items-center justify-content-between mb-1">
+                                    <span class="plate-chip">@form.AracPlaka</span>
+                                    <span class="small text-slate-500"><i class="bi bi-clock me-1"></i>Çıkış: @form.CikisZamani.ToString("HH:mm")</span>
+                                </div>
+                                <div class="text-slate-800 fw-semibold small mt-1">@form.KullananAdSoyad</div>
+                                <div class="text-slate-500 extra-small">Gidilecek Yer: @form.GorevAmaci</div>
+                            </div>
+                        }
+                        @if (!Model.DisaridakiAraclar.Any())
+                        {
+                            <div class="p-4 text-center text-slate-400 small">Şu anda görevde/dışarıda olan araç bulunmuyor.</div>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <!-- İçeride olanlar -->
+            <div class="card shadow-sm border">
+                <div class="card-header bg-white border-bottom d-flex align-items-center justify-content-between py-3">
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="badge bg-success p-1 rounded-circle"></span>
+                        <span class="text-success fw-bold">Şirkette (İçeride) Olan Araçlar</span>
+                    </div>
+                    <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-20 fw-semibold">@Model.IceridekiAraclar.Count Müsait</span>
+                </div>
+                <div class="card-body p-0">
+                    <div class="list-group list-group-flush">
+                        @foreach (var arac in Model.IceridekiAraclar)
+                        {
+                            <div class="list-group-item p-3 d-flex align-items-center justify-content-between">
+                                <div>
+                                    <span class="plate-chip me-2">@arac.Plaka</span>
+                                    <span class="fw-medium text-slate-700 small">@arac.Marka @arac.Model</span>
+                                </div>
+                                <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-20">Müsait</span>
+                            </div>
+                        }
+                        @if (!Model.IceridekiAraclar.Any())
+                        {
+                            <div class="p-4 text-center text-slate-400 small">Şu anda şirkette hazır araç bulunmuyor.</div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,115 @@
+@model YeniGorevFormuViewModel
+@{
+    ViewData["Title"] = "Görev Formu Doldur";
+}
+
+<div class="row justify-content-center">
+    <div class="col-xl-8 col-lg-10">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-slate-900 text-white p-4">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="p-2 bg-amber-500 bg-opacity-20 rounded-3 text-amber-500 fs-4">
+                        <i class="bi bi-file-earmark-text-fill"></i>
+                    </div>
+                    <div>
+                        <h1 class="h5 fw-bold mb-1 text-white">Araç Görev Talebi Formu</h1>
+                        <p class="text-slate-400 small mb-0">Lütfen görev ve araç kullanım detaylarını eksiksiz doldurunuz.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card-body p-4">
+                @if (!Model.AktifAraclar.Any())
+                {
+                    <div class="alert alert-warning border-0 shadow-sm d-flex align-items-center gap-2 mb-4">
+                        <i class="bi bi-exclamation-triangle-fill fs-5"></i>
+                        <span>Şu anda sistemde kayıtlı aktif araç bulunmuyor. Lütfen yetkili yönetici ile iletişime geçiniz.</span>
+                    </div>
+                }
+
+                <form asp-controller="Form" asp-action="Yeni" method="post">
+                    @Html.AntiForgeryToken()
+                    <div asp-validation-summary="ModelOnly" class="text-danger small mb-3"></div>
+
+                    <!-- Step 1: Araç & Kullanan -->
+                    <div class="mb-4">
+                        <h6 class="fw-bold text-slate-800 text-uppercase tracking-wider fs-7 mb-3 border-bottom pb-2">
+                            <i class="bi bi-1-circle-fill text-amber-600 me-1"></i> Araç ve Personel Bilgileri
+                        </h6>
+                        <div class="row g-3">
+                            <div class="col-12">
+                                <label asp-for="VehicleId" class="form-label">Kullanılacak Araç <span class="text-danger">*</span></label>
+                                <select asp-for="VehicleId" class="form-select">
+                                    <option value="">-- Araç Seçiniz (Plaka - Marka Model) --</option>
+                                    @foreach (var arac in Model.AktifAraclar)
+                                    {
+                                        <option value="@arac.Id">@arac.Plaka — @arac.Marka @arac.Model (@(arac.Renk ?? "Belirtilmedi"))</option>
+                                    }
+                                </select>
+                                <span asp-validation-for="VehicleId" class="text-danger small"></span>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label asp-for="KullananAdSoyad" class="form-label">Ad Soyad <span class="text-danger">*</span></label>
+                                <input asp-for="KullananAdSoyad" class="form-control" placeholder="Örn: Ahmet Yılmaz" />
+                                <span asp-validation-for="KullananAdSoyad" class="text-danger small"></span>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label asp-for="KullananTelefon" class="form-label">Cep Telefonu <span class="text-danger">*</span></label>
+                                <input asp-for="KullananTelefon" class="form-control" placeholder="05XX XXX XX XX" data-mask="phone" />
+                                <span asp-validation-for="KullananTelefon" class="text-danger small"></span>
+                            </div>
+
+                            <div class="col-12">
+                                <label asp-for="Departman" class="form-label">Departman / Birim</label>
+                                <input asp-for="Departman" class="form-control" placeholder="Örn: Satış, Lojistik, Bilgi İşlem" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Step 2: Görev Detayları -->
+                    <div class="mb-4">
+                        <h6 class="fw-bold text-slate-800 text-uppercase tracking-wider fs-7 mb-3 border-bottom pb-2">
+                            <i class="bi bi-2-circle-fill text-amber-600 me-1"></i> Görev Amacı ve Zamanlama
+                        </h6>
+                        <div class="row g-3">
+                            <div class="col-12">
+                                <label asp-for="GorevAmaci" class="form-label">Görev Amacı / Gidilecek Yer <span class="text-danger">*</span></label>
+                                <textarea asp-for="GorevAmaci" class="form-control" rows="3" placeholder="Görevin detayını ve varış noktasını açıklayınız..."></textarea>
+                                <span asp-validation-for="GorevAmaci" class="text-danger small"></span>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label asp-for="CikisZamani" class="form-label">Planlanan Çıkış Tarihi ve Saati <span class="text-danger">*</span></label>
+                                <input asp-for="CikisZamani" class="form-control" type="datetime-local" value='@Model.CikisZamani.ToString("yyyy-MM-ddTHH:mm")' step="60" />
+                                <span asp-validation-for="CikisZamani" class="text-danger small"></span>
+                                <div class="form-text text-slate-500 small">Saat ve dakika cinsinden seçiniz.</div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label asp-for="PlanlananDonusZamani" class="form-label">Planlanan Dönüş Tarihi ve Saati <span class="text-danger">*</span></label>
+                                <input asp-for="PlanlananDonusZamani" class="form-control" type="datetime-local" value='@Model.PlanlananDonusZamani.ToString("yyyy-MM-ddTHH:mm")' step="60" />
+                                <span asp-validation-for="PlanlananDonusZamani" class="text-danger small"></span>
+                                <div class="form-text text-slate-500 small">Saat ve dakika cinsinden seçiniz.</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-flex align-items-center justify-content-between pt-3 border-top">
+                        <a asp-controller="Form" asp-action="Sorgula" class="btn btn-outline-secondary">
+                            <i class="bi bi-search"></i>Form Sorgula
+                        </a>
+                        <button type="submit" class="btn btn-accent btn-lg px-4">
+                            <i class="bi bi-send-fill"></i>Görev Formunu Gönder
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

@@ -1,0 +1,148 @@
+@model List<Vehicle>
+@{
+    ViewData["Title"] = "Araç Filosu";
+}
+
+<div class="d-flex align-items-center justify-content-between mb-4">
+    <div>
+        <h1 class="h4 fw-bold text-slate-900 mb-1">
+            <i class="bi bi-car-front-fill text-indigo-600 me-2"></i>Şirket Araç Filosu & Ruhsat Yönetimi
+        </h1>
+        <p class="text-slate-500 small mb-0">Filoda tanımlı araçlar, ruhsat evrakları, sahiplik (öz mal / kiralık), zimmetli personel ve muayene takibi.</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a asp-action="Bakimlar" class="btn btn-outline-primary">
+            <i class="bi bi-tools me-1"></i>Bakım Geçmişi
+        </a>
+        <a asp-action="HgsBorc" class="btn btn-outline-secondary">
+            <i class="bi bi-credit-card-2-front me-1"></i>HGS Borç Sorgula
+        </a>
+        <a asp-action="AracEkle" class="btn btn-accent">
+            <i class="bi bi-plus-lg me-1"></i>Yeni Araç Ekle
+        </a>
+    </div>
+</div>
+
+<div class="card shadow-sm border">
+    <div class="table-responsive">
+        <table class="table align-middle mb-0">
+            <thead>
+                <tr>
+                    <th class="ps-3">Plaka / Sahiplik</th>
+                    <th>Marka / Model</th>
+                    <th>Zimmetli Sürücü / Lokasyon</th>
+                    <th>Muayene & Sigorta</th>
+                    <th>Ruhsat Belgesi</th>
+                    <th>Durum</th>
+                    <th class="text-end pe-3">İşlemler</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var arac in Model)
+                {
+                    <tr>
+                        <td class="ps-3">
+                            <div class="plate-chip mb-1">@arac.Plaka</div>
+                            <div>
+                                @if (arac.SahiplikTuru == "Kiralık Araç")
+                                {
+                                    <span class="badge badge-kiralik">
+                                        <i class="bi bi-key-fill me-1"></i>Kiralık Araç
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="badge badge-ozmal">
+                                        <i class="bi bi-building-check me-1"></i>Şirket Öz Malı
+                                    </span>
+                                }
+                            </div>
+                        </td>
+                        <td>
+                            <div class="fw-bold text-slate-900 fs-6">@arac.Marka @arac.Model</div>
+                            <div class="text-slate-500 extra-small">@(arac.Renk ?? "Renk Belirtilmedi")</div>
+                        </td>
+                        <td>
+                            @if (!string.IsNullOrEmpty(arac.SabitSurucu))
+                            {
+                                <div class="fw-bold text-indigo-900 small"><i class="bi bi-person-badge me-1"></i>@arac.SabitSurucu</div>
+                            }
+                            else
+                            {
+                                <div class="text-slate-500 small"><i class="bi bi-people me-1"></i>Ortak Havuz Aracı</div>
+                            }
+                            <div class="text-slate-500 extra-small"><i class="bi bi-geo-alt me-1"></i>@(arac.Lokasyon ?? "Genel Merkez")</div>
+                        </td>
+                        <td>
+                            @if (arac.MuayeneBitisTarihi != null)
+                            {
+                                var gun = (arac.MuayeneBitisTarihi.Value - DateTime.Now).Days;
+                                <div class="fw-bold extra-small @(gun < 30 ? "text-danger" : "text-slate-800")">
+                                    <i class="bi bi-calendar-event me-1"></i>Muayene: @arac.MuayeneBitisTarihi.Value.ToString("dd.MM.yyyy")
+                                </div>
+                            }
+                            @if (arac.SigortaBitisTarihi != null)
+                            {
+                                <div class="text-slate-600 extra-small">
+                                    <i class="bi bi-shield-check me-1"></i>Sigorta: @arac.SigortaBitisTarihi.Value.ToString("dd.MM.yyyy")
+                                </div>
+                            }
+                        </td>
+                        <td>
+                            @if (!string.IsNullOrEmpty(arac.RuhsatDosyaYolu))
+                            {
+                                <a href="@arac.RuhsatDosyaYolu" target="_blank" class="badge badge-ruhsat-var text-decoration-none">
+                                    <i class="bi bi-file-earmark-check me-1"></i>Ruhsat Yüklü
+                                </a>
+                            }
+                            else
+                            {
+                                <span class="badge badge-ruhsat-yok">Yüklenmedi</span>
+                            }
+                        </td>
+                        <td>
+                            @if (arac.Aktif)
+                            {
+                                <span class="badge badge-aktif">
+                                    <i class="bi bi-check-circle me-1"></i>Aktif
+                                </span>
+                            }
+                            else
+                            {
+                                <span class="badge badge-pasif">
+                                    <i class="bi bi-dash-circle me-1"></i>Pasif
+                                </span>
+                            }
+                        </td>
+                        <td class="text-end pe-3">
+                            <div class="d-flex justify-content-end gap-1">
+                                <a asp-action="Bakimlar" asp-route-vehicleId="@arac.Id" class="btn btn-outline-primary btn-sm" title="Bakım Geçmişi">
+                                    <i class="bi bi-tools"></i>
+                                </a>
+                                <a asp-action="HgsBorc" asp-route-plaka="@arac.Plaka" class="btn btn-outline-secondary btn-sm" title="HGS Borç Sorgula">
+                                    <i class="bi bi-credit-card-2-front"></i>
+                                </a>
+                                <a asp-action="AracDuzenle" asp-route-id="@arac.Id" class="btn btn-outline-secondary btn-sm" title="Düzenle / Ruhsat Yükle">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                <form asp-action="AracSil" asp-route-id="@arac.Id" method="post" class="d-inline"
+                                      onsubmit="return confirm('Bu aracı filodan silmek istediğinize emin misiniz?');">
+                                    @Html.AntiForgeryToken()
+                                    <button type="submit" class="btn btn-outline-danger btn-sm" title="Sil">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                }
+                @if (!Model.Any())
+                {
+                    <tr>
+                        <td colspan="7" class="text-center py-5 text-slate-400">Filoda kayıtlı araç bulunmuyor.</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
