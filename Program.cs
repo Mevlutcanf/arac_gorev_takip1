@@ -28,7 +28,7 @@ builder.Services.AddScoped<GorevFormuRepository>();
 builder.Services.AddScoped<AdminUserRepository>();
 
 // Servisler
-builder.Services.AddScoped<ISmsService, DummySmsService>();
+builder.Services.AddHttpClient();
 builder.Services.AddScoped<ArventoService>();
 builder.Services.AddScoped<IArventoService>(sp => sp.GetRequiredService<ArventoService>());
 builder.Services.AddScoped<IEmailService, EmailService>();

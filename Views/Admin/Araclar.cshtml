@@ -25,16 +25,16 @@
 
 <div class="card shadow-sm border">
     <div class="table-responsive">
-        <table class="table align-middle mb-0">
+        <table class="table align-middle mb-0" id="araclarTable">
             <thead>
                 <tr>
-                    <th class="ps-3">Plaka / Sahiplik</th>
-                    <th>Marka / Model</th>
-                    <th>Zimmetli Sürücü / Lokasyon</th>
-                    <th>Muayene & Sigorta</th>
-                    <th>Ruhsat Belgesi</th>
-                    <th>Durum</th>
-                    <th class="text-end pe-3">İşlemler</th>
+                    <th class="ps-3 text-nowrap">Plaka / Sahiplik</th>
+                    <th class="text-nowrap">Marka / Model</th>
+                    <th style="min-width: 200px;">Zimmetli Sürücü / Lokasyon</th>
+                    <th class="text-nowrap">Muayene & Sigorta</th>
+                    <th class="text-nowrap">Ruhsat Belgesi</th>
+                    <th class="text-nowrap">Durum</th>
+                    <th class="text-end pe-3 text-nowrap">İşlemler</th>
                 </tr>
             </thead>
             <tbody>
@@ -52,8 +52,8 @@
                                 }
                                 else
                                 {
-                                    <span class="badge badge-ozmal">
-                                        <i class="bi bi-building-check me-1"></i>Şirket Öz Malı
+                                    <span class="badge badge-sahiplik badge-sirket">
+                                        <i class="bi bi-building-check me-1"></i>Şirket Aracı
                                     </span>
                                 }
                             </div>
@@ -77,13 +77,14 @@
                             @if (arac.MuayeneBitisTarihi != null)
                             {
                                 var gun = (arac.MuayeneBitisTarihi.Value - DateTime.Now).Days;
-                                <div class="fw-bold extra-small @(gun < 30 ? "text-danger" : "text-slate-800")">
+                                <div class="fw-bold extra-small @(gun < 30 ? "text-danger bg-red-50 p-1 rounded border border-danger border-opacity-25" : "text-slate-800") mb-1">
                                     <i class="bi bi-calendar-event me-1"></i>Muayene: @arac.MuayeneBitisTarihi.Value.ToString("dd.MM.yyyy")
                                 </div>
                             }
                             @if (arac.SigortaBitisTarihi != null)
                             {
-                                <div class="text-slate-600 extra-small">
+                                var gun = (arac.SigortaBitisTarihi.Value - DateTime.Now).Days;
+                                <div class="fw-bold extra-small @(gun < 30 ? "text-danger bg-red-50 p-1 rounded border border-danger border-opacity-25" : "text-slate-600")">
                                     <i class="bi bi-shield-check me-1"></i>Sigorta: @arac.SigortaBitisTarihi.Value.ToString("dd.MM.yyyy")
                                 </div>
                             }
@@ -114,21 +115,21 @@
                                 </span>
                             }
                         </td>
-                        <td class="text-end pe-3">
+                        <td class="text-end pe-3 no-print">
                             <div class="d-flex justify-content-end gap-1">
-                                <a asp-action="Bakimlar" asp-route-vehicleId="@arac.Id" class="btn btn-outline-primary btn-sm" title="Bakım Geçmişi">
+                                <a asp-action="Bakimlar" asp-route-vehicleId="@arac.Id" class="btn btn-outline-primary btn-sm" data-bs-toggle="tooltip" title="Bakım Geçmişi">
                                     <i class="bi bi-tools"></i>
                                 </a>
-                                <a asp-action="HgsBorc" asp-route-plaka="@arac.Plaka" class="btn btn-outline-secondary btn-sm" title="HGS Borç Sorgula">
+                                <a asp-action="HgsBorc" asp-route-plaka="@arac.Plaka" class="btn btn-outline-secondary btn-sm" data-bs-toggle="tooltip" title="HGS Borç Sorgula">
                                     <i class="bi bi-credit-card-2-front"></i>
                                 </a>
-                                <a asp-action="AracDuzenle" asp-route-id="@arac.Id" class="btn btn-outline-secondary btn-sm" title="Düzenle / Ruhsat Yükle">
+                                <a asp-action="AracDuzenle" asp-route-id="@arac.Id" class="btn btn-outline-secondary btn-sm" data-bs-toggle="tooltip" title="Düzenle / Ruhsat Yükle">
                                     <i class="bi bi-pencil"></i>
                                 </a>
                                 <form asp-action="AracSil" asp-route-id="@arac.Id" method="post" class="d-inline"
                                       onsubmit="return confirm('Bu aracı filodan silmek istediğinize emin misiniz?');">
                                     @Html.AntiForgeryToken()
-                                    <button type="submit" class="btn btn-outline-danger btn-sm" title="Sil">
+                                    <button type="submit" class="btn btn-outline-danger btn-sm" data-bs-toggle="tooltip" title="Sil">
                                         <i class="bi bi-trash"></i>
                                     </button>
                                 </form>
@@ -146,3 +147,47 @@
         </table>
     </div>
 </div>
+
+@section Scripts {
+    <!-- DataTables Export Buttons Libraries -->
+    <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.2/css/buttons.bootstrap5.min.css">
+    <script src="https://cdn.datatables.net/buttons/2.4.2/js/dataTables.buttons.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.bootstrap5.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/pdfmake.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/vfs_fonts.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.html5.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.print.min.js"></script>
+
+    <script>
+        $(document).ready(function () {
+            if ($('#araclarTable tbody tr td').length > 1) {
+                $('#araclarTable').DataTable({
+                    language: { url: '//cdn.datatables.net/plug-ins/1.13.8/i18n/tr.json' },
+                    pageLength: 25,
+                    responsive: true,
+                    ordering: true,
+                    dom: '<"d-flex flex-column flex-md-row justify-content-between align-items-center mb-3"Bf>rt<"d-flex flex-column flex-md-row justify-content-between align-items-center mt-3"ip>',
+                    buttons: [
+                        {
+                            extend: 'excelHtml5',
+                            text: '<i class="bi bi-file-earmark-excel"></i> Excel',
+                            className: 'btn btn-success btn-sm',
+                            title: 'Arac Filosu Listesi',
+                            exportOptions: { columns: [0, 1, 2, 3, 4, 5] }
+                        },
+                        {
+                            extend: 'pdfHtml5',
+                            text: '<i class="bi bi-file-earmark-pdf"></i> PDF',
+                            className: 'btn btn-danger btn-sm',
+                            title: 'Arac Filosu Listesi',
+                            orientation: 'landscape',
+                            pageSize: 'A4',
+                            exportOptions: { columns: [0, 1, 2, 3, 4, 5] }
+                        }
+                    ]
+                });
+            }
+        });
+    </script>
+}

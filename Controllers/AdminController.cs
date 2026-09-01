@@ -37,27 +37,89 @@ namespace AracGorevFormu.Controllers
         private string MevcutKullaniciAdi => User.Identity?.Name ?? "Bilinmiyor";
         private int MevcutKullaniciId => int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var id) ? id : 0;
 
+        private void LogIslem(string islemTuru, string detay)
+        {
+            var log = new SystemLog
+            {
+                Tarih = DateTime.Now,
+                KullaniciAdi = MevcutKullaniciAdi,
+                IslemTuru = islemTuru,
+                Detay = detay
+            };
+            _db.SystemLogs.Add(log);
+            _db.SaveChanges();
+        }
+
         // ---------------- DASHBOARD ----------------
 
         [HttpGet]
-        public IActionResult Index()
+        public async Task<IActionResult> Index()
         {
             var tumFormlar = _formRepo.Tumu();
             var araclar = _vehicleRepo.Tumu();
             var disaridakiFormlar = tumFormlar.Where(f => f.AracDisarida).ToList();
             var disaridakiAracIdleri = disaridakiFormlar.Select(f => f.VehicleId).ToHashSet();
 
+            var arventoData = await _arventoService.TumAracKonumlariAsync();
+            var gercekDisaridakiFormlar = new List<GorevFormu>();
+            var gercekIceridekiAraclar = new List<Vehicle>();
+
+            foreach(var arac in araclar.Where(a => a.Aktif))
+            {
+                var arventoMatch = arventoData.FirstOrDefault(x => x.Plaka == arac.Plaka);
+                
+                if (arventoMatch != null)
+                {
+                    string adresLower = (arventoMatch.Adres ?? "").ToLowerInvariant();
+                    bool sirkette = adresLower.Contains("altınordu") || adresLower.Contains("altinordu") || 
+                               adresLower.Contains("abdurrahman tatlıcı") || adresLower.Contains("abdurrahman tatlici");
+                               
+                    if (sirkette)
+                    {
+                        gercekIceridekiAraclar.Add(arac);
+                    }
+                    else
+                    {
+                        var form = disaridakiFormlar.FirstOrDefault(f => f.VehicleId == arac.Id);
+                        if (form != null)
+                        {
+                            gercekDisaridakiFormlar.Add(form);
+                        }
+                        else
+                        {
+                            gercekDisaridakiFormlar.Add(new GorevFormu {
+                                AracPlaka = arac.Plaka,
+                                CikisZamani = arventoMatch.SonKonumZamani,
+                                KullananAdSoyad = "Bilinmiyor (GPS Tespit)",
+                                GorevAmaci = (arventoMatch.Adres) ?? "Canlı Arvento Tespiti"
+                            });
+                        }
+                    }
+                }
+                else
+                {
+                    // Arvento eşleşmesi yoksa, DB'de görevi olanları 'Dışarıda', görevi olmayanları 'Bilinmiyor/Beklemede' sayacağız.
+                    // Şimdilik listeleri kirletmemesi adına 'Şirkette' listesine de, 'Dışarıda' listesine de EKLEMİYORUZ 
+                    // Yalnızca DB'de aktif bir görevi varsa onu Dışarıda listesine ekliyoruz.
+                    var form = disaridakiFormlar.FirstOrDefault(f => f.VehicleId == arac.Id);
+                    if (form != null)
+                    {
+                        gercekDisaridakiFormlar.Add(form);
+                    }
+                }
+            }
+
             var model = new AdminDashboardViewModel
             {
                 ToplamArac = araclar.Count,
                 AktifArac = araclar.Count(a => a.Aktif),
-                SuAndaDisaridaOlan = disaridakiFormlar.Count,
-                SuAndaIcerideOlan = araclar.Count(a => a.Aktif && !disaridakiAracIdleri.Contains(a.Id)),
+                SuAndaDisaridaOlan = gercekDisaridakiFormlar.Count,
+                SuAndaIcerideOlan = gercekIceridekiAraclar.Count,
                 BekleyenOnaySayisi = tumFormlar.Count(f => f.Durum == GorevDurumu.Beklemede),
                 BugunCikanSayisi = tumFormlar.Count(f => f.OlusturmaTarihi.Date == DateTime.Today),
                 SonFormlar = tumFormlar.Take(10).ToList(),
-                DisaridakiAraclar = disaridakiFormlar,
-                IceridekiAraclar = araclar.Where(a => a.Aktif && !disaridakiAracIdleri.Contains(a.Id)).ToList()
+                DisaridakiAraclar = gercekDisaridakiFormlar,
+                IceridekiAraclar = gercekIceridekiAraclar
             };
 
             return View(model);
@@ -112,10 +174,11 @@ namespace AracGorevFormu.Controllers
                 form.OnayTarihi = DateTime.Now;
                 _formRepo.Guncelle(form);
                 await _emailService.FormDurumDegisiklikBildirimiGonderAsync(form, onaylandi: true);
+                LogIslem("Form Onaylandı", $"{form.AracPlaka} plakalı aracın görev formu onaylandı.");
                 TempData["Mesaj"] = $"{form.AracPlaka} plakalı araç için görev formu onaylandı.";
             }
 
-            return RedirectToAction(nameof(Formlar));
+            return RedirectToAction(nameof(ResmiTutanak), new { id = form.Id });
         }
 
         [HttpGet]
@@ -143,6 +206,7 @@ namespace AracGorevFormu.Controllers
                 form.RedNedeni = model.RedNedeni;
                 _formRepo.Guncelle(form);
                 await _emailService.FormDurumDegisiklikBildirimiGonderAsync(form, onaylandi: false);
+                LogIslem("Form Reddedildi", $"{form.AracPlaka} plakalı aracın görev formu reddedildi. Neden: {model.RedNedeni}");
                 TempData["Mesaj"] = "Görev formu reddedildi.";
             }
 
@@ -165,6 +229,7 @@ namespace AracGorevFormu.Controllers
                 // Araç iade edildi e-postası gönder
                 await _emailService.FormTamamlandiBildirimiGonderAsync(form);
                 
+                LogIslem("Araç Döndü", $"{form.AracPlaka} plakalı aracın dönüşü (görevin tamamlanması) kaydedildi.");
                 TempData["Mesaj"] = $"{form.AracPlaka} plakalı aracın dönüşü kaydedildi.";
             }
 
@@ -197,6 +262,7 @@ namespace AracGorevFormu.Controllers
             if (!ModelState.IsValid) return View(vehicle);
 
             _vehicleRepo.Ekle(vehicle);
+            LogIslem("Araç Eklendi", $"{vehicle.Plaka} plakalı yeni araç filoya eklendi.");
             TempData["Mesaj"] = "Araç başarıyla eklendi.";
             return RedirectToAction(nameof(Araclar));
         }
@@ -239,6 +305,7 @@ namespace AracGorevFormu.Controllers
             }
 
             _vehicleRepo.Guncelle(vehicle);
+            LogIslem("Araç Güncellendi", $"{vehicle.Plaka} plakalı aracın bilgileri güncellendi.");
             TempData["Mesaj"] = "Araç ve ruhsat bilgileri güncellendi.";
             return RedirectToAction(nameof(Araclar));
         }
@@ -254,7 +321,9 @@ namespace AracGorevFormu.Controllers
                 return RedirectToAction(nameof(Araclar));
             }
 
+            var aracSilPlaka = _vehicleRepo.GetirById(id)?.Plaka ?? "Bilinmeyen";
             _vehicleRepo.Sil(id);
+            LogIslem("Araç Silindi", $"{aracSilPlaka} plakalı araç silindi.");
             TempData["Mesaj"] = "Araç silindi.";
             return RedirectToAction(nameof(Araclar));
         }
@@ -262,17 +331,31 @@ namespace AracGorevFormu.Controllers
         // ---------------- ARAÇ BAKIM VE SERVİS TAKİBİ ----------------
 
         [HttpGet]
-        public IActionResult Bakimlar(int? vehicleId)
+        public IActionResult Bakimlar(int? vehicleId, DateTime? baslangicTarihi, DateTime? bitisTarihi)
         {
-            var bakimlar = _db.AracBakimlari.OrderByDescending(b => b.BakimTarihi).ToList();
+            var bakimlar = _db.AracBakimlari.OrderByDescending(b => b.BakimTarihi).AsQueryable();
+            
             if (vehicleId != null)
             {
-                bakimlar = bakimlar.Where(b => b.VehicleId == vehicleId).ToList();
+                bakimlar = bakimlar.Where(b => b.VehicleId == vehicleId);
+            }
+            if (baslangicTarihi != null)
+            {
+                bakimlar = bakimlar.Where(b => b.BakimTarihi >= baslangicTarihi);
+            }
+            if (bitisTarihi != null)
+            {
+                // Set the end date to the end of the day to include all records on that date
+                var bTarihi = bitisTarihi.Value.Date.AddDays(1).AddTicks(-1);
+                bakimlar = bakimlar.Where(b => b.BakimTarihi <= bTarihi);
             }
 
             ViewBag.Araclar = _vehicleRepo.Tumu();
             ViewBag.SeciliVehicleId = vehicleId;
-            return View(bakimlar);
+            ViewBag.BaslangicTarihi = baslangicTarihi?.ToString("yyyy-MM-dd");
+            ViewBag.BitisTarihi = bitisTarihi?.ToString("yyyy-MM-dd");
+            
+            return View(bakimlar.ToList());
         }
 
         [HttpPost]
@@ -292,6 +375,7 @@ namespace AracGorevFormu.Controllers
             _db.AracBakimlari.Add(bakim);
             _db.SaveChanges();
 
+            LogIslem("Bakım Eklendi", $"{arac.Plaka} plakalı araç için {bakim.BakimTuru} eklendi.");
             TempData["Mesaj"] = $"{arac.Plaka} plakalı araç için bakım kaydı eklendi.";
             return RedirectToAction(nameof(Bakimlar));
         }
@@ -327,6 +411,7 @@ namespace AracGorevFormu.Controllers
             mevcut.ServisAdi = model.ServisAdi;
 
             _db.SaveChanges();
+            LogIslem("Bakım Güncellendi", $"{mevcut.Plaka} aracı için bakım kaydı güncellendi.");
             TempData["Mesaj"] = "Bakım kaydı başarıyla güncellendi.";
             return RedirectToAction(nameof(Bakimlar));
         }
@@ -338,8 +423,10 @@ namespace AracGorevFormu.Controllers
             var mevcut = _db.AracBakimlari.FirstOrDefault(b => b.Id == id);
             if (mevcut != null)
             {
+                var plaka = mevcut.Plaka;
                 _db.AracBakimlari.Remove(mevcut);
                 _db.SaveChanges();
+                LogIslem("Bakım Silindi", $"{plaka} aracı için bakım kaydı silindi.");
                 TempData["Mesaj"] = "Bakım kaydı silindi.";
             }
             return RedirectToAction(nameof(Bakimlar));
@@ -416,6 +503,13 @@ namespace AracGorevFormu.Controllers
         // ---------------- TEK BİRLEŞİK SİSTEM AYARLARI ----------------
 
         [HttpGet]
+        public IActionResult SistemKayitlari()
+        {
+            var logs = _db.SystemLogs.OrderByDescending(l => l.Tarih).ToList();
+            return View(logs);
+        }
+
+        [HttpGet]
         public IActionResult Ayarlar(string tab = "yoneticiler")
         {
             var me = _adminRepo.GetirById(MevcutKullaniciId);
@@ -426,11 +520,6 @@ namespace AracGorevFormu.Controllers
             var model = new SistemAyarlariPageViewModel
             {
                 AktifTab = tab,
-                ProfilModel = new ProfilViewModel
-                {
-                    KullaniciAdi = me?.KullaniciAdi ?? "",
-                    AdSoyad = me?.AdSoyad ?? ""
-                },
                 Yoneticiler = _adminRepo.Tumu(),
                 YeniYoneticiModel = new YeniAdminViewModel(),
                 SmtpModel = new SmtpAyarlarViewModel
@@ -439,7 +528,7 @@ namespace AracGorevFormu.Controllers
                     Port = smtp.Port,
                     EnableSsl = smtp.EnableSsl,
                     SenderEmail = smtp.SenderEmail,
-                    SenderPassword = string.IsNullOrWhiteSpace(smtp.SenderPassword) ? "" : "••••••••",
+                    SenderPassword = "", // Şifre alanını güvenlik için her zaman boş gösteriyoruz
                     NotificationEmails = smtp.NotificationEmails ?? "",
                     Aktif = smtp.Aktif
                 },
@@ -447,7 +536,7 @@ namespace AracGorevFormu.Controllers
                 {
                     ApiUrl = arvento.ApiUrl,
                     KullaniciAdi = arvento.KullaniciAdi,
-                    Sifre = arvento.Sifre,
+                    Sifre = "", // Şifre alanını güvenlik için her zaman boş gösteriyoruz
                     ApiKey = arvento.ApiKey,
                     Aktif = arvento.Aktif
                 }
@@ -456,9 +545,21 @@ namespace AracGorevFormu.Controllers
             return View(model);
         }
 
+        [HttpGet]
+        public IActionResult Profil()
+        {
+            var me = _adminRepo.GetirById(MevcutKullaniciId);
+            var model = new ProfilViewModel
+            {
+                KullaniciAdi = me?.KullaniciAdi ?? "",
+                AdSoyad = me?.AdSoyad ?? ""
+            };
+            return View(model);
+        }
+
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult AyarlarProfil([Bind(Prefix = "ProfilModel")] ProfilViewModel model)
+        public IActionResult Profil(ProfilViewModel model)
         {
             var admin = _adminRepo.GetirById(MevcutKullaniciId);
             if (admin != null)
@@ -468,7 +569,7 @@ namespace AracGorevFormu.Controllers
                     if (string.IsNullOrWhiteSpace(model.MevcutSifre) || !PasswordHasher.Dogrula(model.MevcutSifre, admin.PasswordHash, admin.PasswordSalt))
                     {
                         TempData["Hata"] = "Mevcut şifreniz hatalı.";
-                        return RedirectToAction(nameof(Ayarlar), new { tab = "profil" });
+                        return View(model);
                     }
                     var (hash, salt) = PasswordHasher.Hashle(model.YeniSifre);
                     admin.PasswordHash = hash;
@@ -477,10 +578,10 @@ namespace AracGorevFormu.Controllers
 
                 admin.AdSoyad = model.AdSoyad;
                 _adminRepo.Guncelle(admin);
+                LogIslem("Profil Güncellendi", "Yönetici kendi profil bilgilerini güncelledi.");
                 TempData["Mesaj"] = "Profil bilgileriniz güncellendi.";
             }
-
-            return RedirectToAction(nameof(Ayarlar), new { tab = "profil" });
+            return RedirectToAction(nameof(Profil));
         }
 
         [HttpPost]
@@ -503,6 +604,7 @@ namespace AracGorevFormu.Controllers
                 PasswordSalt = salt
             });
 
+            LogIslem("Yönetici Eklendi", $"{model.KullaniciAdi} kullanıcı adıyla yeni yönetici eklendi.");
             TempData["Mesaj"] = "Yeni yönetici hesabı oluşturuldu.";
             return RedirectToAction(nameof(Ayarlar), new { tab = "yoneticiler" });
         }
@@ -516,7 +618,9 @@ namespace AracGorevFormu.Controllers
 
             if (hedef != null && !hedef.AnaYonetici && hedef.Id.ToString() != mevcutId)
             {
+                var kullAd = hedef.KullaniciAdi;
                 _adminRepo.Sil(id);
+                LogIslem("Yönetici Silindi", $"{kullAd} kullanıcısı silindi.");
                 TempData["Mesaj"] = "Yönetici hesabı silindi.";
             }
             else
@@ -531,6 +635,13 @@ namespace AracGorevFormu.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> AyarlarSmtp([Bind(Prefix = "SmtpModel")] SmtpAyarlarViewModel model, string? aksiyon)
         {
+            var mevcutAyar = _emailService.AyarlariGetir();
+            
+            if (string.IsNullOrEmpty(model.SenderPassword))
+            {
+                model.SenderPassword = mevcutAyar.SenderPassword;
+            }
+            
             _emailService.AyarlariKaydet(model);
 
             if (aksiyon == "test")
@@ -550,11 +661,13 @@ namespace AracGorevFormu.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> AyarlarArvento([Bind(Prefix = "ArventoModel")] ArventoAyarlarViewModel model, string? aksiyon)
         {
+            var mevcutAyar = _arventoService.AyarlariGetir();
+            
             _arventoService.AyarlariKaydet(new ArventoAyari
             {
                 ApiUrl = model.ApiUrl,
                 KullaniciAdi = model.KullaniciAdi,
-                Sifre = model.Sifre,
+                Sifre = string.IsNullOrEmpty(model.Sifre) ? mevcutAyar.Sifre : model.Sifre,
                 ApiKey = model.ApiKey,
                 Aktif = model.Aktif
             });
@@ -573,5 +686,35 @@ namespace AracGorevFormu.Controllers
 
             return RedirectToAction(nameof(Ayarlar), new { tab = "arvento" });
         }
+
+        [HttpGet]
+        public async Task<IActionResult> GetLiveMapData()
+        {
+            var data = await _arventoService.TumAracKonumlariAsync();
+            if (data == null || data.Count == 0)
+            {
+                // Fallback to empty JSON if no real data or API is disabled
+                return Json(new List<object>());
+            }
+            
+            var result = data.Select(v => {
+                string adresLower = (v.Adres ?? "").ToLowerInvariant();
+                bool sirkette = adresLower.Contains("altınordu") || adresLower.Contains("altinordu") || 
+                                adresLower.Contains("abdurrahman tatlıcı") || adresLower.Contains("abdurrahman tatlici");
+                string aracDurumu = sirkette ? "Şirkette (İçeride)" : "Dışarıda";
+                
+                return new {
+                    lat = v.Enlem,
+                    lng = v.Boylam,
+                    plate = v.Plaka,
+                    model = aracDurumu,
+                    status = "Hız: " + v.Hiz + " km/h | " + (v.SonKonumZamani.ToString("HH:mm")),
+                    driver = v.Adres ?? "Adres bilgisi yok"
+                };
+            });
+            
+            return Json(result);
+        }
     }
 }
+

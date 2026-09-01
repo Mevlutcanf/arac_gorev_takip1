@@ -1,4 +1,5 @@
 using AracGorevFormu.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace AracGorevFormu.Data
 {
@@ -11,7 +12,7 @@ namespace AracGorevFormu.Data
             _db = db;
         }
 
-        public List<AdminUser> Tumu() => _db.AdminUsers.OrderBy(a => a.KullaniciAdi).ToList();
+        public List<AdminUser> Tumu() => _db.AdminUsers.AsNoTracking().OrderBy(a => a.KullaniciAdi).ToList();
 
         public AdminUser? GetirById(int id) => _db.AdminUsers.FirstOrDefault(a => a.Id == id);
 

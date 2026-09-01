@@ -4,6 +4,32 @@
 // ============================================
 
 document.addEventListener('DOMContentLoaded', function () {
+    // ---------- Global DataTables Ayarları ----------
+    if (typeof $.fn.dataTable !== 'undefined') {
+        $.extend(true, $.fn.dataTable.defaults, {
+            language: {
+                "emptyTable": "Tabloda herhangi bir veri mevcut değil",
+                "info": "_TOTAL_ kayıttan _START_ - _END_ arasındaki kayıtlar gösteriliyor",
+                "infoEmpty": "Kayıt yok",
+                "infoFiltered": "(_MAX_ kayıt içerisinden bulunan)",
+                "lengthMenu": "Sayfada _MENU_ kayıt göster",
+                "loadingRecords": "Yükleniyor...",
+                "processing": "İşleniyor...",
+                "search": "Ara:",
+                "zeroRecords": "Eşleşen kayıt bulunamadı",
+                "paginate": {
+                    "first": "İlk",
+                    "last": "Son",
+                    "next": "Sonraki",
+                    "previous": "Önceki"
+                },
+                "aria": {
+                    "sortAscending": ": artan sütun sıralamasını aktifleştir",
+                    "sortDescending": ": azalan sütun sıralamasını aktifleştir"
+                }
+            }
+        });
+    }
 
     // ---------- Telefon Numarası Maskeleme ----------
     const telefonInputlar = document.querySelectorAll('input[name="KullananTelefon"], input[data-mask="phone"]');
@@ -191,4 +217,23 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     `;
     document.head.appendChild(style);
+
+    // ---------- Global Modal Fix ----------
+    // Move all modals to the end of the body to prevent z-index/backdrop issues
+    const modals = document.querySelectorAll('.modal');
+    modals.forEach(function (modal) {
+        document.body.appendChild(modal);
+    });
+
+    // ---------- Bootstrap Tooltip Initialization ----------
+    // Initialize all tooltips on the page
+    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"], [title]:not([title=""])'));
+    tooltipTriggerList.map(function (tooltipTriggerEl) {
+        // Skip elements that already have tooltip or are DataTables buttons (they handle their own titles sometimes, but safe to apply if they have title)
+        if (!tooltipTriggerEl.hasAttribute('data-bs-original-title')) {
+             return new bootstrap.Tooltip(tooltipTriggerEl, {
+                 boundary: document.body
+             });
+        }
+    });
 });

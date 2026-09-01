@@ -29,7 +29,11 @@
             <span>Servis Geçmişi ve Planlanan Bakımlar</span>
         </div>
         <div>
-            <form method="get" asp-action="Bakimlar" class="d-flex align-items-center gap-2">
+            <form method="get" asp-action="Bakimlar" class="d-flex flex-wrap align-items-center gap-2">
+                <input type="date" name="baslangicTarihi" class="form-control form-control-sm bg-slate-800 text-white border-slate-700" value="@ViewBag.BaslangicTarihi" title="Başlangıç Tarihi" onchange="this.form.submit()" />
+                <span class="text-slate-400">-</span>
+                <input type="date" name="bitisTarihi" class="form-control form-control-sm bg-slate-800 text-white border-slate-700" value="@ViewBag.BitisTarihi" title="Bitiş Tarihi" onchange="this.form.submit()" />
+                
                 <select name="vehicleId" class="form-select form-select-sm bg-slate-800 text-white border-slate-700" onchange="this.form.submit()">
                     <option value="">-- Tüm Araçlar --</option>
                     @foreach (var v in araclar)
@@ -37,11 +41,15 @@
                         <option value="@v.Id" selected="@(seciliVehicleId == v.Id)">@v.Plaka — @v.Marka @v.Model</option>
                     }
                 </select>
+                
+                <a asp-action="Bakimlar" class="btn btn-sm btn-outline-secondary" title="Filtreleri Temizle">
+                    <i class="bi bi-x-circle"></i>
+                </a>
             </form>
         </div>
     </div>
     <div class="table-responsive">
-        <table class="table align-middle mb-0">
+        <table class="table align-middle mb-0" id="bakimlarTable">
             <thead>
                 <tr>
                     <th class="ps-3">Plaka / Araç</th>
@@ -103,6 +111,19 @@
                     </tr>
                 }
             </tbody>
+            <tfoot>
+                <tr>
+                    <th></th>
+                    <th></th>
+                    <th></th>
+                    <th></th>
+                    <th></th>
+                    <th class="text-end pe-3 fw-bold">Genel Toplam:</th>
+                    <th id="totalMaliyet" class="fw-bold text-slate-900">0,00 ₺</th>
+                    <th></th>
+                    <th></th>
+                </tr>
+            </tfoot>
         </table>
     </div>
 </div>
@@ -177,3 +198,96 @@
         </div>
     </div>
 </div>
+
+@section Scripts {
+    <!-- DataTables Export Buttons Libraries -->
+    <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.2/css/buttons.bootstrap5.min.css">
+    <script src="https://cdn.datatables.net/buttons/2.4.2/js/dataTables.buttons.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.bootstrap5.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/pdfmake.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/vfs_fonts.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.html5.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.print.min.js"></script>
+
+    <script>
+        $(document).ready(function () {
+            // Modal'ı body'nin en altına taşı, böylece backdrop (kararma) sorunu çözülür
+            $('#yeniBakimModal').appendTo('body');
+
+            // Sadece tablo satırı varsa DataTables'ı başlat
+            if ($('#bakimlarTable tbody tr td').length > 1) {
+                $('#bakimlarTable').DataTable({
+                    language: { url: '//cdn.datatables.net/plug-ins/1.13.8/i18n/tr.json' },
+                    pageLength: 25,
+                    responsive: true,
+                    ordering: true,
+                    dom: '<"d-flex flex-column flex-md-row justify-content-between align-items-center mb-3"Bf>rt<"d-flex flex-column flex-md-row justify-content-between align-items-center mt-3"ip>',
+                    footerCallback: function (row, data, start, end, display) {
+                        var api = this.api();
+
+                        // String değerleri (1.500,00 ₺ gibi) sayıya çeviren fonksiyon
+                        var intVal = function (i) {
+                            if (typeof i === 'string') {
+                                return i.replace(/[\₺\.]/g, '').replace(',', '.') * 1;
+                            }
+                            return typeof i === 'number' ? i : 0;
+                        };
+
+                        // Mevcut sayfadaki toplam maliyeti hesapla
+                        var pageTotal = api
+                            .column(6, { page: 'current' })
+                            .data()
+                            .reduce(function (a, b) {
+                                return intVal(a) + intVal(b);
+                            }, 0);
+
+                        // Toplamı Türkçe para formatında tfoot'a yaz
+                        var formatter = new Intl.NumberFormat('tr-TR', {
+                            style: 'currency',
+                            currency: 'TRY',
+                            minimumFractionDigits: 2
+                        });
+                        $(api.column(6).footer()).html(formatter.format(pageTotal));
+                    },
+                    buttons: [
+                        {
+                            extend: 'excelHtml5',
+                            text: '<i class="bi bi-file-earmark-excel"></i> Excel',
+                            className: 'btn btn-success btn-sm',
+                            title: 'Arac Bakim Raporu',
+                            footer: true,
+                            messageBottom: function() {
+                                return 'Genel Toplam: ' + $('#totalMaliyet').text();
+                            },
+                            exportOptions: {
+                                columns: [0, 1, 2, 3, 4, 5, 6, 7]
+                            }
+                        },
+                        {
+                            extend: 'pdfHtml5',
+                            text: '<i class="bi bi-file-earmark-pdf"></i> PDF',
+                            className: 'btn btn-danger btn-sm',
+                            title: 'Arac Bakim Raporu',
+                            orientation: 'landscape',
+                            pageSize: 'A4',
+                            footer: true,
+                            messageBottom: function() {
+                                return 'Genel Toplam: ' + $('#totalMaliyet').text();
+                            },
+                            exportOptions: {
+                                columns: [0, 1, 2, 3, 4, 5, 6, 7]
+                            },
+                            customize: function(doc) {
+                                doc.defaultStyle.fontSize = 9;
+                                doc.styles.tableHeader.fontSize = 10;
+                                doc.styles.tableFooter.fontSize = 10;
+                                doc.styles.tableFooter.bold = true;
+                            }
+                        }
+                    ]
+                });
+            }
+        });
+    </script>
+}

@@ -1,4 +1,5 @@
 using AracGorevFormu.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace AracGorevFormu.Data
 {
@@ -11,7 +12,7 @@ namespace AracGorevFormu.Data
             _db = db;
         }
 
-        public List<Vehicle> Tumu() => _db.Vehicles.OrderBy(v => v.Plaka).ToList();
+        public List<Vehicle> Tumu() => _db.Vehicles.AsNoTracking().OrderBy(v => v.Plaka).ToList();
 
         public List<Vehicle> AktifOlanlar() => Tumu().Where(v => v.Aktif).ToList();
 

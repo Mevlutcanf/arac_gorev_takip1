@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using AracGorevFormu.Data;
+using AracGorevFormu.Models;
 using AracGorevFormu.Models.ViewModels;
 using AracGorevFormu.Services;
 using Microsoft.AspNetCore.Authentication;
@@ -12,10 +13,12 @@ namespace AracGorevFormu.Controllers
     public class AccountController : Controller
     {
         private readonly AdminUserRepository _adminRepo;
+        private readonly AppDbContext _db;
 
-        public AccountController(AdminUserRepository adminRepo)
+        public AccountController(AdminUserRepository adminRepo, AppDbContext db)
         {
             _adminRepo = adminRepo;
+            _db = db;
         }
 
         [HttpGet]
@@ -62,6 +65,15 @@ namespace AracGorevFormu.Controllers
                     ExpiresUtc = DateTimeOffset.UtcNow.AddHours(8)
                 });
 
+            _db.SystemLogs.Add(new SystemLog
+            {
+                Tarih = DateTime.Now,
+                KullaniciAdi = admin.KullaniciAdi,
+                IslemTuru = "Giriş Yapıldı",
+                Detay = "Yönetici sisteme başarılı şekilde giriş yaptı."
+            });
+            _db.SaveChanges();
+
             if (!string.IsNullOrEmpty(model.ReturnUrl) && Url.IsLocalUrl(model.ReturnUrl))
             {
                 return Redirect(model.ReturnUrl);
@@ -74,6 +86,16 @@ namespace AracGorevFormu.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Logout()
         {
+            var kullaniciAdi = User.Identity?.Name ?? "Bilinmiyor";
+            _db.SystemLogs.Add(new SystemLog
+            {
+                Tarih = DateTime.Now,
+                KullaniciAdi = kullaniciAdi,
+                IslemTuru = "Çıkış Yapıldı",
+                Detay = "Yönetici sistemden güvenli çıkış yaptı."
+            });
+            _db.SaveChanges();
+
             await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
             return RedirectToAction("Login");
         }

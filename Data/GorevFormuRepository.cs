@@ -12,7 +12,7 @@ namespace AracGorevFormu.Data
             _db = db;
         }
 
-        public List<GorevFormu> Tumu() => _db.GorevFormlari.OrderByDescending(f => f.OlusturmaTarihi).ToList();
+        public List<GorevFormu> Tumu() => _db.GorevFormlari.AsNoTracking().OrderByDescending(f => f.OlusturmaTarihi).ToList();
 
         public GorevFormu? GetirById(int id) => _db.GorevFormlari.FirstOrDefault(f => f.Id == id);
 
@@ -30,7 +30,7 @@ namespace AracGorevFormu.Data
         {
             var normalizedAd = adSoyad.Trim().ToLower();
 
-            var query = _db.GorevFormlari.AsQueryable()
+            var query = _db.GorevFormlari.AsNoTracking()
                 .Where(f => f.KullananAdSoyad.ToLower().Contains(normalizedAd));
 
             if (!string.IsNullOrWhiteSpace(telefon))
@@ -43,11 +43,11 @@ namespace AracGorevFormu.Data
         }
 
         public List<GorevFormu> DisaridaOlanlar() =>
-            _db.GorevFormlari.Where(f => f.Durum == GorevDurumu.Onaylandi && f.GercekDonusZamani == null)
+            _db.GorevFormlari.AsNoTracking().Where(f => f.Durum == GorevDurumu.Onaylandi && f.GercekDonusZamani == null)
                 .OrderByDescending(f => f.OlusturmaTarihi).ToList();
 
         public List<GorevFormu> BeklemedeOlanlar() =>
-            _db.GorevFormlari.Where(f => f.Durum == GorevDurumu.Beklemede)
+            _db.GorevFormlari.AsNoTracking().Where(f => f.Durum == GorevDurumu.Beklemede)
                 .OrderByDescending(f => f.OlusturmaTarihi).ToList();
 
         public GorevFormu Ekle(GorevFormu form)
@@ -71,7 +71,7 @@ namespace AracGorevFormu.Data
             string kod;
             do
             {
-                kod = "GF-" + rnd.Next(100000, 999999);
+                kod = "AT-" + rnd.Next(100000, 999999);
             } while (_db.GorevFormlari.Any(f => f.TakipKodu == kod));
             return kod;
         }

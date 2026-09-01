@@ -18,17 +18,19 @@ namespace AracGorevFormu.Data
                 context.Database.EnsureCreated();
 
                 // Eksik kolon/şema testi (yeni eklenen Lokasyon, SabitSurucu, SahiplikTuru vb. kolonların varlık kontrolü)
-                _ = context.Vehicles.Select(v => new { v.Lokasyon, v.SahiplikTuru, v.SabitSurucu, v.SasiNo }).FirstOrDefault();
-                _ = context.AracBakimlari.FirstOrDefault();
-                _ = context.HgsGecisleri.FirstOrDefault();
+                _ = context.Vehicles.OrderBy(v => v.Id).Select(v => new { v.Lokasyon, v.SahiplikTuru, v.SabitSurucu, v.SasiNo }).FirstOrDefault();
+                _ = context.AracBakimlari.OrderBy(a => a.Id).FirstOrDefault();
+                _ = context.HgsGecisleri.OrderBy(h => h.Id).FirstOrDefault();
+                _ = context.SystemLogs.OrderBy(l => l.Id).FirstOrDefault();
             }
             catch (Exception ex)
             {
-                // Eğer veritabanı dosyası eski kolon/tablo şemasına sahipse veritabanını sıfırdan oluştur.
-                // DİKKAT: Bu işlem tüm mevcut verileri siler! Sadece geliştirme ortamında güvenlidir.
-                logger.LogWarning(ex, "Veritabanı şeması uyumsuz, tablo yapısı sıfırdan oluşturuluyor. Mevcut veriler kaybedilecek.");
-                context.Database.EnsureDeleted();
-                context.Database.EnsureCreated();
+                // Eğer veritabanı dosyası eski kolon/tablo şemasına sahipse sıfırdan OLUŞTURMA!
+                // DİKKAT: EnsureDeleted işlemi mevcut verileri sileceği için KALDIRILMIŞTIR.
+                // Lütfen eksik kolonları veritabanına manuel olarak veya Migration ile ekleyin.
+                logger.LogWarning(ex, "Veritabanı şeması uyumsuz. Ancak veri kaybını önlemek için veritabanı SİLİNMEYECEKTİR.");
+                // context.Database.EnsureDeleted(); // VERİ KAYBINA SEBEP OLDUĞU İÇİN İPTAL EDİLDİ
+                // context.Database.EnsureCreated(); // Tablolar varsa hata vermez, ama kolon eklemez.
             }
 
             // 1. Yönetici Hesabı Tohumlama
@@ -53,11 +55,12 @@ namespace AracGorevFormu.Data
                 context.Vehicles.AddRange(
                     new Vehicle
                     {
+                        Id = 1,
                         Plaka = "06 AB 123",
                         Marka = "Ford",
                         Model = "Transit",
                         Renk = "Beyaz",
-                        SahiplikTuru = "Şirket Öz Malı",
+                        SahiplikTuru = "Şirket Aracı",
                         SabitSurucu = "Ahmet Yılmaz (Saha Lojistik Sorumlusu)",
                         Lokasyon = "Ankara Genel Merkez",
                         Aktif = true,
@@ -69,6 +72,7 @@ namespace AracGorevFormu.Data
                     },
                     new Vehicle
                     {
+                        Id = 2,
                         Plaka = "06 CD 456",
                         Marka = "Volkswagen",
                         Model = "Caddy",
@@ -85,11 +89,12 @@ namespace AracGorevFormu.Data
                     },
                     new Vehicle
                     {
+                        Id = 3,
                         Plaka = "06 EF 789",
                         Marka = "Renault",
                         Model = "Clio",
                         Renk = "Gri",
-                        SahiplikTuru = "Şirket Öz Malı",
+                        SahiplikTuru = "Şirket Aracı",
                         SabitSurucu = null, // Ortak Havuz
                         Lokasyon = "Ankara Genel Merkez",
                         Aktif = true,
@@ -101,6 +106,7 @@ namespace AracGorevFormu.Data
                     },
                     new Vehicle
                     {
+                        Id = 4,
                         Plaka = "06 GH 321",
                         Marka = "Toyota",
                         Model = "Corolla",
@@ -125,6 +131,7 @@ namespace AracGorevFormu.Data
                 context.AracBakimlari.AddRange(
                     new AracBakim
                     {
+                        Id = 1,
                         VehicleId = 1,
                         Plaka = "06 AB 123",
                         BakimTarihi = DateTime.Now.AddMonths(-3),
@@ -138,6 +145,7 @@ namespace AracGorevFormu.Data
                     },
                     new AracBakim
                     {
+                        Id = 2,
                         VehicleId = 2,
                         Plaka = "06 CD 456",
                         BakimTarihi = DateTime.Now.AddMonths(-1),

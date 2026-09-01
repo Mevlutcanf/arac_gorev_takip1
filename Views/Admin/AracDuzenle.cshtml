@@ -14,6 +14,7 @@
                 <form asp-action="AracDuzenle" method="post" enctype="multipart/form-data">
                     @Html.AntiForgeryToken()
                     <input type="hidden" asp-for="Id" />
+                    <input type="hidden" asp-for="RuhsatDosyaYolu" />
                     <div asp-validation-summary="ModelOnly" class="text-danger small mb-3"></div>
 
                     <!-- Temel Araç Bilgileri -->
@@ -29,7 +30,7 @@
                         <div class="col-md-6">
                             <label asp-for="SahiplikTuru" class="form-label">Sahiplik Türü <span class="text-danger">*</span></label>
                             <select asp-for="SahiplikTuru" class="form-select">
-                                <option value="Şirket Öz Malı">🏢 Şirket Öz Malı</option>
+                                <option value="Şirket Aracı">🏢 Şirket Aracı</option>
                                 <option value="Kiralık Araç">🔑 Kiralık Araç (Rent a Car)</option>
                             </select>
                         </div>

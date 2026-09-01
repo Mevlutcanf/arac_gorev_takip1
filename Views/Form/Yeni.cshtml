@@ -26,6 +26,13 @@
                         <span>Şu anda sistemde kayıtlı aktif araç bulunmuyor. Lütfen yetkili yönetici ile iletişime geçiniz.</span>
                     </div>
                 }
+                else
+                {
+                    <div class="alert alert-info border-0 shadow-sm d-flex align-items-center gap-2 mb-4 bg-blue-50 text-blue-800">
+                        <i class="bi bi-info-circle-fill fs-5"></i>
+                        <span class="small fw-medium">Yanında kırmızı yıldız (<span class="text-danger">*</span>) bulunan alanların doldurulması zorunludur. Lütfen tarih ve saat seçimlerine dikkat ediniz.</span>
+                    </div>
+                }
 
                 <form asp-controller="Form" asp-action="Yeni" method="post">
                     @Html.AntiForgeryToken()
@@ -39,11 +46,11 @@
                         <div class="row g-3">
                             <div class="col-12">
                                 <label asp-for="VehicleId" class="form-label">Kullanılacak Araç <span class="text-danger">*</span></label>
-                                <select asp-for="VehicleId" class="form-select">
+                                <select asp-for="VehicleId" class="form-select form-select-lg fs-6">
                                     <option value="">-- Araç Seçiniz (Plaka - Marka Model) --</option>
                                     @foreach (var arac in Model.AktifAraclar)
                                     {
-                                        <option value="@arac.Id">@arac.Plaka — @arac.Marka @arac.Model (@(arac.Renk ?? "Belirtilmedi"))</option>
+                                        <option value="@arac.Id">@arac.Plaka — @arac.Marka @arac.Model (@(arac.Renk ?? "Belirtilmedi")) 🟢 Müsait</option>
                                     }
                                 </select>
                                 <span asp-validation-for="VehicleId" class="text-danger small"></span>

@@ -88,6 +88,27 @@ body {
   background-color: rgba(255, 255, 255, 0.15) !important;
 }
 
+/* --------------------------------------------------------------------------
+   3. ANIMATIONS & MICRO-INTERACTIONS
+   -------------------------------------------------------------------------- */
+@keyframes pageFadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.page-transition {
+  animation: pageFadeIn 0.35s ease-out forwards;
+}
+
+.hover-lift {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.hover-lift:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.1), 0 8px 10px -6px rgba(15, 23, 42, 0.1) !important;
+}
+
 .user-menu-btn {
   background-color: rgba(255, 255, 255, 0.12) !important;
   border: 1px solid rgba(255, 255, 255, 0.2) !important;
@@ -330,3 +351,46 @@ body {
 #arvento-map { width: 100%; height: 420px; border-radius: 0.5rem; border: 1px solid #cbd5e1; z-index: 1; }
 .app-footer { margin-top: auto; background-color: #ffffff !important; border-top: 1px solid #e2e8f0 !important; padding: 1.25rem 0 !important; font-size: 0.8125rem !important; color: #475569 !important; }
 .extra-small { font-size: 0.75rem !important; }
+
+/* --------------------------------------------------------------------------
+   9. TAILWIND COLOR UTILITIES & DATATABLES
+   -------------------------------------------------------------------------- */
+.text-slate-400 { color: #94a3b8 !important; }
+.text-slate-500 { color: #64748b !important; }
+.text-slate-600 { color: #475569 !important; }
+.text-slate-700 { color: #334155 !important; }
+.text-slate-800 { color: #1e293b !important; }
+.text-slate-900 { color: #0f172a !important; }
+
+.bg-slate-100 { background-color: #f1f5f9 !important; }
+
+.text-blue-500 { color: #3b82f6 !important; }
+.text-blue-600 { color: #2563eb !important; }
+.bg-blue-50 { background-color: #eff6ff !important; }
+
+.text-amber-600 { color: #d97706 !important; }
+.bg-amber-50 { background-color: #fffbeb !important; }
+
+.text-red-600 { color: #dc2626 !important; }
+.bg-red-50 { background-color: #fef2f2 !important; }
+
+.text-emerald-600 { color: #059669 !important; }
+.bg-emerald-50 { background-color: #ecfdf5 !important; }
+
+.text-indigo-600 { color: #4f46e5 !important; }
+
+/* DataTables Styling Overrides */
+.dt-buttons .btn {
+  margin-right: 0.5rem !important;
+  margin-bottom: 0.5rem !important;
+}
+.dataTables_filter {
+  padding-right: 0.5rem !important;
+  padding-top: 0.5rem !important;
+}
+.dataTables_wrapper > div:first-child {
+  padding: 1rem 1.5rem 0 1.5rem !important;
+}
+.dataTables_wrapper > div:last-child {
+  padding: 0 1.5rem 1rem 1.5rem !important;
+}

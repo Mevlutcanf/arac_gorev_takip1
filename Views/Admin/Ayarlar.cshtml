@@ -33,7 +33,6 @@
 </ul>
 
 <div class="tab-content">
-
     <!-- TAB 2: YÖNETİCİLER & YENİ EKLEME -->
     <div class="tab-pane fade @(activeTab == "yoneticiler" ? "show active" : "")" id="tab-yoneticiler">
         <div class="row g-4">
@@ -122,7 +121,10 @@
 
                             <div class="mb-4">
                                 <label asp-for="YeniYoneticiModel.Sifre" class="form-label">Giriş Şifresi <span class="text-danger">*</span></label>
-                                <input asp-for="YeniYoneticiModel.Sifre" class="form-control" placeholder="En az 6 karakter" required minlength="6" />
+                                <div class="input-group">
+                                    <input asp-for="YeniYoneticiModel.Sifre" type="password" class="form-control toggle-password-field" placeholder="En az 6 karakter" required minlength="6" />
+                                    <button class="btn btn-outline-secondary toggle-password-btn" type="button"><i class="bi bi-eye"></i></button>
+                                </div>
                             </div>
 
                             <button type="submit" class="btn btn-accent w-100">
@@ -174,7 +176,10 @@
                                 </div>
                                 <div class="col-md-6">
                                     <label asp-for="SmtpModel.SenderPassword" class="form-label">E-Posta / Uygulama Şifresi</label>
-                                    <input asp-for="SmtpModel.SenderPassword" class="form-control" type="password" placeholder="••••••••" autocomplete="new-password" />
+                                    <div class="input-group">
+                                        <input asp-for="SmtpModel.SenderPassword" type="password" class="form-control toggle-password-field" placeholder="Değiştirmek istemiyorsanız boş bırakın" autocomplete="new-password" />
+                                        <button class="btn btn-outline-secondary toggle-password-btn" type="button"><i class="bi bi-eye"></i></button>
+                                    </div>
                                 </div>
                             </div>
 
@@ -211,10 +216,8 @@
                         <form asp-action="AyarlarArvento" method="post">
                             @Html.AntiForgeryToken()
 
-                            <div class="mb-3">
-                                <label asp-for="ArventoModel.ApiUrl" class="form-label">API URL</label>
-                                <input asp-for="ArventoModel.ApiUrl" class="form-control font-monospace" />
-                            </div>
+                            <!-- API URL (Gizlendi - Web Scraping kullanılacak) -->
+                            <input type="hidden" asp-for="ArventoModel.ApiUrl" value="https://web.arvento.com/" />
 
                             <div class="mb-3">
                                 <label asp-for="ArventoModel.KullaniciAdi" class="form-label">API Kullanıcı Adı</label>
@@ -223,13 +226,14 @@
 
                             <div class="mb-3">
                                 <label asp-for="ArventoModel.Sifre" class="form-label">API Şifresi</label>
-                                <input asp-for="ArventoModel.Sifre" class="form-control" />
+                                <div class="input-group">
+                                    <input asp-for="ArventoModel.Sifre" type="password" class="form-control toggle-password-field" placeholder="Değiştirmek istemiyorsanız boş bırakın" />
+                                    <button class="btn btn-outline-secondary toggle-password-btn" type="button"><i class="bi bi-eye"></i></button>
+                                </div>
                             </div>
 
-                            <div class="mb-3">
-                                <label asp-for="ArventoModel.ApiKey" class="form-label">API Key</label>
-                                <input asp-for="ArventoModel.ApiKey" class="form-control font-monospace" />
-                            </div>
+                            <!-- API Key (Gizlendi - Web Scraping kullanılacak) -->
+                            <input type="hidden" asp-for="ArventoModel.ApiKey" />
 
                             <div class="form-check form-switch mb-4">
                                 <input asp-for="ArventoModel.Aktif" class="form-check-input" type="checkbox" id="arventoSwitch" />
@@ -264,6 +268,23 @@
     <partial name="_ValidationScriptsPartial" />
     <script>
         document.addEventListener('DOMContentLoaded', function () {
+            // Toggle Password Logic
+            document.querySelectorAll('.toggle-password-btn').forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    const input = this.previousElementSibling;
+                    const icon = this.querySelector('i');
+                    if (input.type === 'password') {
+                        input.type = 'text';
+                        icon.classList.remove('bi-eye');
+                        icon.classList.add('bi-eye-slash');
+                    } else {
+                        input.type = 'password';
+                        icon.classList.remove('bi-eye-slash');
+                        icon.classList.add('bi-eye');
+                    }
+                });
+            });
+
             // Leaflet OpenStreetMap Init
             var map = L.map('arvento-map').setView([39.9334, 32.8597], 11);
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -271,21 +292,22 @@
                 attribution: '&copy; OpenStreetMap contributors'
             }).addTo(map);
 
-            var vehicles = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(
-                ((List<Vehicle>)(ViewBag.Araclar ?? new List<Vehicle>())).Select((v, idx) => new {
-                    lat = 39.9334 + (idx * 0.02 - 0.02),
-                    lng = 32.8597 + ((idx % 2 == 0 ? 1 : -1) * (idx + 1) * 0.018),
-                    plate = v.Plaka,
-                    model = v.Marka + " " + v.Model,
-                    status = v.Aktif ? "Aktif Filo Aracı (" + (v.Lokasyon ?? "Genel Merkez") + ")" : "Serviste / Pasif",
-                    driver = string.IsNullOrEmpty(v.SabitSurucu) ? "Havuz Aracı (Serbest)" : v.SabitSurucu
+            // Fetch Live Arvento Data
+            fetch('/Admin/GetLiveMapData')
+                .then(response => response.json())
+                .then(vehicles => {
+                    if (vehicles && vehicles.length > 0) {
+                        // Fit map bounds to show all markers
+                        var bounds = [];
+                        vehicles.forEach(function(v) {
+                            var marker = L.marker([v.lat, v.lng]).addTo(map);
+                            marker.bindPopup("<b>" + v.plate + "</b><br>Durum: " + v.status + "<br>Adres: " + v.driver);
+                            bounds.push([v.lat, v.lng]);
+                        });
+                        map.fitBounds(bounds, { padding: [20, 20], maxZoom: 15 });
+                    }
                 })
-            ));
-
-            vehicles.forEach(function(v) {
-                var marker = L.marker([v.lat, v.lng]).addTo(map);
-                marker.bindPopup("<b>" + v.plate + "</b><br>" + v.model + "<br>Durum: " + v.status + "<br>Sürücü: " + v.driver);
-            });
+                .catch(err => console.error("Arvento harita veri hatası:", err));
 
             // Re-render map when Arvento tab is clicked
             document.querySelectorAll('a[data-bs-toggle="tab"]').forEach(function(tab) {

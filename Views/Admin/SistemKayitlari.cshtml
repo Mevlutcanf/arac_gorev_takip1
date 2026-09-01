@@ -1,0 +1,64 @@
+@model List<AracGorevFormu.Models.SystemLog>
+@{
+    ViewData["Title"] = "Sistem Kayıtları (Loglar)";
+}
+
+<div class="d-flex align-items-center justify-content-between mb-4">
+    <div>
+        <h1 class="h4 fw-bold text-slate-900 mb-1">
+            <i class="bi bi-clock-history me-2 text-indigo-600"></i>Sistem Kayıtları
+        </h1>
+        <p class="text-slate-500 small mb-0">Sistem üzerindeki tüm yönetici işlemleri ve giriş/çıkış logları.</p>
+    </div>
+</div>
+
+<div class="card shadow-sm border-0 bg-white">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover table-striped table-datatable align-middle mb-0 w-100">
+                <thead class="table-light">
+                    <tr>
+                        <th class="ps-4">Tarih</th>
+                        <th>Kullanıcı</th>
+                        <th>İşlem Türü</th>
+                        <th class="pe-4">Detay</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var log in Model)
+                    {
+                        <tr>
+                            <td class="ps-4 text-nowrap text-slate-600 small">
+                                @log.Tarih.ToString("dd.MM.yyyy HH:mm:ss")
+                            </td>
+                            <td class="fw-semibold text-slate-800">
+                                @log.KullaniciAdi
+                            </td>
+                            <td>
+                                @if (log.IslemTuru.Contains("Silindi") || log.IslemTuru.Contains("Reddedildi"))
+                                {
+                                    <span class="badge bg-danger">@log.IslemTuru</span>
+                                }
+                                else if (log.IslemTuru.Contains("Eklendi") || log.IslemTuru.Contains("Onaylandı"))
+                                {
+                                    <span class="badge bg-success">@log.IslemTuru</span>
+                                }
+                                else if (log.IslemTuru.Contains("Güncellendi") || log.IslemTuru.Contains("Döndü"))
+                                {
+                                    <span class="badge bg-primary">@log.IslemTuru</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary">@log.IslemTuru</span>
+                                }
+                            </td>
+                            <td class="pe-4 text-slate-700">
+                                @log.Detay
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

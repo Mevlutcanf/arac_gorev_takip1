@@ -27,7 +27,7 @@ namespace AracGorevFormu.Models
 
         [StringLength(30)]
         [Display(Name = "Sahiplik Türü")]
-        public string SahiplikTuru { get; set; } = "Şirket Öz Malı"; // "Şirket Öz Malı" veya "Kiralık Araç"
+        public string SahiplikTuru { get; set; } = "Şirket Aracı"; // "Şirket Aracı" veya "Kiralık Araç"
 
         [StringLength(100)]
         [Display(Name = "Zimmetli / Sabit Sürücü")]

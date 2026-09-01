@@ -1,0 +1,55 @@
+@model ProfilViewModel
+@{
+    ViewData["Title"] = "Profilim ve Şifre";
+}
+
+<div class="d-flex align-items-center justify-content-between mb-4">
+    <div>
+        <h1 class="h4 fw-bold text-slate-900 mb-1">
+            <i class="bi bi-person-badge-fill me-2 text-indigo-600"></i>Profil Bilgilerim ve Şifre
+        </h1>
+        <p class="text-slate-500 small mb-0">Hesap bilgilerinizi güncelleyebilir ve şifrenizi değiştirebilirsiniz.</p>
+    </div>
+</div>
+
+<div class="row justify-content-center g-4">
+    <div class="col-lg-6 col-xl-5">
+        <div class="card shadow-sm border">
+            <div class="card-header bg-slate-900 text-white">
+                <i class="bi bi-person-badge me-2 text-info"></i>Profil Detayları
+            </div>
+            <div class="card-body p-4">
+                <form asp-action="Profil" method="post">
+                    @Html.AntiForgeryToken()
+                    <div class="mb-3">
+                        <label asp-for="KullaniciAdi" class="form-label">Kullanıcı Adı</label>
+                        <input asp-for="KullaniciAdi" class="form-control" readonly />
+                    </div>
+                    <div class="mb-3">
+                        <label asp-for="AdSoyad" class="form-label">Ad Soyad</label>
+                        <input asp-for="AdSoyad" class="form-control" />
+                        <span asp-validation-for="AdSoyad" class="text-danger small"></span>
+                    </div>
+                    <hr class="my-4" />
+                    <h6 class="fw-bold mb-3">Şifre Değiştir (İsteğe Bağlı)</h6>
+                    <div class="mb-3">
+                        <label asp-for="MevcutSifre" class="form-label">Mevcut Şifre</label>
+                        <input asp-for="MevcutSifre" class="form-control" />
+                        <span asp-validation-for="MevcutSifre" class="text-danger small"></span>
+                    </div>
+                    <div class="mb-3">
+                        <label asp-for="YeniSifre" class="form-label">Yeni Şifre</label>
+                        <input asp-for="YeniSifre" class="form-control" />
+                        <span asp-validation-for="YeniSifre" class="text-danger small"></span>
+                    </div>
+                    <div class="mb-4">
+                        <label asp-for="YeniSifreTekrar" class="form-label">Yeni Şifre Tekrar</label>
+                        <input asp-for="YeniSifreTekrar" class="form-control" />
+                        <span asp-validation-for="YeniSifreTekrar" class="text-danger small"></span>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100">Değişiklikleri Kaydet</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

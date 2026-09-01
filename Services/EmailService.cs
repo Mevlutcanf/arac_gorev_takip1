@@ -84,7 +84,25 @@ namespace AracGorevFormu.Services
             {
                 var message = new MimeMessage();
                 message.From.Add(new MailboxAddress("Abdurrahman Tatlıcı Araç Takip", ayarlar.SenderEmail));
-                message.To.Add(new MailboxAddress(null, ayarlar.SenderEmail));
+
+                var alicilar = (ayarlar.NotificationEmails ?? string.Empty)
+                    .Split(new[] { ',', ';' }, StringSplitOptions.RemoveEmptyEntries)
+                    .Select(e => e.Trim())
+                    .Where(e => !string.IsNullOrEmpty(e))
+                    .ToList();
+
+                if (alicilar.Count > 0)
+                {
+                    foreach (var alici in alicilar)
+                    {
+                        message.To.Add(new MailboxAddress(null, alici));
+                    }
+                }
+                else
+                {
+                    message.To.Add(new MailboxAddress(null, ayarlar.SenderEmail));
+                }
+
                 message.Subject = "SMTP Test Mesajı — Araç Görev Takip Sistemi";
 
                 var bodyBuilder = new BodyBuilder
