@@ -1,0 +1,136 @@
+@model IEnumerable<AracGorevFormu.Models.Makine>
+
+@{
+    ViewData["Title"] = "Makine Yönetimi";
+}
+
+    <div class="row mb-4 align-items-center">
+        <div class="col-md-6">
+            <h2 class="fw-bold mb-1">Fabrika Makine Yönetimi</h2>
+            <p class="text-muted mb-0">Makineleri ve çalışma saatlerini takip edin.</p>
+        </div>
+        <div class="col-md-6 text-md-end mt-3 mt-md-0">
+            <a asp-action="Ekle" class="btn btn-primary px-4 py-2 hover-lift">
+                <i class="bi bi-plus-lg me-2"></i> Yeni Makine Ekle
+            </a>
+            <a asp-action="BakimEkle" class="btn btn-outline-primary px-4 py-2 hover-lift ms-2">
+                <i class="bi bi-tools me-2"></i> Yeni Bakım Ekle
+            </a>
+        </div>
+    </div>
+
+    <!-- Filtreleme Sekmeleri -->
+    <div class="mb-4">
+        <ul class="nav nav-pills custom-pills">
+            <li class="nav-item">
+                <a class="nav-link @(string.IsNullOrEmpty(ViewBag.SeciliKategori as string) ? "active" : "")" asp-action="Index">Tümü</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link @((ViewBag.SeciliKategori as string) == "Tadıbu" ? "active" : "")" asp-action="Index" asp-route-kategori="Tadıbu">Tadıbu</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link @((ViewBag.SeciliKategori as string) == "Lokum" ? "active" : "")" asp-action="Index" asp-route-kategori="Lokum">Lokum</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link @((ViewBag.SeciliKategori as string) == "Helva" ? "active" : "")" asp-action="Index" asp-route-kategori="Helva">Helva</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link @((ViewBag.SeciliKategori as string) == "Depo" ? "active" : "")" asp-action="Index" asp-route-kategori="Depo">Depo</a>
+            </li>
+        </ul>
+    </div>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="bi bi-check-circle-fill me-2"></i> @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0" id="makineTable">
+                    <thead class="bg-light">
+                        <tr>
+                            <th class="border-0">Makine Adı</th>
+                            <th class="border-0">Marka / Model</th>
+                            <th class="border-0">Seri No / Kod</th>
+                            <th class="border-0">Lokasyon</th>
+                            <th class="border-0 text-center">Çalışma Saati</th>
+                            <th class="border-0 text-center">Durum</th>
+                            <th class="border-0 text-end">İşlemler</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model)
+                        {
+                            <tr>
+                                <td>
+                                    <div class="fw-bold text-dark">@item.Ad</div>
+                                </td>
+                                <td>
+                                    <span class="text-muted">@(string.IsNullOrEmpty(item.Marka) ? "-" : item.Marka) / @(string.IsNullOrEmpty(item.Model) ? "-" : item.Model)</span>
+                                </td>
+                                <td>
+                                    @if (!string.IsNullOrEmpty(item.SeriNo))
+                                    {
+                                        <span class="plate-chip">@item.SeriNo</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">-</span>
+                                    }
+                                </td>
+                                <td>
+                                    <span class="text-muted">@(string.IsNullOrEmpty(item.Lokasyon) ? "-" : item.Lokasyon)</span>
+                                </td>
+                                <td class="text-center">
+                                    <span class="badge bg-slate-100 text-slate-800 fs-6">@item.CalismaSaati <small>Saat</small></span>
+                                </td>
+                                <td class="text-center">
+                                    @if (item.Aktif)
+                                    {
+                                        <span class="badge badge-status badge-aktif"><span class="badge-status-dot"></span> Aktif</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge badge-status badge-pasif"><span class="badge-status-dot"></span> Pasif</span>
+                                    }
+                                </td>
+                                <td class="text-end">
+                                    <a asp-action="BakimListesi" asp-route-makineId="@item.Id" class="btn btn-sm btn-outline-primary" title="Bakım Geçmişi">
+                                        <i class="bi bi-tools"></i> Bakımlar
+                                    </a>
+                                    <a asp-action="Duzenle" asp-route-id="@item.Id" class="btn btn-sm btn-outline-secondary ms-1" title="Düzenle">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                    <form asp-action="Sil" asp-route-id="@item.Id" method="post" class="d-inline" onsubmit="return confirm('Bu makineyi silmek istediğinize emin misiniz? (Bağlı bakımlar da silinecektir)');">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger ms-1" title="Sil">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            $('#makineTable').DataTable({
+                "language": {
+                    "url": "//cdn.datatables.net/plug-ins/1.13.6/i18n/tr.json"
+                },
+                "order": [[0, "asc"]],
+                "pageLength": 25,
+                "dom": '<"row align-items-center mb-3"<"col-md-6"l><"col-md-6"f>>rt<"row align-items-center mt-3"<"col-md-6"i><"col-md-6"p>>'
+            });
+        });
+    </script>
+}

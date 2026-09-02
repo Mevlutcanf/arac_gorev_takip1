@@ -172,6 +172,22 @@ namespace AracGorevFormu.Controllers
                 form.Durum = GorevDurumu.Onaylandi;
                 form.OnaylayanKullaniciAdi = MevcutKullaniciAdi;
                 form.OnayTarihi = DateTime.Now;
+
+                // Aracın anlık konumunu ve KM'sini çekip Çıkış KM'si olarak kaydet
+                var arac = _vehicleRepo.GetirById(form.VehicleId);
+                if (arac != null)
+                {
+                    var anlikKonum = await _arventoService.AracKonumuGetirAsync(arac.Plaka);
+                    if (anlikKonum != null && anlikKonum.ToplamKm.HasValue)
+                    {
+                        form.CikisKm = anlikKonum.ToplamKm.Value;
+                    }
+                    else if (arac.GuncelKm.HasValue)
+                    {
+                        form.CikisKm = arac.GuncelKm.Value;
+                    }
+                }
+
                 _formRepo.Guncelle(form);
                 await _emailService.FormDurumDegisiklikBildirimiGonderAsync(form, onaylandi: true);
                 LogIslem("Form Onaylandı", $"{form.AracPlaka} plakalı aracın görev formu onaylandı.");
@@ -224,6 +240,22 @@ namespace AracGorevFormu.Controllers
             {
                 form.GercekDonusZamani = DateTime.Now;
                 form.Durum = GorevDurumu.TamamlandiDondu;
+
+                // Aracın anlık konumunu ve KM'sini çekip Dönüş KM'si olarak kaydet
+                var arac = _vehicleRepo.GetirById(form.VehicleId);
+                if (arac != null)
+                {
+                    var anlikKonum = await _arventoService.AracKonumuGetirAsync(arac.Plaka);
+                    if (anlikKonum != null && anlikKonum.ToplamKm.HasValue)
+                    {
+                        form.DonusKm = anlikKonum.ToplamKm.Value;
+                    }
+                    else if (arac.GuncelKm.HasValue)
+                    {
+                        form.DonusKm = arac.GuncelKm.Value;
+                    }
+                }
+
                 _formRepo.Guncelle(form);
                 
                 // Araç iade edildi e-postası gönder
@@ -668,7 +700,7 @@ namespace AracGorevFormu.Controllers
                 ApiUrl = model.ApiUrl,
                 KullaniciAdi = model.KullaniciAdi,
                 Sifre = string.IsNullOrEmpty(model.Sifre) ? mevcutAyar.Sifre : model.Sifre,
-                ApiKey = model.ApiKey,
+                ApiKey = string.IsNullOrEmpty(model.ApiKey) ? mevcutAyar.ApiKey : model.ApiKey,
                 Aktif = model.Aktif
             });
 
@@ -703,12 +735,13 @@ namespace AracGorevFormu.Controllers
                                 adresLower.Contains("abdurrahman tatlıcı") || adresLower.Contains("abdurrahman tatlici");
                 string aracDurumu = sirkette ? "Şirkette (İçeride)" : "Dışarıda";
                 
+                string kmBilgisi = v.ToplamKm.HasValue ? $" | {v.ToplamKm} KM" : "";
                 return new {
                     lat = v.Enlem,
                     lng = v.Boylam,
                     plate = v.Plaka,
                     model = aracDurumu,
-                    status = "Hız: " + v.Hiz + " km/h | " + (v.SonKonumZamani.ToString("HH:mm")),
+                    status = $"Hız: {v.Hiz} km/h{kmBilgisi} | {v.SonKonumZamani:HH:mm}",
                     driver = v.Adres ?? "Adres bilgisi yok"
                 };
             });

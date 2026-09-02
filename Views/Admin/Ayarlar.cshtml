@@ -220,20 +220,25 @@
                             <input type="hidden" asp-for="ArventoModel.ApiUrl" value="https://web.arvento.com/" />
 
                             <div class="mb-3">
-                                <label asp-for="ArventoModel.KullaniciAdi" class="form-label">API Kullanıcı Adı</label>
-                                <input asp-for="ArventoModel.KullaniciAdi" class="form-control" />
+                                <label asp-for="ArventoModel.KullaniciAdi" class="form-label">API Kullanıcı Adı (Username)</label>
+                                <input asp-for="ArventoModel.KullaniciAdi" class="form-control" placeholder="Örn: sirket_arvento" />
                             </div>
 
                             <div class="mb-3">
-                                <label asp-for="ArventoModel.Sifre" class="form-label">API Şifresi</label>
+                                <label asp-for="ArventoModel.Sifre" class="form-label">PIN 1</label>
                                 <div class="input-group">
-                                    <input asp-for="ArventoModel.Sifre" type="password" class="form-control toggle-password-field" placeholder="Değiştirmek istemiyorsanız boş bırakın" />
+                                    <input asp-for="ArventoModel.Sifre" type="password" class="form-control toggle-password-field" placeholder="API yetkilisi tarafından verilen PIN1" />
                                     <button class="btn btn-outline-secondary toggle-password-btn" type="button"><i class="bi bi-eye"></i></button>
                                 </div>
                             </div>
 
-                            <!-- API Key (Gizlendi - Web Scraping kullanılacak) -->
-                            <input type="hidden" asp-for="ArventoModel.ApiKey" />
+                            <div class="mb-3">
+                                <label asp-for="ArventoModel.ApiKey" class="form-label">PIN 2</label>
+                                <div class="input-group">
+                                    <input asp-for="ArventoModel.ApiKey" type="password" class="form-control toggle-password-field" placeholder="API yetkilisi tarafından verilen PIN2" />
+                                    <button class="btn btn-outline-secondary toggle-password-btn" type="button"><i class="bi bi-eye"></i></button>
+                                </div>
+                            </div>
 
                             <div class="form-check form-switch mb-4">
                                 <input asp-for="ArventoModel.Aktif" class="form-check-input" type="checkbox" id="arventoSwitch" />

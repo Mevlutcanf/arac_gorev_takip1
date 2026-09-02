@@ -79,19 +79,27 @@
                         </div>
                     </div>
 
-                    <!-- Çıkış Zamanı -->
+                    <!-- Çıkış Zamanı & KM -->
                     <div class="col-md-6">
-                        <div class="p-3 border rounded-3">
-                            <span class="text-slate-500 extra-small fw-bold text-uppercase d-block mb-1">Planlanan Çıkış Tarihi</span>
-                            <div class="fw-bold text-slate-900"><i class="bi bi-calendar-event me-2 text-slate-500"></i>@Model.CikisZamani.ToString("dd.MM.yyyy HH:mm")</div>
+                        <div class="p-3 border rounded-3 h-100">
+                            <span class="text-slate-500 extra-small fw-bold text-uppercase d-block mb-1">Çıkış Bilgileri</span>
+                            <div class="fw-bold text-slate-900 mb-2"><i class="bi bi-calendar-event me-2 text-slate-500"></i>Plan: @Model.CikisZamani.ToString("dd.MM.yyyy HH:mm")</div>
+                            @if(Model.CikisKm.HasValue)
+                            {
+                                <div class="fw-bold text-slate-700 small"><i class="bi bi-speedometer me-2 text-amber-500"></i>Çıkış KM: @Model.CikisKm.Value</div>
+                            }
                         </div>
                     </div>
 
-                    <!-- Dönüş Zamanı -->
+                    <!-- Dönüş Zamanı & KM -->
                     <div class="col-md-6">
-                        <div class="p-3 border rounded-3">
-                            <span class="text-slate-500 extra-small fw-bold text-uppercase d-block mb-1">Planlanan Dönüş Tarihi</span>
-                            <div class="fw-bold text-slate-900"><i class="bi bi-calendar-check me-2 text-slate-500"></i>@Model.PlanlananDonusZamani.ToString("dd.MM.yyyy HH:mm")</div>
+                        <div class="p-3 border rounded-3 h-100">
+                            <span class="text-slate-500 extra-small fw-bold text-uppercase d-block mb-1">Dönüş Bilgileri</span>
+                            <div class="fw-bold text-slate-900 mb-2"><i class="bi bi-calendar-check me-2 text-slate-500"></i>Plan: @Model.PlanlananDonusZamani.ToString("dd.MM.yyyy HH:mm")</div>
+                            @if(Model.DonusKm.HasValue)
+                            {
+                                <div class="fw-bold text-slate-700 small"><i class="bi bi-speedometer me-2 text-amber-500"></i>Dönüş KM: @Model.DonusKm.Value</div>
+                            }
                         </div>
                     </div>
 

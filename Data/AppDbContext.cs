@@ -17,6 +17,8 @@ namespace AracGorevFormu.Data
         public DbSet<AracBakim> AracBakimlari { get; set; } = null!;
         public DbSet<HgsGecis> HgsGecisleri { get; set; } = null!;
         public DbSet<SystemLog> SystemLogs { get; set; } = null!;
+        public DbSet<Makine> Makineler { get; set; } = null!;
+        public DbSet<MakineBakim> MakineBakimlari { get; set; } = null!;
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -34,6 +36,9 @@ namespace AracGorevFormu.Data
             modelBuilder.Entity<AracBakim>().ToTable("AracBakimlari");
             modelBuilder.Entity<HgsGecis>().ToTable("HgsGecisleri");
             modelBuilder.Entity<SystemLog>().ToTable("SystemLogs");
+
+            modelBuilder.Entity<Makine>().ToTable("Makineler");
+            modelBuilder.Entity<MakineBakim>().ToTable("MakineBakimlari");
         }
     }
 }

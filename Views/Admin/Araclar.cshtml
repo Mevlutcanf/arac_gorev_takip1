@@ -24,17 +24,18 @@
 </div>
 
 <div class="card shadow-sm border">
-    <div class="table-responsive">
-        <table class="table align-middle mb-0" id="araclarTable">
+    <div class="p-3">
+        <table class="table align-middle mb-0 dt-responsive nowrap" id="araclarTable" style="width:100%">
             <thead>
                 <tr>
                     <th class="ps-3 text-nowrap">Plaka / Sahiplik</th>
                     <th class="text-nowrap">Marka / Model</th>
                     <th style="min-width: 200px;">Zimmetli Sürücü / Lokasyon</th>
+                    <th class="text-nowrap">Canlı Durum (Arvento)</th>
                     <th class="text-nowrap">Muayene & Sigorta</th>
                     <th class="text-nowrap">Ruhsat Belgesi</th>
                     <th class="text-nowrap">Durum</th>
-                    <th class="text-end pe-3 text-nowrap">İşlemler</th>
+                    <th class="text-end pe-3 text-nowrap all">İşlemler</th>
                 </tr>
             </thead>
             <tbody>
@@ -72,6 +73,21 @@
                                 <div class="text-slate-500 small"><i class="bi bi-people me-1"></i>Ortak Havuz Aracı</div>
                             }
                             <div class="text-slate-500 extra-small"><i class="bi bi-geo-alt me-1"></i>@(arac.Lokasyon ?? "Genel Merkez")</div>
+                        </td>
+                        <td>
+                            @if (arac.SonKonumZamani.HasValue)
+                            {
+                                <div class="small fw-bold text-slate-800" style="white-space: normal; max-width: 200px;"><i class="bi bi-geo-fill text-danger me-1"></i>@(arac.SonAdres ?? "Adres Bilinmiyor")</div>
+                                <div class="extra-small text-slate-500 mt-1"><i class="bi bi-clock me-1"></i>@arac.SonKonumZamani.Value.ToString("dd.MM.yyyy HH:mm")</div>
+                                @if(arac.GuncelKm.HasValue)
+                                {
+                                    <div class="extra-small text-slate-600 fw-semibold"><i class="bi bi-speedometer2 me-1"></i>@arac.GuncelKm.Value KM</div>
+                                }
+                            }
+                            else
+                            {
+                                <span class="badge bg-light text-dark border"><i class="bi bi-wifi-off me-1"></i>Arvento Verisi Yok</span>
+                            }
                         </td>
                         <td>
                             @if (arac.MuayeneBitisTarihi != null)
@@ -140,7 +156,7 @@
                 @if (!Model.Any())
                 {
                     <tr>
-                        <td colspan="7" class="text-center py-5 text-slate-400">Filoda kayıtlı araç bulunmuyor.</td>
+                        <td colspan="8" class="text-center py-5 text-slate-400">Filoda kayıtlı araç bulunmuyor.</td>
                     </tr>
                 }
             </tbody>

@@ -63,5 +63,17 @@ namespace AracGorevFormu.Models
         [StringLength(255)]
         [Display(Name = "Ruhsat Belge Dosya Yolu")]
         public string? RuhsatDosyaYolu { get; set; }
+
+        // ---------- ARVENTO CANLI VERİLERİ ----------
+
+        [Display(Name = "Güncel Kilometre (Arvento)")]
+        public int? GuncelKm { get; set; }
+
+        [Display(Name = "Son Konum Zamanı (Arvento)")]
+        public DateTime? SonKonumZamani { get; set; }
+
+        [StringLength(255)]
+        [Display(Name = "Son Adres (Arvento)")]
+        public string? SonAdres { get; set; }
     }
 }

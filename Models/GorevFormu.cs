@@ -56,6 +56,12 @@ namespace AracGorevFormu.Models
         [Display(Name = "Gerçekleşen Dönüş Tarihi/Saati")]
         public DateTime? GercekDonusZamani { get; set; }
 
+        [Display(Name = "Çıkış Kilometresi")]
+        public int? CikisKm { get; set; }
+
+        [Display(Name = "Dönüş Kilometresi")]
+        public int? DonusKm { get; set; }
+
         public GorevDurumu Durum { get; set; } = GorevDurumu.Beklemede;
 
         public DateTime OlusturmaTarihi { get; set; } = DateTime.Now;

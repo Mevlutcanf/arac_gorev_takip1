@@ -2,7 +2,7 @@ using System.Net;
 using System.Net.Http;
 using System.Text;
 using System.Text.Json;
-using System.Net.WebSockets;
+using System.Xml.Linq;
 using AracGorevFormu.Data;
 using AracGorevFormu.Models;
 using Microsoft.Extensions.DependencyInjection;
@@ -28,6 +28,7 @@ namespace AracGorevFormu.Services
         public DateTime SonKonumZamani { get; set; }
         public string? Adres { get; set; }
         public bool MotorAcik { get; set; }
+        public int? ToplamKm { get; set; }
     }
 
     public class ArventoService : IArventoService
@@ -36,18 +37,19 @@ namespace AracGorevFormu.Services
         private readonly AppDbContext _db;
         private readonly IHttpClientFactory _httpClientFactory;
 
-        // WebSocket verilerini hafızada tutmak için static cache
-        private static Dictionary<string, ArventoAracKonum> _konumCache = new Dictionary<string, ArventoAracKonum>();
-        private static bool _isWsRunning = false;
-        private static object _wsLock = new object();
+        // API İsteklerini yormamak için basit bellek içi önbellek (Cache)
+        private static List<ArventoAracKonum> _konumCache = new List<ArventoAracKonum>();
+        private static DateTime _lastFetchTime = DateTime.MinValue;
+        private static readonly object _cacheLock = new object();
+        private static readonly TimeSpan CacheDuration = TimeSpan.FromSeconds(60);
 
-        // Plaka Eşleştirme Sözlüğü (Manuel Tespit Edilenler)
+        // Plaka Eşleştirme Sözlüğü
         private static readonly Dictionary<string, string> _plakaEslestirme = new Dictionary<string, string>
         {
-            { "1005112", "34 PHK 036" }, // Bursa
-            { "1013977", "06 AT 5679" }, // Beşiktaş
-            { "1017010", "06 AT 2195" }, // Ümraniye
-            { "193924",  "06 FMG 424" }  // Avcılar
+            { "1005112", "34 PHK 036" }, 
+            { "1013977", "06 AT 5679" }, 
+            { "1017010", "06 AT 2195" }, 
+            { "193924",  "06 FMG 424" }  
         };
 
         public ArventoService(ILogger<ArventoService> logger, AppDbContext db, IHttpClientFactory httpClientFactory)
@@ -71,7 +73,7 @@ namespace AracGorevFormu.Services
             var ayar = _db.ArventoAyarlari.FirstOrDefault(a => a.Id == 1);
             if (ayar == null)
             {
-                ayar = new ArventoAyari { Id = 1, ApiUrl = "https://web.arvento.com/", Aktif = false };
+                ayar = new ArventoAyari { Id = 1, ApiUrl = "https://ws.arvento.com/v1/report.asmx", Aktif = false };
                 _db.ArventoAyarlari.Add(ayar);
                 _db.SaveChanges();
             }
@@ -81,147 +83,13 @@ namespace AracGorevFormu.Services
         public void AyarlariKaydet(ArventoAyari ayarlar)
         {
             var ayar = AyarlariGetir();
-            ayar.ApiUrl = "https://web.arvento.com/"; 
-            ayar.KullaniciAdi = ayarlar.KullaniciAdi;
-            ayar.Sifre = ayarlar.Sifre;
+            ayar.ApiUrl = string.IsNullOrEmpty(ayarlar.ApiUrl) ? "https://ws.arvento.com/v1/report.asmx" : ayarlar.ApiUrl; 
+            ayar.KullaniciAdi = ayarlar.KullaniciAdi; // Genelde PIN1
+            ayar.Sifre = ayarlar.Sifre; // Genelde PIN2
             ayar.ApiKey = ayarlar.ApiKey; 
             ayar.Aktif = ayarlar.Aktif;
 
             _db.SaveChanges();
-        }
-
-        private async Task<string?> GetSidAsync(string username, string password)
-        {
-            try
-            {
-                var client = _httpClientFactory.CreateClient("ArventoClient");
-                client.Timeout = TimeSpan.FromSeconds(20);
-
-                var loginData = new
-                {
-                    Username = username,
-                    Password = password,
-                    UserLanguage = "tr-TR"
-                };
-
-                var content = new StringContent(JsonSerializer.Serialize(loginData), Encoding.UTF8, "application/json");
-                var response = await client.PostAsync("https://api.arvento.com/arventocom/login", content);
-
-                if (!response.IsSuccessStatusCode)
-                    return null;
-
-                var jsonStr = await response.Content.ReadAsStringAsync();
-                
-                using var doc = JsonDocument.Parse(jsonStr);
-                if (doc.RootElement.TryGetProperty("res", out var resElem))
-                {
-                    var resUrl = resElem.GetString();
-                    if (!string.IsNullOrEmpty(resUrl) && resUrl.Contains("sid="))
-                    {
-                        var sid = resUrl.Substring(resUrl.IndexOf("sid=") + 4).Split('&')[0];
-                        return sid;
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Arvento SID alınırken hata oluştu.");
-            }
-            return null;
-        }
-
-        private void StartWebSocketListener(string username, string password)
-        {
-            lock (_wsLock)
-            {
-                if (_isWsRunning) return;
-                _isWsRunning = true;
-            }
-
-            Task.Run(async () =>
-            {
-                while (true)
-                {
-                    try
-                    {
-                        var sid = await GetSidAsync(username, password);
-                        if (string.IsNullOrEmpty(sid))
-                        {
-                            await Task.Delay(10000); // 10 saniye sonra tekrar dene
-                            continue;
-                        }
-
-                        using var ws = new ClientWebSocket();
-                        var wsUrl = $"wss://node.arvento.com/arvento?sid={sid}&app=web2&pkt=U528%0D%0AONLN&lid={Guid.NewGuid()}&ld=1&format=json&occ=1";
-                        
-                        await ws.ConnectAsync(new Uri(wsUrl), CancellationToken.None);
-                        _logger.LogInformation("Arvento WebSocket canlı bağlantısı BAŞARILI!");
-
-                        var buffer = new byte[8192];
-                        while (ws.State == WebSocketState.Open)
-                        {
-                            var result = await ws.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
-                            if (result.MessageType == WebSocketMessageType.Close) break;
-
-                            var message = Encoding.UTF8.GetString(buffer, 0, result.Count);
-                            
-                            // "MARK" paketleri canlı konum verileridir
-                            if (message.Contains("\"p\":\"MARK\""))
-                            {
-                                try
-                                {
-                                    using var doc = JsonDocument.Parse(message);
-                                    var root = doc.RootElement;
-                                    
-                                    if (root.TryGetProperty("n", out var nodeProp))
-                                    {
-                                        var nodeId = nodeProp.GetString();
-                                        
-                                        if (root.TryGetProperty("x", out var xProp) && root.TryGetProperty("y", out var yProp))
-                                        {
-                                            double lat = yProp.GetDouble(); // y = lat
-                                            double lon = xProp.GetDouble(); // x = lon
-                                            
-                                            double speed = 0;
-                                            if (root.TryGetProperty("s", out var sProp)) speed = sProp.GetDouble();
-                                            
-                                            string address = "";
-                                            if (root.TryGetProperty("ad", out var adProp)) address = adProp.GetString();
-
-                                            // Plakayı eşleştirme sözlüğünden al, yoksa "Araç {NodeID}" olarak bırak
-                                            string plakaYazisi = _plakaEslestirme.ContainsKey(nodeId) ? _plakaEslestirme[nodeId] : ("Araç " + nodeId);
-
-                                            var konum = new ArventoAracKonum
-                                            {
-                                                Plaka = plakaYazisi,
-                                                Enlem = lat,
-                                                Boylam = lon,
-                                                Hiz = speed,
-                                                Adres = address,
-                                                SonKonumZamani = DateTime.Now
-                                            };
-
-                                            lock (_wsLock)
-                                            {
-                                                _konumCache[nodeId] = konum;
-                                            }
-                                        }
-                                    }
-                                }
-                                catch (Exception ex)
-                                {
-                                    _logger.LogWarning("WebSocket JSON parse hatası: " + ex.Message);
-                                }
-                            }
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        _logger.LogError("Arvento WebSocket koptu veya hata verdi: " + ex.Message);
-                        await Task.Delay(5000); // Yeniden bağlanmadan önce bekle
-                    }
-                }
-            });
         }
 
         public async Task<bool> BaglantiyiTestEtAsync()
@@ -229,8 +97,27 @@ namespace AracGorevFormu.Services
             var ayar = AyarlariGetir();
             if (!ayar.Aktif || string.IsNullOrEmpty(ayar.KullaniciAdi) || string.IsNullOrEmpty(ayar.Sifre)) return false;
 
-            var sid = await GetSidAsync(ayar.KullaniciAdi, ayar.Sifre);
-            return !string.IsNullOrEmpty(sid);
+            try
+            {
+                var client = _httpClientFactory.CreateClient();
+                client.Timeout = TimeSpan.FromSeconds(15);
+                var content = new FormUrlEncodedContent(new[]
+                {
+                    new KeyValuePair<string, string>("Username", ayar.KullaniciAdi),
+                    new KeyValuePair<string, string>("PIN1", ayar.Sifre),
+                    new KeyValuePair<string, string>("PIN2", ayar.ApiKey)
+                });
+                
+                var requestUrl = ayar.ApiUrl.TrimEnd('/') + "/GetVehicleStatusJSON";
+                var response = await client.PostAsync(requestUrl, content);
+                
+                return response.IsSuccessStatusCode;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Arvento API Baglanti Testi Basarisiz");
+                return false;
+            }
         }
 
         public async Task<ArventoAracKonum?> AracKonumuGetirAsync(string plaka)
@@ -239,53 +126,180 @@ namespace AracGorevFormu.Services
             return tumu.FirstOrDefault(a => a.Plaka != null && a.Plaka.Replace(" ", "").Equals(plaka.Replace(" ", ""), StringComparison.OrdinalIgnoreCase));
         }
 
+        private async Task FetchFromApiAsync()
+        {
+            var ayar = AyarlariGetir();
+            if (!ayar.Aktif || string.IsNullOrEmpty(ayar.KullaniciAdi) || string.IsNullOrEmpty(ayar.Sifre)) return;
+
+            try
+            {
+                var client = _httpClientFactory.CreateClient();
+                client.Timeout = TimeSpan.FromSeconds(30);
+                
+                var content = new FormUrlEncodedContent(new[]
+                {
+                    new KeyValuePair<string, string>("Username", ayar.KullaniciAdi),
+                    new KeyValuePair<string, string>("PIN1", ayar.Sifre),
+                    new KeyValuePair<string, string>("PIN2", ayar.ApiKey)
+                });
+
+                // JSON yanıt veren endpoint
+                var requestUrl = ayar.ApiUrl.TrimEnd('/') + "/GetVehicleStatusJSON";
+                var response = await client.PostAsync(requestUrl, content);
+                
+                if (response.IsSuccessStatusCode)
+                {
+                    var jsonStr = await response.Content.ReadAsStringAsync();
+                    var newKonumlar = new List<ArventoAracKonum>();
+
+                    // API bazen HTML hata sayfası döndürür (yanlış kimlik bilgileri vb.)
+                    // JSON olmayan yanıtları filtrele
+                    var trimmed = jsonStr.TrimStart();
+                    if (string.IsNullOrWhiteSpace(trimmed) || (!trimmed.StartsWith("[") && !trimmed.StartsWith("{")))
+                    {
+                        // İlk 200 karakteri logla (debug için)
+                        var snippet = trimmed.Length > 200 ? trimmed.Substring(0, 200) : trimmed;
+                        _logger.LogWarning("Arvento API JSON yerine beklenmeyen yanıt döndürdü. Başlangıç: {Snippet}", snippet);
+                        return; // JSON değilse parse etme
+                    }
+
+                    try
+                    {
+                        using var doc = JsonDocument.Parse(jsonStr);
+                        if (doc.RootElement.ValueKind == JsonValueKind.Array)
+                        {
+                            foreach (var item in doc.RootElement.EnumerateArray())
+                            {
+                                var konum = new ArventoAracKonum { SonKonumZamani = DateTime.Now };
+
+                                if (item.TryGetProperty("Node", out var nodeProp))
+                                    konum.Plaka = _plakaEslestirme.ContainsKey(nodeProp.GetString() ?? "") ? _plakaEslestirme[nodeProp.GetString()!] : ("Araç " + nodeProp.GetString());
+                                else if (item.TryGetProperty("Plate", out var plateProp))
+                                    konum.Plaka = plateProp.GetString() ?? "Bilinmiyor";
+
+                                if (item.TryGetProperty("Latitude", out var latProp) && latProp.TryGetDouble(out var lat))
+                                    konum.Enlem = lat;
+                                
+                                if (item.TryGetProperty("Longitude", out var lonProp) && lonProp.TryGetDouble(out var lon))
+                                    konum.Boylam = lon;
+
+                                if (item.TryGetProperty("Speed", out var speedProp) && speedProp.TryGetDouble(out var speed))
+                                    konum.Hiz = speed;
+
+                                if (item.TryGetProperty("TotalDistance", out var distProp) && distProp.TryGetInt32(out var dist))
+                                    konum.ToplamKm = dist;
+                                else if (item.TryGetProperty("Distance", out var dist2Prop) && dist2Prop.TryGetInt32(out var dist2))
+                                    konum.ToplamKm = dist2;
+                                
+                                if (item.TryGetProperty("Address", out var adrProp))
+                                    konum.Adres = adrProp.GetString();
+                                
+                                if (item.TryGetProperty("Date", out var dateProp) && DateTime.TryParse(dateProp.GetString(), out var parsedDate))
+                                    konum.SonKonumZamani = parsedDate;
+
+                                newKonumlar.Add(konum);
+                            }
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogWarning("JSON parse hatası. Hata: " + ex.Message);
+                    }
+                    
+                    if (newKonumlar.Count > 0)
+                    {
+                        lock (_cacheLock)
+                        {
+                            _konumCache = newKonumlar;
+                            _lastFetchTime = DateTime.Now;
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Arvento API'den veri çekerken hata oluştu.");
+            }
+        }
+
         public async Task<List<ArventoAracKonum>> TumAracKonumlariAsync()
         {
             var ayar = AyarlariGetir();
             if (!ayar.Aktif || string.IsNullOrEmpty(ayar.KullaniciAdi) || string.IsNullOrEmpty(ayar.Sifre)) 
                 return new List<ArventoAracKonum>();
 
-            if (!_isWsRunning)
+            // Cache kontrolü - Veriler 60 saniyeden eskiyse yeniden API isteği at
+            bool needsFetch = false;
+            lock (_cacheLock)
             {
-                StartWebSocketListener(ayar.KullaniciAdi, ayar.Sifre);
-                
-                // İlk defa başlıyorsa verilerin dolması için 2 saniye bekleyelim
-                await Task.Delay(2000);
+                if ((DateTime.Now - _lastFetchTime) > CacheDuration)
+                {
+                    needsFetch = true;
+                }
             }
 
-            // 1. Veritabanından ŞasiNo alanına Node ID girilmiş araçları alalım
+            if (needsFetch)
+            {
+                await FetchFromApiAsync();
+            }
+
+            List<ArventoAracKonum> konumlar;
+            lock (_cacheLock)
+            {
+                konumlar = _konumCache.ToList(); // Kopyasını al
+            }
+
+            // DB ile senkronizasyon (Güncel KM, Adres vs.)
             var dbAraclar = _db.Vehicles
-                .Where(v => !string.IsNullOrEmpty(v.SasiNo))
-                .Select(v => new { v.SasiNo, v.Plaka })
+                .Where(v => !string.IsNullOrEmpty(v.SasiNo) || !string.IsNullOrEmpty(v.Plaka))
                 .ToList();
 
-            // 2. Cache'teki konumların bir kopyasını (referansını bozmadan) alalım
-            List<ArventoAracKonum> konumlar;
-            lock (_wsLock)
-            {
-                konumlar = _konumCache.Values.Select(k => new ArventoAracKonum
-                {
-                    Plaka = k.Plaka,
-                    Enlem = k.Enlem,
-                    Boylam = k.Boylam,
-                    Hiz = k.Hiz,
-                    Adres = k.Adres,
-                    SonKonumZamani = k.SonKonumZamani
-                }).ToList();
-            }
+            bool dbUpdated = false;
 
-            // 3. Eğer plaka "Araç XXX" şeklindeyse ve DB'de ŞasiNo karşılığı varsa plakayı güncelle
             foreach (var konum in konumlar)
             {
+                Vehicle? eslesme = null;
                 if (konum.Plaka != null && konum.Plaka.StartsWith("Araç "))
                 {
                     var nodeId = konum.Plaka.Replace("Araç ", "").Trim();
-                    var eslesme = dbAraclar.FirstOrDefault(v => v.SasiNo == nodeId);
+                    eslesme = dbAraclar.FirstOrDefault(v => v.SasiNo == nodeId);
                     if (eslesme != null)
-                    {
-                        konum.Plaka = eslesme.Plaka; // Veritabanındaki gerçek plakayı atıyoruz!
-                    }
+                        konum.Plaka = eslesme.Plaka; // Gerçek plaka ataması
                 }
+                else if (!string.IsNullOrEmpty(konum.Plaka))
+                {
+                    eslesme = dbAraclar.FirstOrDefault(v => v.Plaka != null && v.Plaka.Replace(" ", "").Equals(konum.Plaka.Replace(" ", ""), StringComparison.OrdinalIgnoreCase));
+                }
+
+                if (eslesme != null)
+                {
+                    bool change = false;
+                    
+                    if (konum.ToplamKm.HasValue && eslesme.GuncelKm != konum.ToplamKm.Value)
+                    {
+                        eslesme.GuncelKm = konum.ToplamKm.Value;
+                        change = true;
+                    }
+                    
+                    if (!string.IsNullOrEmpty(konum.Adres) && eslesme.SonAdres != konum.Adres)
+                    {
+                        eslesme.SonAdres = konum.Adres;
+                        change = true;
+                    }
+
+                    if (eslesme.SonKonumZamani == null || (konum.SonKonumZamani - eslesme.SonKonumZamani.Value).TotalMinutes > 1)
+                    {
+                        eslesme.SonKonumZamani = konum.SonKonumZamani;
+                        change = true;
+                    }
+
+                    if (change) dbUpdated = true;
+                }
+            }
+
+            if (dbUpdated)
+            {
+                _db.SaveChanges();
             }
 
             return konumlar;

@@ -65,6 +65,33 @@
                         </div>
                     </div>
 
+                    <!-- Arvento Canlı Veri Kartı -->
+                    <h6 class="fw-bold text-slate-900 mb-3 border-bottom pb-2 mt-4">
+                        <i class="bi bi-broadcast me-1 text-slate-600"></i>Arvento Canlı Durum
+                    </h6>
+                    <div class="row g-3 mb-4">
+                        <div class="col-12">
+                            <div class="card bg-slate-50 border-0 shadow-sm">
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-4">
+                                            <div class="text-slate-500 small">Güncel Kilometre</div>
+                                            <div class="fw-bold fs-5 text-indigo-700">@(Model.GuncelKm?.ToString() ?? "-") KM</div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="text-slate-500 small">Son Konum Zamanı</div>
+                                            <div class="fw-bold text-slate-800">@(Model.SonKonumZamani?.ToString("dd.MM.yyyy HH:mm") ?? "Veri Yok")</div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="text-slate-500 small">Son Adres</div>
+                                            <div class="fw-bold text-slate-800 small">@(Model.SonAdres ?? "Adres Bilgisi Yok")</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Ruhsat ve Yasal Muayene Bilgileri -->
                     <h6 class="fw-bold text-slate-900 mb-3 border-bottom pb-2">
                         <i class="bi bi-card-heading me-1 text-slate-600"></i>Ruhsat, Muayene ve Sigorta Bilgileri

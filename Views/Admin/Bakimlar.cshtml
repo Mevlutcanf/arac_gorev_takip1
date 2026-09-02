@@ -88,6 +88,19 @@
                             @if (b.SonrakiBakimKm != null)
                             {
                                 <div class="text-slate-500 font-monospace extra-small">@b.SonrakiBakimKm.Value.ToString("N0") km</div>
+                                var guncelArac = araclar.FirstOrDefault(x => x.Id == b.VehicleId);
+                                @if (guncelArac != null && guncelArac.GuncelKm > 0)
+                                {
+                                    var kalanKm = b.SonrakiBakimKm.Value - guncelArac.GuncelKm;
+                                    if (kalanKm <= 0)
+                                    {
+                                        <div class="mt-1 badge bg-danger"><i class="bi bi-exclamation-triangle-fill me-1"></i>Bakım Geçti!</div>
+                                    }
+                                    else if (kalanKm <= 1000)
+                                    {
+                                        <div class="mt-1 badge bg-warning text-dark"><i class="bi bi-exclamation-circle-fill me-1"></i>Yaklaştı (@kalanKm km)</div>
+                                    }
+                                }
                             }
                         </td>
                         <td class="text-end pe-3 no-print">

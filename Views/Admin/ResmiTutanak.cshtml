@@ -94,6 +94,12 @@
                         <td style="background: #f8fafc; font-weight: bold;">Görev Amacı / Güzergah:</td>
                         <td colspan="3">@Model.GorevAmaci</td>
                     </tr>
+                    <tr>
+                        <td style="background: #f8fafc; font-weight: bold;">Çıkış KM (Arvento):</td>
+                        <td>@(Model.CikisKm?.ToString() ?? "—")</td>
+                        <td style="background: #f8fafc; font-weight: bold;">Dönüş KM (Arvento):</td>
+                        <td>@(Model.DonusKm?.ToString() ?? "—")</td>
+                    </tr>
                 </tbody>
             </table>
 

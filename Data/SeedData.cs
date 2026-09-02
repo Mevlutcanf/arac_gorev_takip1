@@ -14,6 +14,17 @@ namespace AracGorevFormu.Data
 
             try
             {
+                // Eksik kolonları eklemek için (Eski veritabanını bozmadan güncellemek için)
+                try { context.Database.ExecuteSqlRaw("ALTER TABLE Vehicles ADD COLUMN GuncelKm INTEGER;"); } catch { }
+                try { context.Database.ExecuteSqlRaw("ALTER TABLE Vehicles ADD COLUMN SonKonumZamani TEXT;"); } catch { }
+                try { context.Database.ExecuteSqlRaw("ALTER TABLE Vehicles ADD COLUMN SonAdres TEXT;"); } catch { }
+                try { context.Database.ExecuteSqlRaw("ALTER TABLE GorevFormlari ADD COLUMN CikisKm INTEGER;"); } catch { }
+                try { context.Database.ExecuteSqlRaw("ALTER TABLE GorevFormlari ADD COLUMN DonusKm INTEGER;"); } catch { }
+                
+                // Makine Modülü - Makbuz OCR eklemeleri
+                try { context.Database.ExecuteSqlRaw("ALTER TABLE MakineBakimlari ADD COLUMN MakbuzDosyaYolu TEXT;"); } catch { }
+                try { context.Database.ExecuteSqlRaw("ALTER TABLE MakineBakimlari ADD COLUMN MakbuzMetni TEXT;"); } catch { }
+
                 // Tabloları oluştur (Database.EnsureCreated)
                 context.Database.EnsureCreated();
 

@@ -6,7 +6,17 @@ namespace AracGorevFormu.Controllers
     {
         public IActionResult Index()
         {
-            return RedirectToAction("Yeni", "Form");
+            return View();
+        }
+
+        [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
+        public IActionResult Error(int? statusCode = null)
+        {
+            if (statusCode.HasValue && statusCode.Value == 404)
+            {
+                return View("Error404");
+            }
+            return View();
         }
     }
 }

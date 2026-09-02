@@ -3,7 +3,23 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="Abdurrahman Tatlıcı - Araç Görev Takip ve Filo Yönetim Sistemi" />
+    <meta name="description" content="@(ViewData["MetaDescription"] ?? "Abdurrahman Tatlıcı - Araç Görev Takip ve Filo Yönetim Sistemi")" />
+    
+    <!-- JSON-LD Structured Data for SEO -->
+    <script type="application/ld+json">
+    {
+      "@@context": "https://schema.org",
+      "@@type": "SoftwareApplication",
+      "name": "Araç Görev Takip Sistemi",
+      "applicationCategory": "BusinessApplication",
+      "operatingSystem": "Web",
+      "author": {
+        "@@type": "Person",
+        "name": "Abdurrahman Tatlıcı"
+      },
+      "description": "@(ViewData["MetaDescription"] ?? "Modern ve kullanıcı dostu arayüz ile kolay filo yönetimi, canlı araç takibi ve görev formları.")"
+    }
+    </script>
     <title>@ViewData["Title"] - Abdurrahman Tatlıcı Araç Görev Takip</title>
     <link rel="shortcut icon" type="image/png" href="/img/logo.png?v=4" />
     <link rel="icon" type="image/png" href="/img/logo.png?v=4" />
@@ -13,13 +29,14 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.10.8/dist/sweetalert2.min.css" />
     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.8/css/dataTables.bootstrap5.min.css" />
+    <link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.bootstrap5.min.css" />
 
     <!-- App Design System CSS -->
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
 </head>
 <body>
     <header class="app-header">
-        <nav class="navbar navbar-expand-lg navbar-dark py-2 px-lg-4">
+        <nav class="navbar navbar-expand-lg navbar-light">
             <div class="container-fluid">
                 <!-- Brand -->
                 @if (User.Identity != null && User.Identity.IsAuthenticated)
@@ -54,21 +71,21 @@
 
                 <!-- Categorized Executive Navigation Links -->
                 <div class="collapse navbar-collapse" id="mainNavbarCollapse">
-                    <ul class="navbar-nav mx-auto mb-2 mb-lg-0 gap-lg-2">
+                    <ul class="navbar-nav mx-auto mb-2 mb-lg-0 gap-lg-1">
                         <!-- Kategori 1: Görev İşlemleri -->
                         <li class="nav-item dropdown">
                             <a class="nav-link dropdown-toggle text-nowrap" href="#" id="gorevDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                <i class="bi bi-clipboard-check-fill me-1 text-amber-400"></i>Görev Talepleri
+                                <i class="bi bi-clipboard-check-fill me-1"></i>Görev Talepleri
                             </a>
                             <ul class="dropdown-menu shadow" aria-labelledby="gorevDropdown">
                                 <li>
                                     <a class="dropdown-item py-2" asp-controller="Form" asp-action="Yeni">
-                                        <i class="bi bi-plus-circle me-2 text-amber-400"></i>Görev Formu Doldur
+                                        <i class="bi bi-plus-circle me-2 text-primary"></i>Görev Formu Doldur
                                     </a>
                                 </li>
                                 <li>
                                     <a class="dropdown-item py-2" asp-controller="Form" asp-action="Sorgula">
-                                        <i class="bi bi-search me-2 text-info"></i>Form Durumu Sorgula
+                                        <i class="bi bi-search me-2 text-primary"></i>Form Durumu Sorgula
                                     </a>
                                 </li>
                                 @if (User.Identity != null && User.Identity.IsAuthenticated)
@@ -76,7 +93,7 @@
                                     <li><hr class="dropdown-divider"></li>
                                     <li>
                                         <a class="dropdown-item py-2" asp-controller="Admin" asp-action="Formlar">
-                                            <i class="bi bi-card-checklist me-2 text-success"></i>Tüm Görev Formları
+                                            <i class="bi bi-card-checklist me-2 text-primary"></i>Tüm Görev Formları
                                         </a>
                                     </li>
                                 }
@@ -88,27 +105,51 @@
                             <!-- Kategori 2: Filo & Bakım Yönetimi -->
                             <li class="nav-item dropdown">
                                 <a class="nav-link dropdown-toggle text-nowrap" href="#" id="filoDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                    <i class="bi bi-car-front-fill me-1 text-info"></i>Filo & Bakım
+                                    <i class="bi bi-car-front-fill me-1"></i>Filo & Bakım
                                 </a>
                                 <ul class="dropdown-menu shadow" aria-labelledby="filoDropdown">
                                     <li>
                                         <a class="dropdown-item py-2" asp-controller="Admin" asp-action="Index">
-                                            <i class="bi bi-grid-1x2-fill me-2 text-indigo-400"></i>Filo Dashboard
+                                            <i class="bi bi-grid-1x2-fill me-2 text-primary"></i>Filo Dashboard
                                         </a>
                                     </li>
                                     <li>
                                         <a class="dropdown-item py-2" asp-controller="Admin" asp-action="Araclar">
-                                            <i class="bi bi-car-front me-2 text-info"></i>Araç Filosu & Ruhsatlar
+                                            <i class="bi bi-car-front me-2 text-primary"></i>Araç Filosu & Ruhsatlar
                                         </a>
                                     </li>
                                     <li>
                                         <a class="dropdown-item py-2" asp-controller="Admin" asp-action="Bakimlar">
-                                            <i class="bi bi-tools me-2 text-amber-400"></i>Bakım & Servis Takibi
+                                            <i class="bi bi-tools me-2 text-primary"></i>Bakım & Servis Takibi
                                         </a>
                                     </li>
                                     <li>
                                         <a class="dropdown-item py-2" asp-controller="Admin" asp-action="HgsBorc">
-                                            <i class="bi bi-credit-card-2-front me-2 text-warning"></i>HGS & Ceza Sorgulama
+                                            <i class="bi bi-credit-card-2-front me-2 text-primary"></i>HGS & Ceza Sorgulama
+                                        </a>
+                                    </li>
+                                </ul>
+                            </li>
+
+                            <!-- Kategori: Makine Yönetimi -->
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle text-nowrap" href="#" id="makineDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <i class="bi bi-nut-fill me-1"></i>Fabrika & Makine
+                                </a>
+                                <ul class="dropdown-menu shadow" aria-labelledby="makineDropdown">
+                                    <li>
+                                        <a class="dropdown-item py-2" asp-controller="Makine" asp-action="Index">
+                                            <i class="bi bi-gear-wide-connected me-2 text-primary"></i>Makine Yönetimi
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item py-2" asp-controller="Makine" asp-action="Ekle">
+                                            <i class="bi bi-plus-circle me-2 text-primary"></i>Yeni Makine Ekle
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item py-2" asp-controller="Makine" asp-action="BakimEkle">
+                                            <i class="bi bi-tools me-2 text-primary"></i>Makine Bakım Ekle
                                         </a>
                                     </li>
                                 </ul>
@@ -117,10 +158,9 @@
                             <!-- Kategori 3: Sistem & Ayarlar -->
                             <li class="nav-item dropdown">
                                 <a class="nav-link dropdown-toggle text-nowrap" href="#" id="ayarlarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                    <i class="bi bi-gear-wide-connected me-1 text-warning"></i>Sistem Ayarları
+                                    <i class="bi bi-gear-wide-connected me-1"></i>Sistem Ayarları
                                 </a>
                                 <ul class="dropdown-menu shadow" aria-labelledby="ayarlarDropdown">
-
                                     <li>
                                         <a class="dropdown-item py-2" asp-controller="Admin" asp-action="Ayarlar" asp-route-tab="yoneticiler">
                                             <i class="bi bi-people me-2 text-primary"></i>Yönetici Hesapları
@@ -128,18 +168,18 @@
                                     </li>
                                     <li>
                                         <a class="dropdown-item py-2" asp-controller="Admin" asp-action="Ayarlar" asp-route-tab="smtp">
-                                            <i class="bi bi-envelope me-2 text-success"></i>E-Posta (SMTP) Bildirim
+                                            <i class="bi bi-envelope me-2 text-primary"></i>E-Posta (SMTP) Bildirim
                                         </a>
                                     </li>
                                     <li>
                                         <a class="dropdown-item py-2" asp-controller="Admin" asp-action="Ayarlar" asp-route-tab="arvento">
-                                            <i class="bi bi-geo-alt me-2 text-danger"></i>Arvento GPS Entegrasyonu
+                                            <i class="bi bi-geo-alt me-2 text-primary"></i>Arvento GPS Entegrasyonu
                                         </a>
                                     </li>
                                     <li><hr class="dropdown-divider"></li>
                                     <li>
                                         <a class="dropdown-item py-2" asp-controller="Admin" asp-action="SistemKayitlari">
-                                            <i class="bi bi-clock-history me-2 text-secondary"></i>Sistem Logları
+                                            <i class="bi bi-clock-history me-2 text-primary"></i>Sistem Logları
                                         </a>
                                     </li>
                                 </ul>
@@ -152,14 +192,14 @@
                         @if (User.Identity != null && User.Identity.IsAuthenticated)
                         {
                             <div class="dropdown">
-                                <button class="btn btn-outline-light dropdown-toggle border-0" type="button" id="userMenuDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-                                    <i class="bi bi-person-circle text-warning fs-6 me-1"></i>
+                                <button class="user-menu-btn dropdown-toggle" type="button" id="userMenuDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <i class="bi bi-person-circle fs-6"></i>
                                     <span>@User.Identity.Name</span>
                                 </button>
                                 <ul class="dropdown-menu dropdown-menu-end shadow" aria-labelledby="userMenuDropdown">
                                     <li>
                                         <a class="dropdown-item py-2" asp-controller="Admin" asp-action="Profil">
-                                            <i class="bi bi-person-badge me-2 text-info"></i>Profilim & Şifre
+                                            <i class="bi bi-person-badge me-2 text-primary"></i>Profilim & Şifre
                                         </a>
                                     </li>
                                     <li><hr class="dropdown-divider"></li>
@@ -176,7 +216,7 @@
                         }
                         else
                         {
-                            <a class="btn btn-outline-light btn-sm text-nowrap" asp-controller="Account" asp-action="Login">
+                            <a class="btn btn-outline-primary btn-sm text-nowrap" asp-controller="Account" asp-action="Login">
                                 <i class="bi bi-lock-fill me-1"></i>Yönetici Girişi
                             </a>
                         }
@@ -187,6 +227,16 @@
     </header>
 
     <main role="main" class="container-fluid px-lg-4 py-4 page-transition">
+        <!-- Dynamic Breadcrumb -->
+        @if (ViewData["Breadcrumb"] != null)
+        {
+            <nav aria-label="breadcrumb" class="mb-4">
+                <ol class="breadcrumb mb-0 bg-transparent p-0">
+                    <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index" class="text-decoration-none text-muted"><i class="bi bi-house-door"></i> Ana Sayfa</a></li>
+                    @Html.Raw(ViewData["Breadcrumb"])
+                </ol>
+            </nav>
+        }
         @if (TempData["Mesaj"] != null)
         {
             <script>
@@ -227,10 +277,12 @@
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/lib/jquery-validation/dist/jquery.validate.min.js"></script>
     <script src="~/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.min.js"></script>
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.10.8/dist/sweetalert2.all.min.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin="" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.10.8/dist/sweetalert2.all.min.js" defer></script>
     <script src="https://cdn.datatables.net/1.13.8/js/jquery.dataTables.min.js"></script>
     <script src="https://cdn.datatables.net/1.13.8/js/dataTables.bootstrap5.min.js"></script>
+    <script src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
+    <script src="https://cdn.datatables.net/responsive/2.5.0/js/responsive.bootstrap5.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
     <script>
         $(document).ready(function () {
