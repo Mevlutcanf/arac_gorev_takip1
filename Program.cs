@@ -17,12 +17,12 @@ builder.Services.Configure<ForwardedHeadersOptions>(options =>
     options.KnownProxies.Clear();
 });
 
-// EF Core Veritabanı Kurulumu (SQLite)
+// EF Core Veritabanı Kurulumu (SQL Server)
 builder.Services.AddDbContext<AppDbContext>(options =>
 {
     var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
         ?? throw new InvalidOperationException("ConnectionStrings:DefaultConnection yapılandırılmamış.");
-    options.UseSqlite(connectionString);
+    options.UseSqlServer(connectionString);
 });
 
 // Repository Katmani (EF Core Scoped Injection)
