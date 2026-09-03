@@ -6,7 +6,7 @@ namespace AracGorevFormu.Controllers
     {
         public IActionResult Index()
         {
-            return View();
+            return RedirectToAction("Yeni", "Form");
         }
 
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]

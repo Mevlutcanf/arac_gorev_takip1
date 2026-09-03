@@ -14,11 +14,12 @@
 
 <div class="card shadow-sm border-0 bg-white">
     <div class="card-body p-0">
-        <div class="table-responsive">
-            <table class="table table-hover table-striped table-datatable align-middle mb-0 w-100">
+        <div class="table-responsive p-3">
+            <table class="table table-hover table-striped align-middle mb-0 w-100" id="sistemLogTable">
                 <thead class="table-light">
                     <tr>
                         <th class="ps-4">Tarih</th>
+                        <th>IP Adresi</th>
                         <th>Kullanıcı</th>
                         <th>İşlem Türü</th>
                         <th class="pe-4">Detay</th>
@@ -30,6 +31,9 @@
                         <tr>
                             <td class="ps-4 text-nowrap text-slate-600 small">
                                 @log.Tarih.ToString("dd.MM.yyyy HH:mm:ss")
+                            </td>
+                            <td class="text-nowrap text-slate-500 font-monospace small">
+                                @(string.IsNullOrEmpty(log.IpAdresi) ? "Bilinmiyor" : log.IpAdresi)
                             </td>
                             <td class="fw-semibold text-slate-800">
                                 @log.KullaniciAdi
@@ -62,3 +66,34 @@
         </div>
     </div>
 </div>
+
+@section Scripts {
+    <!-- DataTables Export Buttons Libraries -->
+    <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.2/css/buttons.bootstrap5.min.css">
+    <script src="https://cdn.datatables.net/buttons/2.4.2/js/dataTables.buttons.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.bootstrap5.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/pdfmake.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/vfs_fonts.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.html5.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.print.min.js"></script>
+
+    <script>
+        $(document).ready(function () {
+            if ($('#sistemLogTable tbody tr').length > 0 && !$('#sistemLogTable tbody tr td').hasClass('dataTables_empty')) {
+                $('#sistemLogTable').DataTable({
+                    language: { url: '//cdn.datatables.net/plug-ins/1.13.8/i18n/tr.json' },
+                    pageLength: 25,
+                    responsive: true,
+                    ordering: true,
+                    order: [[0, "desc"]],
+                    dom: '<"d-flex flex-column flex-md-row justify-content-between align-items-center mb-3"Bf>rt<"d-flex flex-column flex-md-row justify-content-between align-items-center mt-3"ip>',
+                    buttons: [
+                        { extend: 'excelHtml5', text: '<i class="bi bi-file-earmark-excel"></i> Excel', className: 'btn btn-success btn-sm me-2', title: 'Sistem Loglari', exportOptions: { columns: [0, 1, 2, 3, 4], format: { body: function (data) { return data.toString().replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim(); } } } },
+                        { extend: 'pdfHtml5', text: '<i class="bi bi-file-earmark-pdf"></i> PDF', className: 'btn btn-danger btn-sm', title: 'Sistem Loglari', orientation: 'landscape', pageSize: 'A4', exportOptions: { columns: [0, 1, 2, 3, 4], format: { body: function (data) { return data.toString().replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim(); } } } }
+                    ]
+                });
+            }
+        });
+    </script>
+}

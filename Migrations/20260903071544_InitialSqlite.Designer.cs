@@ -11,8 +11,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace AracGorevFormu.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260901111331_AddMakbuzTaramasi")]
-    partial class AddMakbuzTaramasi
+    [Migration("20260903071544_InitialSqlite")]
+    partial class InitialSqlite
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -136,6 +136,42 @@ namespace AracGorevFormu.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("ArventoAyarlari", (string)null);
+                });
+
+            modelBuilder.Entity("AracGorevFormu.Models.DosyaEki", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("DosyaAdi")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("DosyaTipi")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("TEXT");
+
+                    b.Property<byte[]>("Icerik")
+                        .IsRequired()
+                        .HasColumnType("BLOB");
+
+                    b.Property<int>("ParentId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("ParentTuru")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("YuklenmeTarihi")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("DosyaEkleri", (string)null);
                 });
 
             modelBuilder.Entity("AracGorevFormu.Models.GorevFormu", b =>
@@ -398,6 +434,11 @@ namespace AracGorevFormu.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("IpAdresi")
+                        .IsRequired()
+                        .HasMaxLength(45)
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("IslemTuru")
                         .IsRequired()
                         .HasMaxLength(100)
@@ -459,6 +500,17 @@ namespace AracGorevFormu.Migrations
 
                     b.Property<string>("Renk")
                         .HasMaxLength(30)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("RuhsatDosyaAdi")
+                        .HasMaxLength(255)
+                        .HasColumnType("TEXT");
+
+                    b.Property<byte[]>("RuhsatDosyaIcerigi")
+                        .HasColumnType("BLOB");
+
+                    b.Property<string>("RuhsatDosyaTipi")
+                        .HasMaxLength(100)
                         .HasColumnType("TEXT");
 
                     b.Property<string>("RuhsatDosyaYolu")

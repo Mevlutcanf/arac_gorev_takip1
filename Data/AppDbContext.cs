@@ -19,6 +19,7 @@ namespace AracGorevFormu.Data
         public DbSet<SystemLog> SystemLogs { get; set; } = null!;
         public DbSet<Makine> Makineler { get; set; } = null!;
         public DbSet<MakineBakim> MakineBakimlari { get; set; } = null!;
+        public DbSet<DosyaEki> DosyaEkleri { get; set; } = null!;
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -39,6 +40,7 @@ namespace AracGorevFormu.Data
 
             modelBuilder.Entity<Makine>().ToTable("Makineler");
             modelBuilder.Entity<MakineBakim>().ToTable("MakineBakimlari");
+            modelBuilder.Entity<DosyaEki>().ToTable("DosyaEkleri");
         }
     }
 }

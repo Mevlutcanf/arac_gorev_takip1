@@ -14,25 +14,15 @@ namespace AracGorevFormu.Data
 
             try
             {
-                // Eksik kolonları eklemek için (Eski veritabanını bozmadan güncellemek için)
-                try { context.Database.ExecuteSqlRaw("ALTER TABLE Vehicles ADD COLUMN GuncelKm INTEGER;"); } catch { }
-                try { context.Database.ExecuteSqlRaw("ALTER TABLE Vehicles ADD COLUMN SonKonumZamani TEXT;"); } catch { }
-                try { context.Database.ExecuteSqlRaw("ALTER TABLE Vehicles ADD COLUMN SonAdres TEXT;"); } catch { }
-                try { context.Database.ExecuteSqlRaw("ALTER TABLE GorevFormlari ADD COLUMN CikisKm INTEGER;"); } catch { }
-                try { context.Database.ExecuteSqlRaw("ALTER TABLE GorevFormlari ADD COLUMN DonusKm INTEGER;"); } catch { }
-                
-                // Makine Modülü - Makbuz OCR eklemeleri
-                try { context.Database.ExecuteSqlRaw("ALTER TABLE MakineBakimlari ADD COLUMN MakbuzDosyaYolu TEXT;"); } catch { }
-                try { context.Database.ExecuteSqlRaw("ALTER TABLE MakineBakimlari ADD COLUMN MakbuzMetni TEXT;"); } catch { }
-
                 // Tabloları oluştur (Database.EnsureCreated)
                 context.Database.EnsureCreated();
 
-                // Eksik kolon/şema testi (yeni eklenen Lokasyon, SabitSurucu, SahiplikTuru vb. kolonların varlık kontrolü)
-                _ = context.Vehicles.OrderBy(v => v.Id).Select(v => new { v.Lokasyon, v.SahiplikTuru, v.SabitSurucu, v.SasiNo }).FirstOrDefault();
+                // Eksik kolon/şema testi (yeni eklenen Lokasyon, SabitSurucu, SahiplikTuru, RuhsatDosyaIcerigi vb. kolonların varlık kontrolü)
+                _ = context.Vehicles.OrderBy(v => v.Id).Select(v => new { v.Lokasyon, v.SahiplikTuru, v.SabitSurucu, v.SasiNo, v.RuhsatDosyaIcerigi, v.RuhsatDosyaAdi, v.RuhsatDosyaTipi }).FirstOrDefault();
                 _ = context.AracBakimlari.OrderBy(a => a.Id).FirstOrDefault();
                 _ = context.HgsGecisleri.OrderBy(h => h.Id).FirstOrDefault();
                 _ = context.SystemLogs.OrderBy(l => l.Id).FirstOrDefault();
+                _ = context.DosyaEkleri.OrderBy(d => d.Id).FirstOrDefault();
             }
             catch (Exception ex)
             {

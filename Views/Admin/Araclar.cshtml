@@ -17,7 +17,7 @@
         <a asp-action="HgsBorc" class="btn btn-outline-secondary">
             <i class="bi bi-credit-card-2-front me-1"></i>HGS Borç Sorgula
         </a>
-        <a asp-action="AracEkle" class="btn btn-accent">
+        <a asp-action="AracEkle" class="btn btn-warning text-dark fw-bold">
             <i class="bi bi-plus-lg me-1"></i>Yeni Araç Ekle
         </a>
     </div>
@@ -106,7 +106,13 @@
                             }
                         </td>
                         <td>
-                            @if (!string.IsNullOrEmpty(arac.RuhsatDosyaYolu))
+                            @if (arac.RuhsatDosyaIcerigi != null && arac.RuhsatDosyaIcerigi.Length > 0)
+                            {
+                                <a href="@Url.Action("RuhsatDosyaIndir", "Admin", new { id = arac.Id })" target="_blank" class="badge badge-ruhsat-var text-decoration-none">
+                                    <i class="bi bi-file-earmark-check me-1"></i>Ruhsat Yüklü
+                                </a>
+                            }
+                            else if (!string.IsNullOrEmpty(arac.RuhsatDosyaYolu))
                             {
                                 <a href="@arac.RuhsatDosyaYolu" target="_blank" class="badge badge-ruhsat-var text-decoration-none">
                                     <i class="bi bi-file-earmark-check me-1"></i>Ruhsat Yüklü
@@ -131,21 +137,23 @@
                                 </span>
                             }
                         </td>
-                        <td class="text-end pe-3 no-print">
+                        <td class="text-end">
                             <div class="d-flex justify-content-end gap-1">
-                                <a asp-action="Bakimlar" asp-route-vehicleId="@arac.Id" class="btn btn-outline-primary btn-sm" data-bs-toggle="tooltip" title="Bakım Geçmişi">
+                                <a asp-action="Bakimlar" asp-route-vehicleId="@arac.Id" class="btn btn-outline-amber btn-sm" data-bs-toggle="tooltip" title="Bakım Geçmişi">
                                     <i class="bi bi-tools"></i>
                                 </a>
-                                <a asp-action="HgsBorc" asp-route-plaka="@arac.Plaka" class="btn btn-outline-secondary btn-sm" data-bs-toggle="tooltip" title="HGS Borç Sorgula">
+                                <a asp-action="HgsBorc" asp-route-plaka="@arac.Plaka" class="btn btn-outline-indigo btn-sm" data-bs-toggle="tooltip" title="HGS Borç Sorgula">
                                     <i class="bi bi-credit-card-2-front"></i>
                                 </a>
-                                <a asp-action="AracDuzenle" asp-route-id="@arac.Id" class="btn btn-outline-secondary btn-sm" data-bs-toggle="tooltip" title="Düzenle / Ruhsat Yükle">
-                                    <i class="bi bi-pencil"></i>
+                                <a asp-action="AracDetay" asp-route-id="@arac.Id" class="btn btn-sm btn-outline-primary" title="Araç Detaylarını Görüntüle">
+                                    <i class="bi bi-eye"></i>
                                 </a>
-                                <form asp-action="AracSil" asp-route-id="@arac.Id" method="post" class="d-inline"
-                                      onsubmit="return confirm('Bu aracı filodan silmek istediğinize emin misiniz?');">
+                                <a asp-action="AracDuzenle" asp-route-id="@arac.Id" class="btn btn-sm btn-outline-secondary" title="Düzenle">
+                                    <i class="bi bi-pencil-square"></i>
+                                </a>
+                                <form asp-action="AracSil" asp-route-id="@arac.Id" method="post" style="display:inline;" onsubmit="return confirm('Bu aracı silmek istediğinize emin misiniz? Bu işlem geri alınamaz.');">
                                     @Html.AntiForgeryToken()
-                                    <button type="submit" class="btn btn-outline-danger btn-sm" data-bs-toggle="tooltip" title="Sil">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger" title="Sil">
                                         <i class="bi bi-trash"></i>
                                     </button>
                                 </form>
@@ -188,9 +196,16 @@
                         {
                             extend: 'excelHtml5',
                             text: '<i class="bi bi-file-earmark-excel"></i> Excel',
-                            className: 'btn btn-success btn-sm',
+                            className: 'btn btn-warning btn-sm text-dark fw-bold me-2',
                             title: 'Arac Filosu Listesi',
-                            exportOptions: { columns: [0, 1, 2, 3, 4, 5] }
+                            exportOptions: { 
+                                columns: [0, 1, 2, 3, 4, 5],
+                                format: {
+                                    body: function (data, row, column, node) {
+                                        return data.toString().replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+                                    }
+                                }
+                            }
                         },
                         {
                             extend: 'pdfHtml5',
@@ -199,7 +214,14 @@
                             title: 'Arac Filosu Listesi',
                             orientation: 'landscape',
                             pageSize: 'A4',
-                            exportOptions: { columns: [0, 1, 2, 3, 4, 5] }
+                            exportOptions: { 
+                                columns: [0, 1, 2, 3, 4, 5],
+                                format: {
+                                    body: function (data, row, column, node) {
+                                        return data.toString().replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+                                    }
+                                }
+                            }
                         }
                     ]
                 });

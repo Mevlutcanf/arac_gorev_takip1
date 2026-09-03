@@ -1,6 +1,7 @@
 using AracGorevFormu.Data;
 using AracGorevFormu.Services;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -8,18 +9,20 @@ var builder = WebApplication.CreateBuilder(args);
 // MVC
 builder.Services.AddControllersWithViews();
 
-// EF Core Veritabanı Kurulumu (Varsayılan: Kurulum gerektirmeyen tak-çalıştır İlişkisel Veritabanı)
+// IP adresi dogru alinmasi icin proxy/forwarded headers destegi
+builder.Services.Configure<ForwardedHeadersOptions>(options =>
+{
+    options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+    options.KnownNetworks.Clear();
+    options.KnownProxies.Clear();
+});
+
+// EF Core Veritabanı Kurulumu (SQLite)
 builder.Services.AddDbContext<AppDbContext>(options =>
 {
-    var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? "Data Source=App_Data/AracGorevFormu.db";
-    if (connectionString.Contains("Data Source=", StringComparison.OrdinalIgnoreCase))
-    {
-        options.UseSqlite(connectionString);
-    }
-    else
-    {
-        options.UseSqlServer(connectionString);
-    }
+    var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
+        ?? throw new InvalidOperationException("ConnectionStrings:DefaultConnection yapılandırılmamış.");
+    options.UseSqlite(connectionString);
 });
 
 // Repository Katmani (EF Core Scoped Injection)
@@ -51,6 +54,8 @@ var app = builder.Build();
 
 // Baslangic verisi ve otomatik veritabanı tablo kurulumu
 SeedData.Uygula(app.Services);
+
+app.UseForwardedHeaders();
 
 if (app.Environment.IsDevelopment())
 {

@@ -1,0 +1,227 @@
+@model IEnumerable<AracGorevFormu.Models.MakineBakim>
+
+@{
+    ViewData["Title"] = "Tüm Makine Bakımları";
+}
+
+<div class="row mb-4 align-items-center">
+    <div class="col-md-8">
+        <h2 class="fw-bold mb-1"><i class="bi bi-tools text-amber-500 me-2"></i>Tüm Makine Bakım Kayıtları</h2>
+        <p class="text-muted mb-0">Tesis genelindeki tüm makinelerin bakım, arıza ve servis işlemlerini buradan inceleyebilir ve filtreleyebilirsiniz.</p>
+    </div>
+    <div class="col-md-4 text-md-end mt-3 mt-md-0">
+        <a asp-action="Index" class="btn btn-outline-secondary px-4 py-2 hover-lift">
+            <i class="bi bi-arrow-left me-2"></i> Makinelere Dön
+        </a>
+    </div>
+</div>
+
+<div class="card shadow-sm border-0 mb-4">
+    <div class="card-header bg-white py-3 border-bottom d-flex align-items-center justify-content-between">
+        <h5 class="mb-0 fw-bold text-slate-800">
+            <i class="bi bi-list-ul me-2"></i>Kayıtlı Tüm Bakımlar
+        </h5>
+        
+        <!-- Özel Filtreleme Alanı -->
+        <div class="d-flex align-items-center gap-2">
+            <label class="small text-slate-500 fw-bold mb-0">Tür Filtresi:</label>
+            <select id="bakimTuruFilter" class="form-select form-select-sm" style="width: auto;">
+                <option value="">Tümü</option>
+                <option value="Periyodik Bakım">Periyodik Bakım</option>
+                <option value="Arıza/Tamir">Arıza/Tamir</option>
+                <option value="Kurulum">Kurulum</option>
+                <option value="Kalibrasyon">Kalibrasyon</option>
+            </select>
+        </div>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive p-3">
+            <table class="table table-hover align-middle mb-0" id="tumBakimlarTable">
+                <thead class="bg-light">
+                    <tr>
+                        <th class="border-0">Tarih</th>
+                        <th class="border-0">Makine / Cihaz</th>
+                        <th class="border-0">Bakım Türü</th>
+                        <th class="border-0 text-center">Ç. Saati</th>
+                        <th class="border-0">Yapılan İşlemler</th>
+                        <th class="border-0 text-end">Maliyet</th>
+                        <th class="border-0 text-center no-print">Makbuz</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model)
+                    {
+                        <tr>
+                            <td>
+                                <div class="fw-bold text-dark">@item.BakimTarihi.ToString("dd.MM.yyyy")</div>
+                            </td>
+                            <td>
+                                <a asp-action="MakineDetay" asp-route-id="@item.MakineId" class="fw-bold text-primary text-decoration-none">
+                                    @(item.Makine?.Ad ?? "Bilinmiyor")
+                                </a>
+                            </td>
+                            <td>
+                                <span class="badge badge-bakim-turu fs-6">@item.BakimTuru</span>
+                            </td>
+                            <td class="text-center">
+                                <span class="fw-semibold text-muted">@item.CalismaSaati <small>Saat</small></span>
+                            </td>
+                            <td>
+                                <div class="text-dark text-truncate" style="max-width: 250px;" title="@item.YapilanIslemler">@item.YapilanIslemler</div>
+                                @if (!string.IsNullOrEmpty(item.DegisenParcalar))
+                                {
+                                    <div class="small text-muted mt-1 text-truncate" style="max-width: 250px;" title="@item.DegisenParcalar"><i class="bi bi-gear-fill me-1 text-secondary"></i> @item.DegisenParcalar</div>
+                                }
+                            </td>
+                            <td class="text-end fw-bold @(item.Maliyet > 0 ? "text-danger" : "text-muted")">
+                                @(item.Maliyet > 0 ? item.Maliyet.ToString("C2") : "-")
+                            </td>
+                            <td class="text-center no-print">
+                                @if (!string.IsNullOrEmpty(item.MakbuzDosyaYolu))
+                                {
+                                    var makbuzParts = item.MakbuzDosyaYolu.Split(',', StringSplitOptions.RemoveEmptyEntries);
+                                    foreach (var part in makbuzParts)
+                                    {
+                                        if (part.Trim().StartsWith("db:"))
+                                        {
+                                            var dosyaId = part.Trim().Replace("db:", "");
+                                            <a href="@Url.Action("MakbuzIndir", "Makine", new { id = dosyaId })" target="_blank" class="btn btn-sm btn-outline-secondary me-1" title="Makbuzu İndir">
+                                                <i class="bi bi-file-earmark-text"></i>
+                                            </a>
+                                        }
+                                        else
+                                        {
+                                            <a href="@part.Trim()" target="_blank" class="btn btn-sm btn-outline-secondary me-1" title="Makbuzu Görüntüle">
+                                                <i class="bi bi-file-earmark-text"></i>
+                                            </a>
+                                        }
+                                    }
+                                }
+                                <form asp-action="BakimSil" asp-route-id="@item.Id" method="post" class="d-inline" onsubmit="return confirm('Bu bakım kaydını silmek istediğinize emin misiniz?');">
+                                    @Html.AntiForgeryToken()
+                                    <button type="submit" class="btn btn-sm btn-outline-danger" title="Sil"><i class="bi bi-trash"></i></button>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+                @if (Model.Any())
+                {
+                    <tfoot>
+                        <tr>
+                            <td colspan="5" class="text-end fw-bold text-slate-700">Sayfa Toplamı:</td>
+                            <td class="text-end fw-bold text-danger fs-5" id="pageMaliyet">0,00 ₺</td>
+                            <td></td>
+                        </tr>
+                    </tfoot>
+                }
+            </table>
+        </div>
+        
+        @if (!Model.Any())
+        {
+            <div class="text-center py-5">
+                <i class="bi bi-journal-x text-muted opacity-50 mb-3" style="font-size: 3rem;"></i>
+                <h5 class="text-muted fw-bold">Henüz Bakım Kaydı Yok</h5>
+                <p class="text-muted mb-4">Sistemde kayıtlı herhangi bir makine bakım işlemi bulunamadı.</p>
+            </div>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <!-- DataTables Export Buttons Libraries -->
+    <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.2/css/buttons.bootstrap5.min.css">
+    <script src="https://cdn.datatables.net/buttons/2.4.2/js/dataTables.buttons.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.bootstrap5.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/pdfmake.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/vfs_fonts.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.html5.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.print.min.js"></script>
+
+    <script>
+        $(document).ready(function () {
+            if ($('#tumBakimlarTable tbody tr').length > 0 && !$('#tumBakimlarTable tbody tr td').hasClass('dataTables_empty')) {
+                var table = $('#tumBakimlarTable').DataTable({
+                    "language": {
+                        "url": "//cdn.datatables.net/plug-ins/1.13.6/i18n/tr.json"
+                    },
+                    "order": [[0, "desc"]],
+                    "pageLength": 25,
+                    "dom": '<"d-flex flex-column flex-md-row justify-content-between align-items-center mb-3"Bf>rt<"d-flex flex-column flex-md-row justify-content-between align-items-center mt-3"ip>',
+                    "drawCallback": function (settings) {
+                        var api = this.api();
+                        
+                        // Sadece formatlanmış TL metinlerinden (₺) sayısal değerleri çıkarıp toplamak için yardımcı fonksiyon
+                        var intVal = function (i) {
+                            if (typeof i === 'string') {
+                                i = i.replace(/[\$,₺]/g, '').replace(/\./g, '').replace(/,/g, '.');
+                            }
+                            return typeof i === 'number' ? i : Number(i) || 0;
+                        };
+
+                        var pageTotal = api
+                            .column(5, { page: 'current' })
+                            .data()
+                            .reduce(function (a, b) {
+                                return intVal(a) + intVal(b);
+                            }, 0);
+
+                        var formatter = new Intl.NumberFormat('tr-TR', {
+                            style: 'currency',
+                            currency: 'TRY',
+                            minimumFractionDigits: 2
+                        });
+                        
+                        $(api.column(5).footer()).html(formatter.format(pageTotal));
+                    },
+                    "buttons": [
+                        {
+                            extend: 'excelHtml5',
+                            text: '<i class="bi bi-file-earmark-excel"></i> Excel',
+                            className: 'btn btn-success btn-sm me-2',
+                            title: 'Tüm Makine Bakım Kayıtları',
+                            footer: true,
+                            exportOptions: { 
+                                columns: [0, 1, 2, 3, 4, 5],
+                                format: {
+                                    body: function (data, row, column, node) {
+                                        return data.toString().replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+                                    }
+                                }
+                            }
+                        },
+                        {
+                            extend: 'pdfHtml5',
+                            text: '<i class="bi bi-file-earmark-pdf"></i> PDF',
+                            className: 'btn btn-danger btn-sm',
+                            title: 'Tüm Makine Bakım Kayıtları',
+                            orientation: 'landscape',
+                            pageSize: 'A4',
+                            footer: true,
+                            exportOptions: { 
+                                columns: [0, 1, 2, 3, 4, 5],
+                                format: {
+                                    body: function (data, row, column, node) {
+                                        return data.toString().replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+                                    }
+                                }
+                            },
+                            customize: function(doc) {
+                                doc.defaultStyle.fontSize = 9;
+                                doc.styles.tableHeader.fontSize = 10;
+                            }
+                        }
+                    ]
+                });
+
+                // Özel Tür Filtresi Olayı
+                $('#bakimTuruFilter').on('change', function () {
+                    var val = $.fn.dataTable.util.escapeRegex($(this).val());
+                    table.column(2).search(val ? '^' + val + '$' : '', true, false).draw();
+                });
+            }
+        });
+    </script>
+}

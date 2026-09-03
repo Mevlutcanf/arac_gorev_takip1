@@ -1,0 +1,162 @@
+@model AracGorevFormu.Models.ViewModels.MakineDetayViewModel
+@{
+    ViewData["Title"] = "Makine Detayı: " + Model.Makine.Ad;
+}
+
+<div class="d-flex align-items-center justify-content-between mb-4">
+    <div>
+        <h1 class="h3 fw-bold text-slate-900 mb-1">
+            @Model.Makine.Ad
+            @if (Model.Makine.Aktif)
+            {
+                <span class="d-inline-block px-2 py-1 rounded-pill bg-emerald-100 text-emerald-700 fw-bold fs-7 ms-2 align-middle border border-emerald-200">Aktif</span>
+            }
+            else
+            {
+                <span class="d-inline-block px-2 py-1 rounded-pill bg-red-100 text-red-700 fw-bold fs-7 ms-2 align-middle border border-red-200">Pasif</span>
+            }
+        </h1>
+        <p class="text-slate-500 mb-0">@Model.Makine.Marka @Model.Makine.Model - @Model.Makine.Lokasyon</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a asp-action="Duzenle" asp-route-id="@Model.Makine.Id" class="btn btn-primary shadow-sm hover-lift">
+            <i class="bi bi-pencil-square me-1"></i> Düzenle
+        </a>
+        <a asp-action="Index" class="btn btn-outline-secondary shadow-sm hover-lift">
+            <i class="bi bi-arrow-left me-1"></i> Listeye Dön
+        </a>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- SOL SÜTUN: MAKİNE GÖRSELİ VEYA BİLGİSİ (STICKY) -->
+    <div class="col-lg-4">
+        <div class="sticky-top" style="top: 100px; z-index: 10;">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-white py-3 border-bottom d-flex align-items-center">
+                    <i class="bi bi-tools text-amber-500 fs-5 me-2"></i>
+                    <h5 class="mb-0 fw-bold text-slate-800">Makine / Cihaz Profili</h5>
+                </div>
+                <div class="card-body p-0 bg-slate-50 d-flex justify-content-center align-items-center" style="min-height: 300px; border-radius: 0 0 12px 12px;">
+                    <!-- Şu an makine resmi olmadığı için ikon gösteriyoruz -->
+                    <div class="text-center text-slate-400 p-4">
+                        <i class="bi bi-hdd-rack display-1 mb-3 opacity-25"></i>
+                        <h6 class="fw-semibold">Görsel Eklenmemiş</h6>
+                        <p class="small mb-3">Sistemde makine için tanımlı görsel bulunmuyor.</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card shadow-sm border-0 mt-4">
+                <div class="card-body">
+                    <h6 class="fw-bold text-slate-700 border-bottom pb-2 mb-3"><i class="bi bi-speedometer2 text-indigo-500 me-2"></i> Çalışma Durumu</h6>
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="text-slate-500 small">Güncel Çalışma Saati:</span>
+                        <span class="fw-bold text-slate-800">@Model.Makine.CalismaSaati.ToString("N0") Saat</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="text-slate-500 small">Toplam Bakım Sayısı:</span>
+                        <span class="fw-bold text-slate-800">@Model.BakimGecmisi.Count</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SAĞ SÜTUN: DETAYLI BİLGİLER VE BAKIMLAR -->
+    <div class="col-lg-8">
+        
+        <!-- Temel Bilgiler Kartı -->
+        <div class="card shadow-sm border-0 mb-4">
+            <div class="card-header bg-white py-3 border-bottom">
+                <h5 class="mb-0 fw-bold text-slate-800">Teknik Özellikler</h5>
+            </div>
+            <div class="card-body p-4">
+                <div class="row g-4">
+                    <div class="col-md-6">
+                        <label class="text-slate-400 small text-uppercase tracking-wider fw-bold">Marka</label>
+                        <div class="fs-6 fw-medium text-slate-800">@(Model.Makine.Marka ?? "Bilinmiyor")</div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="text-slate-400 small text-uppercase tracking-wider fw-bold">Model</label>
+                        <div class="fs-6 fw-medium text-slate-800">@(Model.Makine.Model ?? "Bilinmiyor")</div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="text-slate-400 small text-uppercase tracking-wider fw-bold">Seri No / Ürün Kodu</label>
+                        <div class="fs-6 fw-medium text-slate-800 font-monospace">@(Model.Makine.SeriNo ?? "—")</div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="text-slate-400 small text-uppercase tracking-wider fw-bold">Bulunduğu Departman / Alan</label>
+                        <div class="fs-6 fw-medium text-slate-800">@(Model.Makine.Lokasyon ?? "Bilinmiyor")</div>
+                    </div>
+                    <div class="col-md-12">
+                        <label class="text-slate-400 small text-uppercase tracking-wider fw-bold">Sisteme Kayıt Tarihi</label>
+                        <div class="fs-6 fw-medium text-slate-800">@Model.Makine.EklenmeTarihi.ToString("dd.MM.yyyy HH:mm")</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bakım Geçmişi Kartı -->
+        <div class="card shadow-sm border-0 mb-4">
+            <div class="card-header bg-white py-3 border-bottom d-flex align-items-center justify-content-between">
+                <div class="d-flex align-items-center">
+                    <i class="bi bi-tools text-amber-500 fs-5 me-2"></i>
+                    <h5 class="mb-0 fw-bold text-slate-800">Bakım & Servis Kayıtları</h5>
+                </div>
+                <a asp-action="BakimEkle" asp-route-makineId="@Model.Makine.Id" class="btn btn-sm btn-primary">
+                    <i class="bi bi-plus-lg me-1"></i> Yeni Bakım Ekle
+                </a>
+            </div>
+            <div class="card-body p-0">
+                @if (Model.BakimGecmisi.Any())
+                {
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th class="ps-4 border-0">Tarih</th>
+                                    <th class="border-0">Tür</th>
+                                    <th class="border-0">İşlem Özeti</th>
+                                    <th class="border-0 text-end pe-4">Maliyet</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var bakim in Model.BakimGecmisi)
+                                {
+                                    <tr>
+                                        <td class="ps-4">
+                                            <div class="fw-semibold text-slate-800">@bakim.BakimTarihi.ToString("dd.MM.yyyy")</div>
+                                            <div class="small text-slate-500">@bakim.CalismaSaati.ToString("N0") Saat</div>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-slate-100 text-slate-700 border">@bakim.BakimTuru</span>
+                                            @if(!string.IsNullOrEmpty(bakim.MakbuzDosyaYolu))
+                                            {
+                                                <i class="bi bi-receipt ms-1 text-primary" title="Makbuz Eklendi"></i>
+                                            }
+                                        </td>
+                                        <td>
+                                            <span class="d-inline-block text-truncate" style="max-width: 200px;" title="@bakim.YapilanIslemler">
+                                                @bakim.YapilanIslemler
+                                            </span>
+                                        </td>
+                                        <td class="text-end pe-4 fw-semibold text-success">@bakim.Maliyet.ToString("C")</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+                else
+                {
+                    <div class="text-center text-muted p-5">
+                        <i class="bi bi-journal-x display-4 mb-3 opacity-25"></i>
+                        <h5>Bakım Kaydı Bulunamadı</h5>
+                        <p class="small mb-0">Bu makineye ait henüz bir bakım veya servis işlemi girilmemiş.</p>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>

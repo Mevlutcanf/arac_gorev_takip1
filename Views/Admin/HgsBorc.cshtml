@@ -20,7 +20,7 @@
                 <i class="bi bi-arrow-left me-1"></i>Tüm Filo Listesine Dön
             </a>
         }
-        <button type="button" class="btn btn-accent shadow-sm" data-bs-toggle="modal" data-bs-target="#hgsEkleModal">
+        <button type="button" class="btn btn-warning text-dark shadow-sm fw-bold" data-bs-toggle="modal" data-bs-target="#hgsEkleModal">
             <i class="bi bi-plus-circle me-1"></i>Yeni HGS / Ceza Kaydı Ekle
         </button>
     </div>
@@ -123,7 +123,7 @@
                 </div>
             </div>
             <div class="col-md-3">
-                <button type="submit" class="btn btn-accent w-100 fw-bold">
+                <button type="submit" class="btn btn-warning text-dark w-100 fw-bold">
                     <i class="bi bi-search me-1"></i>Seçili Aracı Sorgula (API)
                 </button>
             </div>
@@ -150,8 +150,8 @@
             </div>
             <span class="badge bg-slate-700 text-white fw-bold">@Model.AracOzetleri.Count Araç</span>
         </div>
-        <div class="table-responsive">
-            <table class="table align-middle mb-0">
+        <div class="table-responsive p-3">
+            <table class="table align-middle mb-0" id="hgsOzetTable">
                 <thead>
                     <tr>
                         <th class="ps-3">Plaka</th>
@@ -213,7 +213,7 @@
                                 <div class="d-inline-flex gap-1">
                                     <form asp-action="HgsSorgula" asp-route-plaka="@a.Plaka" method="post" class="d-inline" onsubmit="return showLoading(this);">
                                         @Html.AntiForgeryToken()
-                                        <button type="submit" class="btn btn-sm btn-accent text-nowrap">
+                                        <button type="submit" class="btn btn-sm btn-warning text-dark text-nowrap fw-bold">
                                             <i class="bi bi-search me-1"></i>Sorgula (API)
                                         </button>
                                     </form>
@@ -288,8 +288,8 @@ else if (seciliAracOzet != null)
         </div>
         <span class="badge bg-amber-500 text-slate-900 fw-bold fs-6">@Model.TumGecisler.Count Hareket</span>
     </div>
-    <div class="table-responsive">
-        <table class="table align-middle mb-0">
+    <div class="table-responsive p-3">
+        <table class="table align-middle mb-0" id="hgsGecislerTable">
             <thead>
                 <tr>
                     <th class="ps-3">Geçiş Tarihi</th>
@@ -319,28 +319,34 @@ else if (seciliAracOzet != null)
                         </td>
                         <td class="fw-bold text-slate-900 fs-6">@g.Tutar.ToString("C2")</td>
                         <td class="text-end pe-3">
-                            @if (g.OdediMi)
-                            {
-                                <span class="badge badge-hgs-odendi"><i class="bi bi-check-circle-fill me-1"></i>Ödendi</span>
-                            }
-                            else
-                            {
-                                <div class="d-inline-flex flex-column align-items-end gap-1">
-                                    <span class="badge badge-hgs-bekliyor mb-1"><i class="bi bi-hourglass-split me-1"></i>Ödeme Bekliyor</span>
-                                    <div class="d-flex gap-1">
-                                        <a href="https://webihlaltakip.kgm.gov.tr/WebIhlalSorgulama/Sayfalar/Sorgulama.aspx?lang=tr" target="_blank" class="btn btn-sm btn-primary py-1 px-2 text-nowrap fw-bold" title="KGM Web İhlal Takip sayfasında ödeme yap">
-                                            <i class="bi bi-credit-card-fill me-1"></i>Resmî Ödeme Yap
-                                        </a>
-                                        <form asp-action="HgsOde" asp-route-id="@g.Id" asp-route-plaka="@(Model.SeciliPlaka ?? g.Plaka)" method="post" class="d-inline"
-                                              onsubmit="return confirm('Bu borcu sistemde ödendi olarak kapatmak istiyor musunuz?');">
-                                            @Html.AntiForgeryToken()
-                                            <button type="submit" class="btn btn-sm btn-outline-success py-1 px-2 text-nowrap fw-bold" title="Sistemde ödendi olarak işaretle">
-                                                <i class="bi bi-check2-all"></i>
-                                            </button>
-                                        </form>
+                            <div class="d-flex justify-content-end align-items-center gap-2">
+                                @if (g.OdediMi)
+                                {
+                                    <span class="badge badge-hgs-odendi"><i class="bi bi-check-circle-fill me-1"></i>Ödendi</span>
+                                }
+                                else
+                                {
+                                    <div class="d-inline-flex flex-column align-items-end gap-1">
+                                        <span class="badge badge-hgs-bekliyor mb-1"><i class="bi bi-hourglass-split me-1"></i>Ödeme Bekliyor</span>
+                                        <div class="d-flex gap-1">
+                                            <a href="https://webihlaltakip.kgm.gov.tr/WebIhlalSorgulama/Sayfalar/Sorgulama.aspx?lang=tr" target="_blank" class="btn btn-sm btn-primary py-1 px-2 text-nowrap fw-bold" title="KGM Web İhlal Takip sayfasında ödeme yap">
+                                                <i class="bi bi-credit-card-fill me-1"></i>Resmî Ödeme Yap
+                                            </a>
+                                            <form asp-action="HgsOde" asp-route-id="@g.Id" asp-route-plaka="@(Model.SeciliPlaka ?? g.Plaka)" method="post" class="d-inline"
+                                                  onsubmit="return confirm('Bu borcu sistemde ödendi olarak kapatmak istiyor musunuz?');">
+                                                @Html.AntiForgeryToken()
+                                                <button type="submit" class="btn btn-sm btn-outline-warning text-dark py-1 px-2 text-nowrap fw-bold" title="Sistemde ödendi olarak işaretle">
+                                                    <i class="bi bi-check2-all"></i>
+                                                </button>
+                                            </form>
+                                        </div>
                                     </div>
-                                </div>
-                            }
+                                }
+                                <form asp-action="HgsSil" asp-route-id="@g.Id" asp-route-plaka="@(Model.SeciliPlaka ?? g.Plaka)" method="post" class="d-inline" onsubmit="return confirm('Bu HGS kaydını silmek istediğinize emin misiniz?');">
+                                    @Html.AntiForgeryToken()
+                                    <button type="submit" class="btn btn-sm btn-outline-danger py-1 px-2 text-nowrap fw-bold" title="Sil"><i class="bi bi-trash"></i></button>
+                                </form>
+                            </div>
                         </td>
                     </tr>
                 }
@@ -399,7 +405,7 @@ else if (seciliAracOzet != null)
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
-                    <button type="submit" class="btn btn-accent"><i class="bi bi-save me-1"></i>Kaydı Ekle</button>
+                    <button type="submit" class="btn btn-warning text-dark fw-bold"><i class="bi bi-save me-1"></i>Kaydı Ekle</button>
                 </div>
             </form>
         </div>
@@ -407,6 +413,16 @@ else if (seciliAracOzet != null)
 </div>
 
 @section Scripts {
+    <!-- DataTables Export Buttons Libraries -->
+    <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.2/css/buttons.bootstrap5.min.css">
+    <script src="https://cdn.datatables.net/buttons/2.4.2/js/dataTables.buttons.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.bootstrap5.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/pdfmake.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/vfs_fonts.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.html5.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.print.min.js"></script>
+
     <script>
         function showLoading(form) {
             var btn = $(form).find('button[type="submit"]');
@@ -417,5 +433,38 @@ else if (seciliAracOzet != null)
             // Return true allows form to submit naturally
             return true;
         }
+
+        $(document).ready(function () {
+            // Ozet Tablosu
+            if ($('#hgsOzetTable tbody tr').length > 0 && !$('#hgsOzetTable tbody tr td').hasClass('dataTables_empty')) {
+                $('#hgsOzetTable').DataTable({
+                    language: { url: '//cdn.datatables.net/plug-ins/1.13.8/i18n/tr.json' },
+                    pageLength: 25,
+                    responsive: true,
+                    ordering: true,
+                    dom: '<"d-flex flex-column flex-md-row justify-content-between align-items-center mb-3"Bf>rt<"d-flex flex-column flex-md-row justify-content-between align-items-center mt-3"ip>',
+                    buttons: [
+                        { extend: 'excelHtml5', text: '<i class="bi bi-file-earmark-excel"></i> Excel', className: 'btn btn-success btn-sm me-2', title: 'HGS Borc Ozeti', exportOptions: { columns: [0, 1, 2, 3, 4, 5, 6], format: { body: function (data) { return data.toString().replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim(); } } } },
+                        { extend: 'pdfHtml5', text: '<i class="bi bi-file-earmark-pdf"></i> PDF', className: 'btn btn-danger btn-sm', title: 'HGS Borc Ozeti', orientation: 'landscape', pageSize: 'A4', exportOptions: { columns: [0, 1, 2, 3, 4, 5, 6], format: { body: function (data) { return data.toString().replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim(); } } } }
+                    ]
+                });
+            }
+
+            // Gecisler Tablosu
+            if ($('#hgsGecislerTable tbody tr').length > 0 && !$('#hgsGecislerTable tbody tr td').hasClass('dataTables_empty')) {
+                $('#hgsGecislerTable').DataTable({
+                    language: { url: '//cdn.datatables.net/plug-ins/1.13.8/i18n/tr.json' },
+                    pageLength: 25,
+                    responsive: true,
+                    ordering: true,
+                    order: [[0, "desc"]], // Tarihe gore
+                    dom: '<"d-flex flex-column flex-md-row justify-content-between align-items-center mb-3"Bf>rt<"d-flex flex-column flex-md-row justify-content-between align-items-center mt-3"ip>',
+                    buttons: [
+                        { extend: 'excelHtml5', text: '<i class="bi bi-file-earmark-excel"></i> Excel', className: 'btn btn-success btn-sm me-2', title: 'HGS Gecis Hareketleri', exportOptions: { columns: [0, 1, 2, 3, 4, 5], format: { body: function (data) { return data.toString().replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim(); } } } },
+                        { extend: 'pdfHtml5', text: '<i class="bi bi-file-earmark-pdf"></i> PDF', className: 'btn btn-danger btn-sm', title: 'HGS Gecis Hareketleri', orientation: 'landscape', pageSize: 'A4', exportOptions: { columns: [0, 1, 2, 3, 4, 5], format: { body: function (data) { return data.toString().replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim(); } } } }
+                    ]
+                });
+            }
+        });
     </script>
 }

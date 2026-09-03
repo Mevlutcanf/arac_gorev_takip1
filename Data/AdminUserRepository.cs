@@ -12,42 +12,42 @@ namespace AracGorevFormu.Data
             _db = db;
         }
 
-        public List<AdminUser> Tumu() => _db.AdminUsers.AsNoTracking().OrderBy(a => a.KullaniciAdi).ToList();
+        public async Task<List<AdminUser>> TumuAsync() => await _db.AdminUsers.AsNoTracking().OrderBy(a => a.KullaniciAdi).ToListAsync();
 
-        public AdminUser? GetirById(int id) => _db.AdminUsers.FirstOrDefault(a => a.Id == id);
+        public async Task<AdminUser?> GetirByIdAsync(int id) => await _db.AdminUsers.FirstOrDefaultAsync(a => a.Id == id);
 
-        public AdminUser? GetirByKullaniciAdi(string kullaniciAdi)
+        public async Task<AdminUser?> GetirByKullaniciAdiAsync(string kullaniciAdi)
         {
             if (string.IsNullOrWhiteSpace(kullaniciAdi)) return null;
             var normalized = kullaniciAdi.Trim().ToLower();
-            return _db.AdminUsers.FirstOrDefault(a => a.KullaniciAdi.ToLower() == normalized);
+            return await _db.AdminUsers.FirstOrDefaultAsync(a => a.KullaniciAdi.ToLower() == normalized);
         }
 
-        public bool KullaniciAdiVarMi(string kullaniciAdi) => GetirByKullaniciAdi(kullaniciAdi) != null;
+        public async Task<bool> KullaniciAdiVarMiAsync(string kullaniciAdi) => await GetirByKullaniciAdiAsync(kullaniciAdi) != null;
 
-        public AdminUser Ekle(AdminUser admin)
+        public async Task<AdminUser> EkleAsync(AdminUser admin)
         {
             admin.EklenmeTarihi = DateTime.Now;
             if (string.IsNullOrEmpty(admin.Rol)) admin.Rol = "Yönetici";
             _db.AdminUsers.Add(admin);
-            _db.SaveChanges();
+            await _db.SaveChangesAsync();
             return admin;
         }
 
-        public bool Guncelle(AdminUser admin)
+        public async Task<bool> GuncelleAsync(AdminUser admin)
         {
             _db.AdminUsers.Update(admin);
-            return _db.SaveChanges() > 0;
+            return await _db.SaveChangesAsync() > 0;
         }
 
-        public bool Sil(int id)
+        public async Task<bool> SilAsync(int id)
         {
-            var target = GetirById(id);
+            var target = await GetirByIdAsync(id);
             if (target == null) return false;
             _db.AdminUsers.Remove(target);
-            return _db.SaveChanges() > 0;
+            return await _db.SaveChangesAsync() > 0;
         }
 
-        public int AdminSayisi() => _db.AdminUsers.Count();
+        public async Task<int> AdminSayisiAsync() => await _db.AdminUsers.CountAsync();
     }
 }

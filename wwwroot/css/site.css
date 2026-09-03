@@ -191,14 +191,18 @@ body {
 }
 
 .card-header {
-  background-color: #F8FAFC !important;
-  border-bottom: 1px solid var(--border-color) !important;
+  background-color: #F8FAFC;
+  border-bottom: 1px solid var(--border-color);
   padding: 1.25rem 1.5rem !important;
   font-weight: 700 !important;
   font-size: 1rem !important;
-  color: var(--text-main) !important;
+  color: var(--text-main);
   border-top-left-radius: calc(var(--radius-lg) - 1px);
   border-top-right-radius: calc(var(--radius-lg) - 1px);
+}
+.card-header.bg-slate-900, .card-header.text-white {
+  background-color: #0F172A !important;
+  color: #FFFFFF !important;
 }
 
 /* --------------------------------------------------------------------------

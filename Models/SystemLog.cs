@@ -19,5 +19,8 @@ namespace AracGorevFormu.Models
 
         [Required]
         public string Detay { get; set; } = string.Empty;
+
+        [StringLength(45)]
+        public string IpAdresi { get; set; } = string.Empty;
     }
 }

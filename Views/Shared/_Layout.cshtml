@@ -20,7 +20,7 @@
       "description": "@(ViewData["MetaDescription"] ?? "Modern ve kullanıcı dostu arayüz ile kolay filo yönetimi, canlı araç takibi ve görev formları.")"
     }
     </script>
-    <title>@ViewData["Title"] - Abdurrahman Tatlıcı Araç Görev Takip</title>
+    <title>@ViewData["Title"] - Fleon | Filo ve Makine Yönetimi</title>
     <link rel="shortcut icon" type="image/png" href="/img/logo.png?v=4" />
     <link rel="icon" type="image/png" href="/img/logo.png?v=4" />
     <!-- Third-Party CSS -->
@@ -42,24 +42,24 @@
                 @if (User.Identity != null && User.Identity.IsAuthenticated)
                 {
                     <a class="app-brand" asp-controller="Admin" asp-action="Index">
-                        <div class="app-brand-icon">
-                            <i class="bi bi-truck-front-fill"></i>
+                        <div class="app-brand-icon bg-transparent text-primary">
+                            <img src="~/img/fleon-logo.jpg" alt="Fleon" style="width:36px; height:36px; border-radius:8px; object-fit:contain;" />
                         </div>
-                        <div class="d-flex flex-column">
-                            <span class="app-brand-title">Araç Görev Takip</span>
-                            <span class="app-brand-subtitle">Abdurrahman Tatlıcı</span>
+                        <div class="d-flex flex-column ms-2">
+                            <span class="app-brand-title" style="letter-spacing:1px; font-weight:800;">Fleon</span>
+                            <span class="app-brand-subtitle" style="font-size:0.75rem;">Filo & Makine Zekası</span>
                         </div>
                     </a>
                 }
                 else
                 {
                     <a class="app-brand" asp-controller="Home" asp-action="Index">
-                        <div class="app-brand-icon">
-                            <i class="bi bi-truck-front-fill"></i>
+                        <div class="app-brand-icon bg-transparent text-primary">
+                            <img src="~/img/fleon-logo.jpg" alt="Fleon" style="width:36px; height:36px; border-radius:8px; object-fit:contain;" />
                         </div>
-                        <div class="d-flex flex-column">
-                            <span class="app-brand-title">Araç Görev Takip</span>
-                            <span class="app-brand-subtitle">Abdurrahman Tatlıcı</span>
+                        <div class="d-flex flex-column ms-2">
+                            <span class="app-brand-title" style="letter-spacing:1px; font-weight:800;">Fleon</span>
+                            <span class="app-brand-subtitle" style="font-size:0.75rem;">Filo & Makine Zekası</span>
                         </div>
                     </a>
                 }
@@ -80,12 +80,12 @@
                             <ul class="dropdown-menu shadow" aria-labelledby="gorevDropdown">
                                 <li>
                                     <a class="dropdown-item py-2" asp-controller="Form" asp-action="Yeni">
-                                        <i class="bi bi-plus-circle me-2 text-primary"></i>Görev Formu Doldur
+                                        <i class="bi bi-plus-circle me-2 text-slate-800"></i>Görev Formu Doldur
                                     </a>
                                 </li>
                                 <li>
                                     <a class="dropdown-item py-2" asp-controller="Form" asp-action="Sorgula">
-                                        <i class="bi bi-search me-2 text-primary"></i>Form Durumu Sorgula
+                                        <i class="bi bi-search me-2 text-slate-800"></i>Form Durumu Sorgula
                                     </a>
                                 </li>
                                 @if (User.Identity != null && User.Identity.IsAuthenticated)
@@ -93,7 +93,7 @@
                                     <li><hr class="dropdown-divider"></li>
                                     <li>
                                         <a class="dropdown-item py-2" asp-controller="Admin" asp-action="Formlar">
-                                            <i class="bi bi-card-checklist me-2 text-primary"></i>Tüm Görev Formları
+                                            <i class="bi bi-card-checklist me-2 text-slate-800"></i>Tüm Görev Formları
                                         </a>
                                     </li>
                                 }
@@ -110,22 +110,22 @@
                                 <ul class="dropdown-menu shadow" aria-labelledby="filoDropdown">
                                     <li>
                                         <a class="dropdown-item py-2" asp-controller="Admin" asp-action="Index">
-                                            <i class="bi bi-grid-1x2-fill me-2 text-primary"></i>Filo Dashboard
+                                            <i class="bi bi-grid-1x2-fill me-2 text-slate-800"></i>Filo Dashboard
                                         </a>
                                     </li>
                                     <li>
                                         <a class="dropdown-item py-2" asp-controller="Admin" asp-action="Araclar">
-                                            <i class="bi bi-car-front me-2 text-primary"></i>Araç Filosu & Ruhsatlar
+                                            <i class="bi bi-car-front me-2 text-slate-800"></i>Araç Filosu & Ruhsatlar
                                         </a>
                                     </li>
                                     <li>
                                         <a class="dropdown-item py-2" asp-controller="Admin" asp-action="Bakimlar">
-                                            <i class="bi bi-tools me-2 text-primary"></i>Bakım & Servis Takibi
+                                            <i class="bi bi-tools me-2 text-slate-800"></i>Bakım & Servis Takibi
                                         </a>
                                     </li>
                                     <li>
                                         <a class="dropdown-item py-2" asp-controller="Admin" asp-action="HgsBorc">
-                                            <i class="bi bi-credit-card-2-front me-2 text-primary"></i>HGS & Ceza Sorgulama
+                                            <i class="bi bi-credit-card-2-front me-2 text-slate-800"></i>HGS & Ceza Sorgulama
                                         </a>
                                     </li>
                                 </ul>
@@ -138,18 +138,23 @@
                                 </a>
                                 <ul class="dropdown-menu shadow" aria-labelledby="makineDropdown">
                                     <li>
+                                        <a class="dropdown-item py-2" asp-controller="Makine" asp-action="Dashboard">
+                                            <i class="bi bi-speedometer2 me-2 text-slate-800"></i>Makine Dashboard
+                                        </a>
+                                    </li>
+                                    <li>
                                         <a class="dropdown-item py-2" asp-controller="Makine" asp-action="Index">
-                                            <i class="bi bi-gear-wide-connected me-2 text-primary"></i>Makine Yönetimi
+                                            <i class="bi bi-gear-wide-connected me-2 text-slate-800"></i>Makine Yönetimi
                                         </a>
                                     </li>
                                     <li>
                                         <a class="dropdown-item py-2" asp-controller="Makine" asp-action="Ekle">
-                                            <i class="bi bi-plus-circle me-2 text-primary"></i>Yeni Makine Ekle
+                                            <i class="bi bi-plus-circle me-2 text-slate-800"></i>Yeni Makine Ekle
                                         </a>
                                     </li>
                                     <li>
                                         <a class="dropdown-item py-2" asp-controller="Makine" asp-action="BakimEkle">
-                                            <i class="bi bi-tools me-2 text-primary"></i>Makine Bakım Ekle
+                                            <i class="bi bi-tools me-2 text-slate-800"></i>Makine Bakım Ekle
                                         </a>
                                     </li>
                                 </ul>
@@ -163,23 +168,23 @@
                                 <ul class="dropdown-menu shadow" aria-labelledby="ayarlarDropdown">
                                     <li>
                                         <a class="dropdown-item py-2" asp-controller="Admin" asp-action="Ayarlar" asp-route-tab="yoneticiler">
-                                            <i class="bi bi-people me-2 text-primary"></i>Yönetici Hesapları
+                                            <i class="bi bi-people me-2 text-slate-800"></i>Yönetici Hesapları
                                         </a>
                                     </li>
                                     <li>
                                         <a class="dropdown-item py-2" asp-controller="Admin" asp-action="Ayarlar" asp-route-tab="smtp">
-                                            <i class="bi bi-envelope me-2 text-primary"></i>E-Posta (SMTP) Bildirim
+                                            <i class="bi bi-envelope me-2 text-slate-800"></i>E-Posta (SMTP) Bildirim
                                         </a>
                                     </li>
                                     <li>
                                         <a class="dropdown-item py-2" asp-controller="Admin" asp-action="Ayarlar" asp-route-tab="arvento">
-                                            <i class="bi bi-geo-alt me-2 text-primary"></i>Arvento GPS Entegrasyonu
+                                            <i class="bi bi-geo-alt me-2 text-slate-800"></i>Arvento GPS Entegrasyonu
                                         </a>
                                     </li>
                                     <li><hr class="dropdown-divider"></li>
                                     <li>
                                         <a class="dropdown-item py-2" asp-controller="Admin" asp-action="SistemKayitlari">
-                                            <i class="bi bi-clock-history me-2 text-primary"></i>Sistem Logları
+                                            <i class="bi bi-clock-history me-2 text-slate-800"></i>Sistem Logları
                                         </a>
                                     </li>
                                 </ul>
@@ -199,7 +204,7 @@
                                 <ul class="dropdown-menu dropdown-menu-end shadow" aria-labelledby="userMenuDropdown">
                                     <li>
                                         <a class="dropdown-item py-2" asp-controller="Admin" asp-action="Profil">
-                                            <i class="bi bi-person-badge me-2 text-primary"></i>Profilim & Şifre
+                                            <i class="bi bi-person-badge me-2 text-slate-800"></i>Profilim & Şifre
                                         </a>
                                     </li>
                                     <li><hr class="dropdown-divider"></li>
@@ -216,7 +221,7 @@
                         }
                         else
                         {
-                            <a class="btn btn-outline-primary btn-sm text-nowrap" asp-controller="Account" asp-action="Login">
+                            <a class="btn btn-dark btn-sm text-nowrap" asp-controller="Account" asp-action="Login">
                                 <i class="bi bi-lock-fill me-1"></i>Yönetici Girişi
                             </a>
                         }
@@ -266,7 +271,7 @@
         <div class="container-fluid px-lg-4">
             <div class="d-flex flex-column flex-sm-row align-items-center justify-content-between gap-2">
                 <div>
-                    <strong class="text-slate-800">Abdurrahman Tatlıcı</strong> &copy; @DateTime.Now.Year — Araç Görev Takip ve Filo Yönetim Sistemi
+                    <strong class="text-slate-800">Fleon</strong> &copy; @DateTime.Now.Year — Filo ve Makine Yönetimi
                 </div>
             </div>
         </div>

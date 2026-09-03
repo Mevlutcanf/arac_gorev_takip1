@@ -83,7 +83,7 @@ namespace AracGorevFormu.Services
             try
             {
                 var message = new MimeMessage();
-                message.From.Add(new MailboxAddress("Abdurrahman Tatlıcı Araç Takip", ayarlar.SenderEmail));
+                message.From.Add(new MailboxAddress("Abdurrahman Tatlıcı | Fleon", ayarlar.SenderEmail));
 
                 var alicilar = (ayarlar.NotificationEmails ?? string.Empty)
                     .Split(new[] { ',', ';' }, StringSplitOptions.RemoveEmptyEntries)
@@ -103,17 +103,17 @@ namespace AracGorevFormu.Services
                     message.To.Add(new MailboxAddress(null, ayarlar.SenderEmail));
                 }
 
-                message.Subject = "SMTP Test Mesajı — Araç Görev Takip Sistemi";
+                message.Subject = "SMTP Test Mesajı — Fleon";
 
                 var bodyBuilder = new BodyBuilder
                 {
                     HtmlBody = @"
-                        <div style='font-family: Arial, sans-serif; padding: 30px; max-width: 500px; margin: 0 auto;'>
-                            <div style='background: linear-gradient(135deg, #0f172a, #312e81); padding: 20px 25px; border-radius: 12px 12px 0 0;'>
-                                <h2 style='color: #ffffff; margin: 0; font-size: 18px;'>✅ SMTP Bağlantı Testi Başarılı</h2>
+                        <div style='font-family: ""Segoe UI"", Arial, sans-serif; padding: 30px; max-width: 500px; margin: 0 auto; background-color: #f8fafc;'>
+                            <div style='background: #0f172a; padding: 20px 25px; border-radius: 12px 12px 0 0; border-bottom: 4px solid #f59e0b;'>
+                                <h2 style='color: #f8fafc; margin: 0; font-size: 20px;'><span style='color: #f59e0b;'>✅</span> SMTP Bağlantı Testi Başarılı</h2>
                             </div>
                             <div style='background: #ffffff; padding: 25px; border: 1px solid #e2e8f0; border-radius: 0 0 12px 12px;'>
-                                <p style='color: #334155; margin: 0 0 10px;'>Araç Görev Takip sisteminden gelen e-posta bildirim testi başarıyla tamamlandı.</p>
+                                <p style='color: #334155; margin: 0 0 10px;'>Fleon sisteminden gelen e-posta bildirim testi başarıyla tamamlandı.</p>
                                 <p style='color: #94a3b8; font-size: 12px; margin: 0;'>Bu mesaj otomatik test amaçlı gönderilmiştir.</p>
                             </div>
                         </div>"
@@ -185,7 +185,7 @@ namespace AracGorevFormu.Services
                 }
 
                 var message = new MimeMessage();
-                message.From.Add(new MailboxAddress("Abdurrahman Tatlıcı Araç Görev Takip", ayar.SenderEmail));
+                message.From.Add(new MailboxAddress("Abdurrahman Tatlıcı | Fleon", ayar.SenderEmail));
 
                 foreach (var alici in alicilar)
                 {
@@ -197,9 +197,9 @@ namespace AracGorevFormu.Services
                 var bodyBuilder = new BodyBuilder
                 {
                     HtmlBody = $@"
-                        <div style='font-family: Arial, sans-serif; padding: 20px; color: #1e293b; max-width: 600px; margin: 0 auto;'>
-                            <div style='background: linear-gradient(135deg, #0f172a, #312e81); padding: 20px 25px; border-radius: 12px 12px 0 0;'>
-                                <h2 style='color: #ffffff; margin: 0; font-size: 18px;'>🚗 Yeni Araç Görev Talebi</h2>
+                        <div style='font-family: ""Segoe UI"", Arial, sans-serif; padding: 20px; color: #1e293b; max-width: 600px; margin: 0 auto; background-color: #f8fafc;'>
+                            <div style='background: #0f172a; padding: 20px 25px; border-radius: 12px 12px 0 0; border-bottom: 4px solid #f59e0b;'>
+                                <h2 style='color: #f8fafc; margin: 0; font-size: 20px;'><span style='color: #f59e0b;'>🚗</span> Yeni Araç Görev Talebi</h2>
                             </div>
                             <div style='background: #ffffff; padding: 25px; border: 1px solid #e2e8f0;'>
                                 <p style='color: #475569;'>Sistemde yeni bir araç görev formu dolduruldu. Detaylar aşağıdadır:</p>
@@ -209,7 +209,6 @@ namespace AracGorevFormu.Services
                                     <tr style='background: #f8fafc;'><td style='padding: 10px 12px; border: 1px solid #cbd5e1; font-weight: bold;'>Kullanan Personel:</td><td style='padding: 10px 12px; border: 1px solid #cbd5e1;'>{form.KullananAdSoyad} ({form.KullananTelefon})</td></tr>
                                     <tr><td style='padding: 10px 12px; border: 1px solid #cbd5e1; font-weight: bold;'>Görev Amacı:</td><td style='padding: 10px 12px; border: 1px solid #cbd5e1;'>{form.GorevAmaci}</td></tr>
                                     <tr style='background: #f8fafc;'><td style='padding: 10px 12px; border: 1px solid #cbd5e1; font-weight: bold;'>Planlanan Çıkış:</td><td style='padding: 10px 12px; border: 1px solid #cbd5e1;'>{form.CikisZamani:dd.MM.yyyy HH:mm}</td></tr>
-                                    <tr><td style='padding: 10px 12px; border: 1px solid #cbd5e1; font-weight: bold;'>Planlanan Dönüş:</td><td style='padding: 10px 12px; border: 1px solid #cbd5e1;'>{form.PlanlananDonusZamani:dd.MM.yyyy HH:mm}</td></tr>
                                 </table>
                             </div>
                             <div style='background: #f1f5f9; padding: 15px 25px; border-radius: 0 0 12px 12px; border: 1px solid #e2e8f0; border-top: none;'>
@@ -261,7 +260,7 @@ namespace AracGorevFormu.Services
                 }
 
                 var message = new MimeMessage();
-                message.From.Add(new MailboxAddress("Abdurrahman Tatlıcı Araç Görev Takip", ayar.SenderEmail));
+                message.From.Add(new MailboxAddress("Abdurrahman Tatlıcı | Fleon", ayar.SenderEmail));
 
                 foreach (var alici in alicilar)
                 {
@@ -277,9 +276,9 @@ namespace AracGorevFormu.Services
                 var bodyBuilder = new BodyBuilder
                 {
                     HtmlBody = $@"
-                        <div style='font-family: Arial, sans-serif; padding: 20px; color: #1e293b; max-width: 600px; margin: 0 auto;'>
-                            <div style='background: linear-gradient(135deg, #0f172a, #312e81); padding: 20px 25px; border-radius: 12px 12px 0 0;'>
-                                <h2 style='color: #ffffff; margin: 0; font-size: 18px;'>{durumBaslik}</h2>
+                        <div style='font-family: ""Segoe UI"", Arial, sans-serif; padding: 20px; color: #1e293b; max-width: 600px; margin: 0 auto; background-color: #f8fafc;'>
+                            <div style='background: #0f172a; padding: 20px 25px; border-radius: 12px 12px 0 0; border-bottom: 4px solid {durumRenk};'>
+                                <h2 style='color: #f8fafc; margin: 0; font-size: 20px;'>{durumBaslik}</h2>
                             </div>
                             <div style='background: #ffffff; padding: 25px; border: 1px solid #e2e8f0;'>
                                 <div style='background: {durumBg}; color: {durumRenk}; padding: 12px 15px; border-radius: 6px; font-weight: bold; margin-bottom: 20px;'>
@@ -338,7 +337,7 @@ namespace AracGorevFormu.Services
                 }
 
                 var message = new MimeMessage();
-                message.From.Add(new MailboxAddress("Abdurrahman Tatlıcı Araç Görev Takip", ayar.SenderEmail));
+                message.From.Add(new MailboxAddress("Abdurrahman Tatlıcı | Fleon", ayar.SenderEmail));
 
                 foreach (var alici in alicilar)
                 {
@@ -357,9 +356,9 @@ namespace AracGorevFormu.Services
                 var bodyBuilder = new BodyBuilder
                 {
                     HtmlBody = $@"
-                        <div style='font-family: Arial, sans-serif; padding: 20px; color: #1e293b; max-width: 600px; margin: 0 auto;'>
-                            <div style='background: linear-gradient(135deg, #0f172a, #312e81); padding: 20px 25px; border-radius: 12px 12px 0 0;'>
-                                <h2 style='color: #ffffff; margin: 0; font-size: 18px;'>🏁 Araç Şirkete Teslim Edildi</h2>
+                        <div style='font-family: ""Segoe UI"", Arial, sans-serif; padding: 20px; color: #1e293b; max-width: 600px; margin: 0 auto; background-color: #f8fafc;'>
+                            <div style='background: #0f172a; padding: 20px 25px; border-radius: 12px 12px 0 0; border-bottom: 4px solid #f59e0b;'>
+                                <h2 style='color: #f8fafc; margin: 0; font-size: 20px;'><span style='color: #f59e0b;'>🏁</span> Araç Şirkete Teslim Edildi</h2>
                             </div>
                             <div style='background: #ffffff; padding: 25px; border: 1px solid #e2e8f0;'>
                                 <div style='background: #f0fdf4; color: #166534; padding: 12px 15px; border-radius: 6px; font-weight: bold; margin-bottom: 20px;'>

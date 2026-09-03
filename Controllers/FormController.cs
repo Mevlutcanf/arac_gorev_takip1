@@ -12,21 +12,29 @@ namespace AracGorevFormu.Controllers
         private readonly VehicleRepository _vehicleRepo;
         private readonly GorevFormuRepository _formRepo;
         private readonly IEmailService _emailService;
+        private readonly IServiceScopeFactory _scopeFactory;
 
-        public FormController(VehicleRepository vehicleRepo, GorevFormuRepository formRepo, IEmailService emailService)
+        public FormController(VehicleRepository vehicleRepo, GorevFormuRepository formRepo, IEmailService emailService, IServiceScopeFactory scopeFactory)
         {
             _vehicleRepo = vehicleRepo;
             _formRepo = formRepo;
             _emailService = emailService;
+            _scopeFactory = scopeFactory;
         }
 
         [HttpGet]
-        public IActionResult Yeni()
+        public async Task<IActionResult> Yeni()
         {
+            var aktifAraclar = await _vehicleRepo.AktifOlanlarAsync();
+            var disaridakiFormlar = await _formRepo.DisaridaOlanlarAsync();
+            var beklemedekiFormlar = await _formRepo.BeklemedeOlanlarAsync();
+
             var model = new YeniGorevFormuViewModel
             {
-                AktifAraclar = _vehicleRepo.AktifOlanlar()
+                AktifAraclar = aktifAraclar
             };
+            ViewBag.DisaridakiAracIdleri = disaridakiFormlar.Select(f => f.VehicleId).ToList();
+            ViewBag.OnayBekleyenAracIdleri = beklemedekiFormlar.Select(f => f.VehicleId).ToList();
             return View(model);
         }
 
@@ -34,20 +42,31 @@ namespace AracGorevFormu.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Yeni(YeniGorevFormuViewModel model)
         {
-            var arac = _vehicleRepo.GetirById(model.VehicleId);
+            var arac = await _vehicleRepo.GetirByIdAsync(model.VehicleId);
             if (arac == null || !arac.Aktif)
             {
                 ModelState.AddModelError(nameof(model.VehicleId), "Seçilen araç bulunamadı veya artık aktif değil.");
             }
-
-            if (model.PlanlananDonusZamani <= model.CikisZamani)
+            else
             {
-                ModelState.AddModelError(nameof(model.PlanlananDonusZamani), "Planlanan dönüş zamanı, çıkış zamanından sonra olmalıdır.");
+                var beklemedekiFormlar = await _formRepo.BeklemedeOlanlarAsync();
+                var disaridakiFormlar = await _formRepo.DisaridaOlanlarAsync();
+                
+                var musaitDegil = beklemedekiFormlar.Any(f => f.VehicleId == arac.Id) || disaridakiFormlar.Any(f => f.VehicleId == arac.Id);
+                if (musaitDegil)
+                {
+                    ModelState.AddModelError(nameof(model.VehicleId), "Bu araç şu anda görevde veya onay bekleyen bir görevi var. Lütfen 'Müsait' durumda olan başka bir araç seçiniz.");
+                }
             }
+
 
             if (!ModelState.IsValid)
             {
-                model.AktifAraclar = _vehicleRepo.AktifOlanlar();
+                model.AktifAraclar = await _vehicleRepo.AktifOlanlarAsync();
+                var disaridakiFormlar = await _formRepo.DisaridaOlanlarAsync();
+                var beklemedekiFormlar = await _formRepo.BeklemedeOlanlarAsync();
+                ViewBag.DisaridakiAracIdleri = disaridakiFormlar.Select(f => f.VehicleId).ToList();
+                ViewBag.OnayBekleyenAracIdleri = beklemedekiFormlar.Select(f => f.VehicleId).ToList();
                 return View(model);
             }
 
@@ -62,22 +81,21 @@ namespace AracGorevFormu.Controllers
                 Departman = model.Departman,
                 GorevAmaci = model.GorevAmaci,
                 CikisZamani = model.CikisZamani,
-                PlanlananDonusZamani = model.PlanlananDonusZamani,
                 Durum = GorevDurumu.Beklemede
             };
 
-            _formRepo.Ekle(form);
+            await _formRepo.EkleAsync(form);
 
-            // E-posta bildirim gönderimi (varsa yapılandırılmış SMTP)
+            // Kullanıcı görsel bir geçiş/yükleme ekranı görmek istediği için e-posta gönderimi tamamlanana kadar (senkron) bekliyoruz
             await _emailService.FormBildirimiGonderAsync(form);
 
             return RedirectToAction("Basarili", new { takipKodu = form.TakipKodu });
         }
 
         [HttpGet]
-        public IActionResult Basarili(string takipKodu)
+        public async Task<IActionResult> Basarili(string takipKodu)
         {
-            var form = _formRepo.GetirByTakipKodu(takipKodu);
+            var form = await _formRepo.GetirByTakipKoduAsync(takipKodu);
             if (form == null) return NotFound();
             return View(form);
         }
@@ -90,7 +108,7 @@ namespace AracGorevFormu.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult Sorgula(SorgulaViewModel model)
+        public async Task<IActionResult> Sorgula(SorgulaViewModel model)
         {
             if (model.SorgulamaTipi == "kod")
             {
@@ -101,7 +119,7 @@ namespace AracGorevFormu.Controllers
                     return View(model);
                 }
 
-                var form = _formRepo.GetirByTakipKodu(model.TakipKodu.Trim());
+                var form = await _formRepo.GetirByTakipKoduAsync(model.TakipKodu.Trim());
                 if (form == null)
                 {
                     ModelState.AddModelError(nameof(model.TakipKodu), "Bu takip koduna ait bir görev formu bulunamadı.");
@@ -119,7 +137,7 @@ namespace AracGorevFormu.Controllers
                     return View(model);
                 }
 
-                var sonuclar = _formRepo.AraByAdSoyadTelefon(model.AdSoyad, model.Telefon);
+                var sonuclar = await _formRepo.AraByAdSoyadTelefonAsync(model.AdSoyad, model.Telefon);
 
                 if (sonuclar.Count == 0)
                 {
@@ -136,9 +154,9 @@ namespace AracGorevFormu.Controllers
         }
 
         [HttpGet]
-        public IActionResult Detay(string takipKodu)
+        public async Task<IActionResult> Detay(string takipKodu)
         {
-            var form = _formRepo.GetirByTakipKodu(takipKodu);
+            var form = await _formRepo.GetirByTakipKoduAsync(takipKodu);
             if (form == null) return NotFound();
             return View(form);
         }
@@ -147,14 +165,14 @@ namespace AracGorevFormu.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DonusBildir(string takipKodu)
         {
-            var form = _formRepo.GetirByTakipKodu(takipKodu);
+            var form = await _formRepo.GetirByTakipKoduAsync(takipKodu);
             if (form == null) return NotFound();
 
             if (form.Durum == GorevDurumu.Onaylandi && form.GercekDonusZamani == null)
             {
                 form.GercekDonusZamani = DateTime.Now;
                 form.Durum = GorevDurumu.TamamlandiDondu;
-                _formRepo.Guncelle(form);
+                await _formRepo.GuncelleAsync(form);
                 
                 // Araç iade edildi (teslim edildi) e-postası gönder
                 await _emailService.FormTamamlandiBildirimiGonderAsync(form);

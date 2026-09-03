@@ -1,0 +1,351 @@
+@model AracGorevFormu.Models.ViewModels.AracDetayViewModel
+@{
+    ViewData["Title"] = "Araç Detayı: " + Model.Arac.Plaka;
+}
+
+<div class="d-flex align-items-center justify-content-between mb-4">
+    <div>
+        <h1 class="h3 fw-bold text-slate-900 mb-1">
+            @Model.Arac.Plaka
+            @if (Model.Arac.Aktif)
+            {
+                <span class="d-inline-block px-2 py-1 rounded-pill bg-emerald-100 text-emerald-700 fw-bold fs-7 ms-2 align-middle border border-emerald-200">Aktif</span>
+            }
+            else
+            {
+                <span class="d-inline-block px-2 py-1 rounded-pill bg-red-100 text-red-700 fw-bold fs-7 ms-2 align-middle border border-red-200">Pasif</span>
+            }
+        </h1>
+        <p class="text-slate-500 mb-0">@Model.Arac.Marka @Model.Arac.Model - @Model.Arac.SahiplikTuru</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a asp-action="AracDuzenle" asp-route-id="@Model.Arac.Id" class="btn btn-primary shadow-sm hover-lift">
+            <i class="bi bi-pencil-square me-1"></i> Düzenle
+        </a>
+        <a asp-action="Araclar" class="btn btn-outline-secondary shadow-sm hover-lift">
+            <i class="bi bi-arrow-left me-1"></i> Listeye Dön
+        </a>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- SOL SÜTUN: RUHSAT GÖRSELİ (STICKY) -->
+    <div class="col-lg-4">
+        <div class="sticky-top" style="top: 100px; z-index: 10;">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-white py-3 border-bottom d-flex align-items-center">
+                    <i class="bi bi-card-heading text-amber-500 fs-5 me-2"></i>
+                    <h5 class="mb-0 fw-bold text-slate-800">Ruhsat Belgesi</h5>
+                </div>
+                <div class="card-body p-0 bg-slate-50 d-flex justify-content-center align-items-center" style="min-height: 400px; overflow: hidden; border-radius: 0 0 12px 12px;">
+                    @if (Model.Arac.RuhsatDosyaIcerigi != null && Model.Arac.RuhsatDosyaIcerigi.Length > 0)
+                    {
+                        var ruhsatUrl = Url.Action("RuhsatDosyaIndir", "Admin", new { id = Model.Arac.Id });
+                        var isImage = (Model.Arac.RuhsatDosyaTipi ?? "").StartsWith("image/");
+                        if (isImage)
+                        {
+                            <a href="@ruhsatUrl" target="_blank" title="Tam boyutta açmak için tıklayın">
+                                <img src="@ruhsatUrl" alt="Ruhsat - @Model.Arac.Plaka" class="img-fluid" style="object-fit: contain; max-height: 600px; transition: transform 0.3s ease;" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'" />
+                            </a>
+                        }
+                        else
+                        {
+                            <div class="text-center p-4">
+                                <i class="bi bi-file-earmark-pdf text-danger display-1 mb-3"></i>
+                                <h6 class="fw-semibold">@Model.Arac.RuhsatDosyaAdi</h6>
+                                <a href="@ruhsatUrl" class="btn btn-primary mt-2" target="_blank">
+                                    <i class="bi bi-download me-1"></i>Dosyayı İndir
+                                </a>
+                            </div>
+                        }
+                    }
+                    else if (!string.IsNullOrEmpty(Model.Arac.RuhsatDosyaYolu))
+                    {
+                        <a href="@Model.Arac.RuhsatDosyaYolu" target="_blank" title="Tam boyutta açmak için tıklayın">
+                            <img src="@Model.Arac.RuhsatDosyaYolu" alt="Ruhsat - @Model.Arac.Plaka" class="img-fluid" style="object-fit: contain; max-height: 600px; transition: transform 0.3s ease;" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'" />
+                        </a>
+                    }
+                    else
+                    {
+                        <div class="text-center text-slate-400 p-4">
+                            <i class="bi bi-image-alt display-1 mb-3 opacity-25"></i>
+                            <h6 class="fw-semibold">Ruhsat Yüklenmemiş</h6>
+                            <p class="small mb-3">Bu araca ait herhangi bir belge bulunamadı.</p>
+                            <a asp-action="AracDuzenle" asp-route-id="@Model.Arac.Id" class="btn btn-sm btn-outline-primary">
+                                <i class="bi bi-upload me-1"></i> Belge Yükle
+                            </a>
+                        </div>
+                    }
+                </div>
+            </div>
+            
+            <!-- Canlı Arvento Konumu Özet Kartı -->
+            <div class="card shadow-sm border-0 mt-4">
+                <div class="card-body">
+                    <h6 class="fw-bold text-slate-700 border-bottom pb-2 mb-3"><i class="bi bi-geo-alt-fill text-indigo-500 me-2"></i> Canlı Konum (Arvento)</h6>
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="text-slate-500 small">Güncel KM:</span>
+                        <span class="fw-bold text-slate-800">@(Model.Arac.GuncelKm.HasValue ? Model.Arac.GuncelKm.Value.ToString("N0") + " km" : "Bilinmiyor")</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="text-slate-500 small">Son Sinyal:</span>
+                        <span class="fw-bold text-slate-800">@(Model.Arac.SonKonumZamani?.ToString("dd.MM.yyyy HH:mm") ?? "Veri Yok")</span>
+                    </div>
+                    <div>
+                        <span class="text-slate-500 small d-block mb-1">Adres:</span>
+                        <p class="small text-slate-700 fw-medium mb-0" style="line-height: 1.4;">
+                            @(Model.Arac.SonAdres ?? "Adres verisi bulunamadı.")
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SAĞ SÜTUN: DETAYLI BİLGİLER -->
+    <div class="col-lg-8">
+        
+        <!-- Temel Bilgiler Kartı -->
+        <div class="card shadow-sm border-0 mb-4">
+            <div class="card-header bg-white py-3 border-bottom">
+                <h5 class="mb-0 fw-bold text-slate-800">Temel Bilgiler & Kayıtlar</h5>
+            </div>
+            <div class="card-body p-4">
+                <div class="row g-4">
+                    <div class="col-md-6">
+                        <label class="text-slate-400 small text-uppercase tracking-wider fw-bold">Lokasyon</label>
+                        <div class="fs-6 fw-medium text-slate-800">@(Model.Arac.Lokasyon ?? "Bilinmiyor")</div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="text-slate-400 small text-uppercase tracking-wider fw-bold">Sabit Sürücü / Zimmet</label>
+                        <div class="fs-6 fw-medium text-slate-800">@(Model.Arac.SabitSurucu ?? "Yok")</div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="text-slate-400 small text-uppercase tracking-wider fw-bold">Renk</label>
+                        <div class="fs-6 fw-medium text-slate-800">@(Model.Arac.Renk ?? "Bilinmiyor")</div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="text-slate-400 small text-uppercase tracking-wider fw-bold">Şasi No (VIN)</label>
+                        <div class="fs-6 fw-medium text-slate-800 font-monospace">@(Model.Arac.SasiNo ?? "—")</div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="text-slate-400 small text-uppercase tracking-wider fw-bold">Motor No</label>
+                        <div class="fs-6 fw-medium text-slate-800 font-monospace">@(Model.Arac.MotorNo ?? "—")</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Muayene ve Sigorta Kartı -->
+        <div class="card shadow-sm border-0 mb-4">
+            <div class="card-header bg-white py-3 border-bottom d-flex align-items-center">
+                <i class="bi bi-shield-check text-emerald-500 fs-5 me-2"></i>
+                <h5 class="mb-0 fw-bold text-slate-800">Resmi Geçerlilik Tarihleri</h5>
+            </div>
+            <div class="card-body p-4">
+                <div class="row g-4">
+                    <div class="col-md-4">
+                        <label class="text-slate-400 small text-uppercase tracking-wider fw-bold mb-1 d-block">Tescil Tarihi</label>
+                        <div class="fs-6 fw-medium text-slate-800">@(Model.Arac.TescilTarihi?.ToString("dd.MM.yyyy") ?? "Belirtilmemiş")</div>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="text-slate-400 small text-uppercase tracking-wider fw-bold mb-1 d-block">Muayene Bitiş</label>
+                        @{
+                            var muayeneGecmis = Model.Arac.MuayeneBitisTarihi.HasValue && Model.Arac.MuayeneBitisTarihi.Value < DateTime.Today;
+                            var muayeneYakin = Model.Arac.MuayeneBitisTarihi.HasValue && Model.Arac.MuayeneBitisTarihi.Value >= DateTime.Today && Model.Arac.MuayeneBitisTarihi.Value <= DateTime.Today.AddDays(30);
+                        }
+                        <div class="fs-6 fw-medium @(muayeneGecmis ? "text-danger" : muayeneYakin ? "text-warning" : "text-slate-800")">
+                            @(Model.Arac.MuayeneBitisTarihi?.ToString("dd.MM.yyyy") ?? "Belirtilmemiş")
+                            @if (muayeneGecmis) { <i class="bi bi-exclamation-circle-fill ms-1"></i> }
+                            @if (muayeneYakin) { <i class="bi bi-info-circle-fill ms-1"></i> }
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="text-slate-400 small text-uppercase tracking-wider fw-bold mb-1 d-block">Sigorta / Kasko Bitiş</label>
+                        @{
+                            var sigortaGecmis = Model.Arac.SigortaBitisTarihi.HasValue && Model.Arac.SigortaBitisTarihi.Value < DateTime.Today;
+                            var sigortaYakin = Model.Arac.SigortaBitisTarihi.HasValue && Model.Arac.SigortaBitisTarihi.Value >= DateTime.Today && Model.Arac.SigortaBitisTarihi.Value <= DateTime.Today.AddDays(30);
+                        }
+                        <div class="fs-6 fw-medium @(sigortaGecmis ? "text-danger" : sigortaYakin ? "text-warning" : "text-slate-800")">
+                            @(Model.Arac.SigortaBitisTarihi?.ToString("dd.MM.yyyy") ?? "Belirtilmemiş")
+                            @if (sigortaGecmis) { <i class="bi bi-exclamation-circle-fill ms-1"></i> }
+                            @if (sigortaYakin) { <i class="bi bi-info-circle-fill ms-1"></i> }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Akordeon: Görevler, Bakımlar, HGS -->
+        <div class="accordion accordion-flush border shadow-sm rounded-3 overflow-hidden mb-4" id="aracDetayAccordion">
+            
+            <!-- Son Görevler -->
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="headingGorev">
+                    <button class="accordion-button fw-bold text-slate-800" type="button" data-bs-toggle="collapse" data-bs-target="#collapseGorev" aria-expanded="true" aria-controls="collapseGorev">
+                        <i class="bi bi-file-earmark-text-fill text-blue-500 me-2"></i> Son Görev Formları (@Model.SonGorevler.Count)
+                    </button>
+                </h2>
+                <div id="collapseGorev" class="accordion-collapse collapse show" aria-labelledby="headingGorev" data-bs-parent="#aracDetayAccordion">
+                    <div class="accordion-body p-0">
+                        @if (Model.SonGorevler.Any())
+                        {
+                            <div class="table-responsive">
+                                <table class="table table-hover table-striped align-middle mb-0">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th class="ps-3 border-0">Takip Kodu</th>
+                                            <th class="border-0">Tarih</th>
+                                            <th class="border-0">Personel</th>
+                                            <th class="border-0">Durum</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var gorev in Model.SonGorevler.Take(5))
+                                        {
+                                            <tr>
+                                                <td class="ps-3"><a asp-action="FormDetay" asp-route-id="@gorev.Id" class="fw-bold text-primary font-monospace text-decoration-none">@gorev.TakipKodu</a></td>
+                                                <td class="small">@gorev.CikisZamani.ToString("dd.MM.yyyy")</td>
+                                                <td>@gorev.KullananAdSoyad</td>
+                                                <td>
+                                                    <span class="badge border bg-opacity-10 
+                                                        @(gorev.Durum == AracGorevFormu.Models.GorevDurumu.TamamlandiDondu ? "border-emerald-200 bg-emerald-100 text-emerald-700" :
+                                                          gorev.Durum == AracGorevFormu.Models.GorevDurumu.Onaylandi ? "border-blue-200 bg-blue-100 text-blue-700" :
+                                                          gorev.Durum == AracGorevFormu.Models.GorevDurumu.Reddedildi ? "border-red-200 bg-red-100 text-red-700" :
+                                                          "border-amber-200 bg-amber-100 text-amber-700")">
+                                                        @gorev.Durum
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                            @if(Model.SonGorevler.Count > 5)
+                            {
+                                <div class="p-2 text-center bg-light border-top">
+                                    <a href="/Admin/Formlar?arama=@Model.Arac.Plaka" class="text-primary small fw-semibold text-decoration-none">Tümünü Gör</a>
+                                </div>
+                            }
+                        }
+                        else
+                        {
+                            <div class="text-center text-muted p-4 small">Bu araca ait kayıtlı görev formu bulunamadı.</div>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bakım Geçmişi -->
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="headingBakim">
+                    <button class="accordion-button collapsed fw-bold text-slate-800" type="button" data-bs-toggle="collapse" data-bs-target="#collapseBakim" aria-expanded="false" aria-controls="collapseBakim">
+                        <i class="bi bi-tools text-amber-500 me-2"></i> Bakım & Servis Geçmişi (@Model.BakimGecmisi.Count)
+                    </button>
+                </h2>
+                <div id="collapseBakim" class="accordion-collapse collapse" aria-labelledby="headingBakim" data-bs-parent="#aracDetayAccordion">
+                    <div class="accordion-body p-0">
+                        @if (Model.BakimGecmisi.Any())
+                        {
+                            <div class="table-responsive">
+                                <table class="table table-hover align-middle mb-0">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th class="ps-3 border-0">Tarih</th>
+                                            <th class="border-0">Tür</th>
+                                            <th class="border-0">Maliyet</th>
+                                            <th class="border-0">Servis</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var bakim in Model.BakimGecmisi.Take(5))
+                                        {
+                                            <tr>
+                                                <td class="ps-3 small">@bakim.BakimTarihi.ToString("dd.MM.yyyy")</td>
+                                                <td><span class="badge bg-slate-100 text-slate-700 border">@bakim.BakimTuru</span></td>
+                                                <td class="fw-semibold text-success">@bakim.Maliyet.ToString("C")</td>
+                                                <td class="small">@(bakim.ServisAdi ?? "Belirtilmemiş")</td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                            @if(Model.BakimGecmisi.Count > 5)
+                            {
+                                <div class="p-2 text-center bg-light border-top">
+                                    <a asp-action="Bakimlar" asp-route-vehicleId="@Model.Arac.Id" class="text-primary small fw-semibold text-decoration-none">Tümünü Gör</a>
+                                </div>
+                            }
+                        }
+                        else
+                        {
+                            <div class="text-center text-muted p-4 small">Bu araca ait bakım kaydı bulunamadı.</div>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <!-- HGS Geçişleri -->
+            <div class="accordion-item border-0">
+                <h2 class="accordion-header" id="headingHgs">
+                    <button class="accordion-button collapsed fw-bold text-slate-800" type="button" data-bs-toggle="collapse" data-bs-target="#collapseHgs" aria-expanded="false" aria-controls="collapseHgs">
+                        <i class="bi bi-signpost-split-fill text-indigo-500 me-2"></i> HGS & İhlal Kayıtları (@Model.HgsGecisleri.Count)
+                    </button>
+                </h2>
+                <div id="collapseHgs" class="accordion-collapse collapse" aria-labelledby="headingHgs" data-bs-parent="#aracDetayAccordion">
+                    <div class="accordion-body p-0">
+                        @if (Model.HgsGecisleri.Any())
+                        {
+                            <div class="table-responsive">
+                                <table class="table table-hover align-middle mb-0">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th class="ps-3 border-0">Tarih</th>
+                                            <th class="border-0">Gişe / Nokta</th>
+                                            <th class="border-0">Tutar</th>
+                                            <th class="border-0">Durum</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var hgs in Model.HgsGecisleri.Take(5))
+                                        {
+                                            <tr>
+                                                <td class="ps-3 small">@hgs.GecisTarihi.ToString("dd.MM.yyyy")</td>
+                                                <td class="small">
+                                                    @hgs.GiseAdı
+                                                    @if(hgs.CezaMi) { <span class="badge bg-red-100 text-red-700 ms-1">Ceza</span> }
+                                                </td>
+                                                <td class="fw-semibold">@hgs.Tutar.ToString("C")</td>
+                                                <td>
+                                                    @if(hgs.OdediMi)
+                                                    {
+                                                        <span class="badge bg-emerald-100 text-emerald-700 border border-emerald-200">Ödendi</span>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="badge bg-red-100 text-red-700 border border-red-200">Ödenmedi</span>
+                                                    }
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                            @if(Model.HgsGecisleri.Count > 5)
+                            {
+                                <div class="p-2 text-center bg-light border-top">
+                                    <a asp-action="HgsBorc" asp-route-plaka="@Model.Arac.Plaka" class="text-primary small fw-semibold text-decoration-none">Tümünü Gör</a>
+                                </div>
+                            }
+                        }
+                        else
+                        {
+                            <div class="text-center text-muted p-4 small">Bu araca ait HGS geçiş kaydı bulunamadı.</div>
+                        }
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>

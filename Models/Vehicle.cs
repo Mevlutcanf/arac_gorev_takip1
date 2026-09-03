@@ -64,6 +64,17 @@ namespace AracGorevFormu.Models
         [Display(Name = "Ruhsat Belge Dosya Yolu")]
         public string? RuhsatDosyaYolu { get; set; }
 
+        /// <summary>Ruhsat dosyasının veritabanında saklanan binary içeriği</summary>
+        public byte[]? RuhsatDosyaIcerigi { get; set; }
+
+        /// <summary>Ruhsat dosyasının orijinal adı</summary>
+        [StringLength(255)]
+        public string? RuhsatDosyaAdi { get; set; }
+
+        /// <summary>Ruhsat dosyasının MIME tipi (application/pdf, image/jpeg vb.)</summary>
+        [StringLength(100)]
+        public string? RuhsatDosyaTipi { get; set; }
+
         // ---------- ARVENTO CANLI VERİLERİ ----------
 
         [Display(Name = "Güncel Kilometre (Arvento)")]

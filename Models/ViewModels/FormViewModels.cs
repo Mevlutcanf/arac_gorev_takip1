@@ -36,10 +36,6 @@ namespace AracGorevFormu.Models.ViewModels
         [DataType(DataType.DateTime)]
         public DateTime CikisZamani { get; set; } = new DateTime(DateTime.Now.Year, DateTime.Now.Month, DateTime.Now.Day, DateTime.Now.Hour, DateTime.Now.Minute, 0);
 
-        [Required(ErrorMessage = "Planlanan dönüş tarihi/saati zorunludur.")]
-        [Display(Name = "Planlanan Dönüş Tarihi/Saati")]
-        [DataType(DataType.DateTime)]
-        public DateTime PlanlananDonusZamani { get; set; } = new DateTime(DateTime.Now.Year, DateTime.Now.Month, DateTime.Now.Day, DateTime.Now.Hour, DateTime.Now.Minute, 0).AddHours(2);
 
         public List<Vehicle> AktifAraclar { get; set; } = new();
     }

@@ -3,6 +3,7 @@ using AracGorevFormu.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using AracGorevFormu.Models.ViewModels;
 
 namespace AracGorevFormu.Controllers
 {
@@ -18,7 +19,63 @@ namespace AracGorevFormu.Controllers
             _logger = logger;
         }
 
-        // GET: /Makine
+        private string MevcutKullaniciAdi => User.Identity?.Name ?? "Bilinmiyor";
+
+        private string GetClientIpAddress()
+        {
+            var ip = HttpContext.Request.Headers["X-Forwarded-For"].FirstOrDefault();
+            if (string.IsNullOrEmpty(ip)) ip = HttpContext.Connection.RemoteIpAddress?.ToString();
+            if (ip == "::1" || ip == "127.0.0.1") return "Localhost";
+            return string.IsNullOrEmpty(ip) ? "Bilinmiyor" : ip;
+        }
+
+        private async Task LogIslemAsync(string islemTuru, string detay)
+        {
+            var log = new SystemLog
+            {
+                Tarih = DateTime.Now,
+                KullaniciAdi = MevcutKullaniciAdi,
+                IslemTuru = islemTuru,
+                Detay = detay,
+                IpAdresi = GetClientIpAddress()
+            };
+            _context.SystemLogs.Add(log);
+            await _context.SaveChangesAsync();
+        }
+
+        // GET: /Makine/Dashboard
+        public async Task<IActionResult> Dashboard()
+        {
+            var model = new MakineDashboardViewModel();
+
+            var makineler = await _context.Makineler.ToListAsync();
+            var bakimlar = await _context.MakineBakimlari.Include(b => b.Makine).ToListAsync();
+
+            model.ToplamMakineSayisi = makineler.Count;
+            model.ToplamBakimSayisi = bakimlar.Count;
+            model.ToplamBakimMaliyeti = bakimlar.Sum(b => b.Maliyet);
+            model.BuAykiBakimSayisi = bakimlar.Count(b => b.BakimTarihi.Month == DateTime.Now.Month && b.BakimTarihi.Year == DateTime.Now.Year);
+
+            // Son 5 bakım
+            model.SonBakimlar = bakimlar.OrderByDescending(b => b.BakimTarihi).Take(5).ToList();
+
+            // Lokasyon/Kategori dağılımı
+            model.KategoriDagilimi = makineler
+                .GroupBy(m => string.IsNullOrEmpty(m.Lokasyon) ? "Belirtilmedi" : m.Lokasyon)
+                .ToDictionary(g => g.Key, g => g.Count());
+
+            // En çok maliyet çıkaran 5 makine
+            model.EnCokMaliyetliMakineler = bakimlar
+                .GroupBy(b => b.Makine != null ? b.Makine.Ad : "Bilinmeyen Makine")
+                .Select(g => new { MakineAd = g.Key, ToplamMaliyet = g.Sum(x => x.Maliyet) })
+                .OrderByDescending(x => x.ToplamMaliyet)
+                .Take(5)
+                .ToDictionary(x => x.MakineAd, x => x.ToplamMaliyet);
+
+            return View(model);
+        }
+
+        // GET: /Makine/Index
         public async Task<IActionResult> Index(string kategori)
         {
             var query = _context.Makineler.AsQueryable();
@@ -50,6 +107,9 @@ namespace AracGorevFormu.Controllers
                 makine.EklenmeTarihi = DateTime.Now;
                 _context.Add(makine);
                 await _context.SaveChangesAsync();
+                
+                await LogIslemAsync("Makine Eklendi", $"{makine.Ad} adlı makine sisteme eklendi.");
+                
                 TempData["SuccessMessage"] = "Makine başarıyla eklendi.";
                 return RedirectToAction(nameof(Index));
             }
@@ -80,11 +140,14 @@ namespace AracGorevFormu.Controllers
                 {
                     _context.Update(makine);
                     await _context.SaveChangesAsync();
+                    
+                    await LogIslemAsync("Makine Güncellendi", $"{makine.Ad} adlı makinenin bilgileri güncellendi.");
+                    
                     TempData["SuccessMessage"] = "Makine başarıyla güncellendi.";
                 }
                 catch (DbUpdateConcurrencyException)
                 {
-                    if (!MakineExists(makine.Id)) return NotFound();
+                    if (!await MakineExistsAsync(makine.Id)) return NotFound();
                     else throw;
                 }
                 return RedirectToAction(nameof(Index));
@@ -100,8 +163,12 @@ namespace AracGorevFormu.Controllers
             var makine = await _context.Makineler.FindAsync(id);
             if (makine != null)
             {
+                var makineAdi = makine.Ad;
                 _context.Makineler.Remove(makine);
                 await _context.SaveChangesAsync();
+                
+                await LogIslemAsync("Makine Silindi", $"{makineAdi} adlı makine sistemden silindi.");
+                
                 TempData["SuccessMessage"] = "Makine silindi.";
             }
             return RedirectToAction(nameof(Index));
@@ -110,6 +177,18 @@ namespace AracGorevFormu.Controllers
         // ==========================================
         // BAKIM İŞLEMLERİ
         // ==========================================
+
+        // GET: /Makine/TumBakimlar
+        [HttpGet]
+        public async Task<IActionResult> TumBakimlar()
+        {
+            var bakimlar = await _context.MakineBakimlari
+                                         .Include(b => b.Makine)
+                                         .OrderByDescending(b => b.BakimTarihi)
+                                         .ToListAsync();
+
+            return View(bakimlar);
+        }
 
         // GET: /Makine/BakimListesi/5
         public async Task<IActionResult> BakimListesi(int makineId)
@@ -155,27 +234,10 @@ namespace AracGorevFormu.Controllers
         // POST: /Makine/BakimEkle
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> BakimEkle(MakineBakim bakim, IFormFile? MakbuzDosya)
+        public async Task<IActionResult> BakimEkle(MakineBakim bakim, List<IFormFile> MakbuzDosyalar)
         {
             if (ModelState.IsValid)
             {
-                // Dosya Yükleme ve OCR İşlemi
-                if (MakbuzDosya != null && MakbuzDosya.Length > 0)
-                {
-                    var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", "makbuzlar");
-                    if (!Directory.Exists(uploadsFolder)) Directory.CreateDirectory(uploadsFolder);
-                    
-                    var uniqueFileName = Guid.NewGuid().ToString() + "_" + MakbuzDosya.FileName;
-                    var filePath = Path.Combine(uploadsFolder, uniqueFileName);
-
-                    using (var fileStream = new FileStream(filePath, FileMode.Create))
-                    {
-                        await MakbuzDosya.CopyToAsync(fileStream);
-                    }
-                    
-                    bakim.MakbuzDosyaYolu = "/uploads/makbuzlar/" + uniqueFileName;
-                }
-
                 bakim.EklenmeTarihi = DateTime.Now;
                 _context.Add(bakim);
 
@@ -188,6 +250,52 @@ namespace AracGorevFormu.Controllers
                 }
 
                 await _context.SaveChangesAsync();
+
+                // Çoklu Dosya Yükleme İşlemi — Veritabanına kaydet (diske değil)
+                if (MakbuzDosyalar != null && MakbuzDosyalar.Count > 0)
+                {
+                    var dosyaIdler = new List<string>();
+
+                    foreach (var dosya in MakbuzDosyalar)
+                    {
+                        if (dosya.Length > 0)
+                        {
+                            using var ms = new MemoryStream();
+                            await dosya.CopyToAsync(ms);
+
+                            var dosyaEki = new DosyaEki
+                            {
+                                ParentTuru = "MakineBakimMakbuzu",
+                                ParentId = bakim.Id,
+                                DosyaAdi = dosya.FileName,
+                                DosyaTipi = dosya.ContentType,
+                                Icerik = ms.ToArray(),
+                                YuklenmeTarihi = DateTime.Now
+                            };
+                            _context.DosyaEkleri.Add(dosyaEki);
+                        }
+                    }
+
+                    await _context.SaveChangesAsync();
+
+                    // DosyaEki Id'lerini MakbuzDosyaYolu alanında sakla (geriye uyumluluk)
+                    var eklenenDosyalar = _context.DosyaEkleri
+                        .Where(d => d.ParentTuru == "MakineBakimMakbuzu" && d.ParentId == bakim.Id)
+                        .Select(d => d.Id.ToString())
+                        .ToList();
+
+                    if (eklenenDosyalar.Any())
+                    {
+                        bakim.MakbuzDosyaYolu = string.Join(",", eklenenDosyalar.Select(id => $"db:{id}"));
+                        await _context.SaveChangesAsync();
+                    }
+                }
+
+                if (makine != null)
+                {
+                    await LogIslemAsync("Makine Bakımı Eklendi", $"{makine.Ad} makinesine yeni bakım/servis kaydı eklendi.");
+                }
+
                 TempData["SuccessMessage"] = "Makine bakım kaydı eklendi.";
                 return RedirectToAction(nameof(BakimListesi), new { makineId = bakim.MakineId });
             }
@@ -199,11 +307,50 @@ namespace AracGorevFormu.Controllers
             return View(bakim);
         }
 
-
-
-        private bool MakineExists(int id)
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> BakimSil(int id)
         {
-            return _context.Makineler.Any(e => e.Id == id);
+            var bakim = await _context.MakineBakimlari.FindAsync(id);
+            if (bakim != null)
+            {
+                var makineId = bakim.MakineId;
+                
+                // Makbuz dosyalarını da sil
+                var dosyalar = await _context.DosyaEkleri
+                    .Where(d => d.ParentTuru == "MakineBakimMakbuzu" && d.ParentId == bakim.Id)
+                    .ToListAsync();
+                if (dosyalar.Any())
+                {
+                    _context.DosyaEkleri.RemoveRange(dosyalar);
+                }
+
+                _context.MakineBakimlari.Remove(bakim);
+                await _context.SaveChangesAsync();
+                await LogIslemAsync("Makine Bakımı Silindi", $"ID'si {id} olan makine bakım kaydı silindi.");
+                TempData["SuccessMessage"] = "Makine bakım kaydı başarıyla silindi.";
+                return RedirectToAction(nameof(BakimListesi), new { makineId = makineId });
+            }
+            return RedirectToAction(nameof(TumBakimlar));
+        }
+
+        /// <summary>
+        /// Makbuz/fatura dosyasını veritabanından indirmek için endpoint
+        /// </summary>
+        [HttpGet]
+        public async Task<IActionResult> MakbuzIndir(int id)
+        {
+            var dosya = await _context.DosyaEkleri.FirstOrDefaultAsync(d => d.Id == id);
+            if (dosya == null || dosya.Icerik == null || dosya.Icerik.Length == 0)
+                return NotFound();
+
+            return File(dosya.Icerik, dosya.DosyaTipi ?? "application/octet-stream", dosya.DosyaAdi ?? $"Makbuz_{id}.dat");
+        }
+
+
+        private async Task<bool> MakineExistsAsync(int id)
+        {
+            return await _context.Makineler.AnyAsync(e => e.Id == id);
         }
     }
 }

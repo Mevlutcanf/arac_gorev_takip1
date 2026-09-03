@@ -12,8 +12,8 @@
                         <i class="bi bi-file-earmark-text-fill"></i>
                     </div>
                     <div>
-                        <h1 class="h5 fw-bold mb-1 text-white">Araç Görev Talebi Formu</h1>
-                        <p class="text-slate-400 small mb-0">Lütfen görev ve araç kullanım detaylarını eksiksiz doldurunuz.</p>
+                        <h1 class="h5 fw-bold mb-1 text-white">Fleon Görev Talebi</h1>
+                        <p class="text-white text-opacity-75 small mb-0">Lütfen tüm bilgileri eksiksiz doldurunuz.</p>
                     </div>
                 </div>
             </div>
@@ -34,7 +34,7 @@
                     </div>
                 }
 
-                <form asp-controller="Form" asp-action="Yeni" method="post">
+                <form id="yeniGorevForm" asp-controller="Form" asp-action="Yeni" method="post">
                     @Html.AntiForgeryToken()
                     <div asp-validation-summary="ModelOnly" class="text-danger small mb-3"></div>
 
@@ -50,7 +50,19 @@
                                     <option value="">-- Araç Seçiniz (Plaka - Marka Model) --</option>
                                     @foreach (var arac in Model.AktifAraclar)
                                     {
-                                        <option value="@arac.Id">@arac.Plaka — @arac.Marka @arac.Model (@(arac.Renk ?? "Belirtilmedi")) 🟢 Müsait</option>
+                                        var disaridaMi = (ViewBag.DisaridakiAracIdleri as List<int>)?.Contains(arac.Id) == true;
+                                        var onayBekliyorMu = (ViewBag.OnayBekleyenAracIdleri as List<int>)?.Contains(arac.Id) == true;
+                                        
+                                        var durumMetni = disaridaMi ? "🔴 Görevde / Dışarıda" : (onayBekliyorMu ? "🟡 Onay Bekliyor" : "🟢 Müsait");
+                                        
+                                        @if(disaridaMi || onayBekliyorMu)
+                                        {
+                                            <option value="@arac.Id" disabled>@arac.Plaka — @arac.Marka @arac.Model (@(arac.Renk ?? "Belirtilmedi")) @durumMetni</option>
+                                        }
+                                        else
+                                        {
+                                            <option value="@arac.Id">@arac.Plaka — @arac.Marka @arac.Model (@(arac.Renk ?? "Belirtilmedi")) @durumMetni</option>
+                                        }
                                     }
                                 </select>
                                 <span asp-validation-for="VehicleId" class="text-danger small"></span>
@@ -87,17 +99,10 @@
                                 <span asp-validation-for="GorevAmaci" class="text-danger small"></span>
                             </div>
 
-                            <div class="col-md-6">
+                            <div class="col-12">
                                 <label asp-for="CikisZamani" class="form-label">Planlanan Çıkış Tarihi ve Saati <span class="text-danger">*</span></label>
-                                <input asp-for="CikisZamani" class="form-control" type="datetime-local" value='@Model.CikisZamani.ToString("yyyy-MM-ddTHH:mm")' step="60" />
+                                <input asp-for="CikisZamani" class="form-control" type="datetime-local" value='@Model.CikisZamani.ToString("yyyy-MM-ddTHH:mm")' />
                                 <span asp-validation-for="CikisZamani" class="text-danger small"></span>
-                                <div class="form-text text-slate-500 small">Saat ve dakika cinsinden seçiniz.</div>
-                            </div>
-
-                            <div class="col-md-6">
-                                <label asp-for="PlanlananDonusZamani" class="form-label">Planlanan Dönüş Tarihi ve Saati <span class="text-danger">*</span></label>
-                                <input asp-for="PlanlananDonusZamani" class="form-control" type="datetime-local" value='@Model.PlanlananDonusZamani.ToString("yyyy-MM-ddTHH:mm")' step="60" />
-                                <span asp-validation-for="PlanlananDonusZamani" class="text-danger small"></span>
                                 <div class="form-text text-slate-500 small">Saat ve dakika cinsinden seçiniz.</div>
                             </div>
                         </div>
@@ -107,7 +112,7 @@
                         <a asp-controller="Form" asp-action="Sorgula" class="btn btn-outline-secondary">
                             <i class="bi bi-search"></i>Form Sorgula
                         </a>
-                        <button type="submit" class="btn btn-accent btn-lg px-4">
+                        <button type="button" class="btn btn-accent btn-lg px-4" onclick="submitFormWithLoading(this)">
                             <i class="bi bi-send-fill"></i>Görev Formunu Gönder
                         </button>
                     </div>
@@ -117,6 +122,71 @@
     </div>
 </div>
 
+
+
 @section Scripts {
-    <partial name="_ValidationScriptsPartial" />
+    <style>
+        @@keyframes drawCircle { to { stroke-dashoffset: 0; } }
+        @@keyframes drawTick   { to { stroke-dashoffset: 0; } }
+        #gorevOverlay {
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            right: 0 !important;
+            bottom: 0 !important;
+            width: 100vw !important;
+            height: 100vh !important;
+            z-index: 2147483647 !important;
+            background: rgba(255,255,255,0.3);
+            backdrop-filter: blur(18px);
+            -webkit-backdrop-filter: blur(18px);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+    </style>
+    <script>
+        // Overlay'i doğrudan body'e ekle (üst eleman transform sorunundan kaçınmak için)
+        var overlayEl = document.createElement('div');
+        overlayEl.id = 'gorevOverlay';
+        overlayEl.innerHTML = `
+            <div id="gorevSpinner" style="display:flex;flex-direction:column;align-items:center;text-align:center;">
+                <div class="spinner-border" style="width:5rem;height:5rem;border-width:0.4em;color:#f59e0b;" role="status"></div>
+                <h3 style="color:#1e293b;font-weight:700;letter-spacing:1px;margin-top:1.5rem;margin-bottom:0.5rem;">Görev Formu Oluşturuluyor...</h3>
+                <p style="color:#475569;font-size:1rem;margin:0;">Lütfen sayfayı kapatmayın...</p>
+            </div>
+            <div id="gorevTick" style="display:none;flex-direction:column;align-items:center;text-align:center;">
+                <svg viewBox="0 0 80 80" width="96" height="96">
+                    <circle cx="40" cy="40" r="36" fill="none" stroke="#22c55e" stroke-width="5" stroke-dasharray="226" stroke-dashoffset="226" style="animation:drawCircle 0.5s ease forwards;"/>
+                    <polyline points="22,42 35,55 58,28" fill="none" stroke="#22c55e" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="60" stroke-dashoffset="60" style="animation:drawTick 0.4s ease 0.45s forwards;"/>
+                </svg>
+                <h3 style="color:#1e293b;font-weight:700;letter-spacing:1px;margin-top:1.2rem;margin-bottom:0.5rem;">Başarıyla Alındı!</h3>
+                <p style="color:#16a34a;font-size:1rem;margin:0;">Yönlendiriliyorsunuz...</p>
+            </div>
+        `;
+        document.body.appendChild(overlayEl);
+
+        function submitFormWithLoading(btn) {
+            // Overlay'i göster
+            overlayEl.style.display = 'flex';
+            document.body.style.overflow = 'hidden'; // Scroll'u kilitle
+
+            // Butonu devre dışı bırak
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Gönderiliyor...';
+            btn.disabled = true;
+
+            // 1.2sn sonra spinner -> tik
+            setTimeout(function () {
+                document.getElementById('gorevSpinner').style.display = 'none';
+                var tick = document.getElementById('gorevTick');
+                tick.style.display = 'flex';
+            }, 1200);
+
+            // 2sn sonra formu gönder
+            setTimeout(function () {
+                document.getElementById('yeniGorevForm').submit();
+            }, 2000);
+        }
+    </script>
 }

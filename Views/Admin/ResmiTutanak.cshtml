@@ -37,14 +37,40 @@
             .header-title { font-size: 1rem; }
             .plate-badge { font-size: 0.9rem; padding: 2px 6px; }
         }
+        
+        .floating-action-bar {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 15px;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+            z-index: 1000;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(0,0,0,0.05);
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
     </style>
 </head>
 <body>
-    <div class="no-print text-center mb-4">
-        <button onclick="window.print()" class="btn btn-dark btn-lg px-4 me-2"><i class="bi bi-printer me-2"></i>Resmî Çıktı Al & İmzalat</button>
-        <button onclick="window.close()" class="btn btn-outline-secondary btn-lg me-2">Kapat</button>
-        <a href="/Admin/Formlar" class="btn btn-outline-primary btn-lg">Listeye Dön</a>
+    <div class="no-print floating-action-bar">
+        <button onclick="printAndRedirect()" class="btn btn-dark btn-lg shadow-sm"><i class="bi bi-printer me-2"></i>Resmî Çıktı Al & İmzalat</button>
+        <button onclick="window.close()" class="btn btn-outline-secondary shadow-sm">Kapat</button>
+        <a href="/Admin/Formlar" class="btn btn-outline-primary shadow-sm">Listeye Dön</a>
     </div>
+
+    <script>
+        function printAndRedirect() {
+            window.print();
+            // Yazdırma ekranı kapandığında otomatik detay sayfasına yönlendirir
+            window.onafterprint = function() {
+                window.location.href = '/Admin/FormDetay/@Model.Id';
+            };
+        }
+    </script>
 
     @foreach (var nusha in new[] { "ŞİRKET NÜSHASI", "SÜRÜCÜ NÜSHASI" })
     {
@@ -55,7 +81,7 @@
             <div class="d-flex align-items-center justify-content-between pb-2 border-bottom border-2 border-dark">
                 <div>
                     <h2 class="header-title mb-1">Abdurrahman Tatlıcı</h2>
-                    <div class="fw-bold text-secondary" style="font-size: 0.8rem;">RESMÎ ARAÇ GÖREV VE ZİMMET TESLİM TUTANAĞI</div>
+                    <div class="fw-bold text-secondary" style="font-size: 0.8rem;">FLEON — RESMÎ ARAÇ/MAKİNE GÖREV VE ZİMMET TESLİM TUTANAĞI</div>
                 </div>
                 <div class="text-end">
                     <div class="plate-badge mb-1">@Model.AracPlaka</div>
@@ -81,8 +107,8 @@
                     <tr>
                         <td style="background: #f8fafc; font-weight: bold;">Sürücü / Personel:</td>
                         <td><b>@Model.KullananAdSoyad</b></td>
-                        <td style="background: #f8fafc; font-weight: bold;">Planlanan Dönüş:</td>
-                        <td>@Model.PlanlananDonusZamani.ToString("dd.MM.yyyy HH:mm")</td>
+                        <td style="background: #f8fafc; font-weight: bold;">Departman / Birim:</td>
+                        <td>@(Model.Departman ?? "—")</td>
                     </tr>
                     <tr>
                         <td style="background: #f8fafc; font-weight: bold;">İletişim / Cep Tel:</td>

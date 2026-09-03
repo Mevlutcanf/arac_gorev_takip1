@@ -21,6 +21,14 @@ namespace AracGorevFormu.Controllers
             _db = db;
         }
 
+        private string GetClientIpAddress()
+        {
+            var ip = HttpContext.Request.Headers["X-Forwarded-For"].FirstOrDefault();
+            if (string.IsNullOrEmpty(ip)) ip = HttpContext.Connection.RemoteIpAddress?.ToString();
+            if (ip == "::1" || ip == "127.0.0.1") return "Localhost";
+            return string.IsNullOrEmpty(ip) ? "Bilinmiyor" : ip;
+        }
+
         [HttpGet]
         public IActionResult Login(string? returnUrl = null)
         {
@@ -40,7 +48,7 @@ namespace AracGorevFormu.Controllers
                 return View(model);
             }
 
-            var admin = _adminRepo.GetirByKullaniciAdi(model.KullaniciAdi);
+            var admin = await _adminRepo.GetirByKullaniciAdiAsync(model.KullaniciAdi);
             if (admin == null || !PasswordHasher.Dogrula(model.Sifre, admin.PasswordHash, admin.PasswordSalt))
             {
                 model.HataMesaji = "Kullanıcı adı veya şifre hatalı.";
@@ -70,9 +78,10 @@ namespace AracGorevFormu.Controllers
                 Tarih = DateTime.Now,
                 KullaniciAdi = admin.KullaniciAdi,
                 IslemTuru = "Giriş Yapıldı",
-                Detay = "Yönetici sisteme başarılı şekilde giriş yaptı."
+                Detay = "Yönetici sisteme başarılı şekilde giriş yaptı.",
+                IpAdresi = GetClientIpAddress()
             });
-            _db.SaveChanges();
+            await _db.SaveChangesAsync();
 
             if (!string.IsNullOrEmpty(model.ReturnUrl) && Url.IsLocalUrl(model.ReturnUrl))
             {
@@ -92,9 +101,10 @@ namespace AracGorevFormu.Controllers
                 Tarih = DateTime.Now,
                 KullaniciAdi = kullaniciAdi,
                 IslemTuru = "Çıkış Yapıldı",
-                Detay = "Yönetici sistemden güvenli çıkış yaptı."
+                Detay = "Yönetici sistemden güvenli çıkış yaptı.",
+                IpAdresi = GetClientIpAddress()
             });
-            _db.SaveChanges();
+            await _db.SaveChangesAsync();
 
             await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
             return RedirectToAction("Login");

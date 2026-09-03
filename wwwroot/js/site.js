@@ -139,7 +139,7 @@ document.addEventListener('DOMContentLoaded', function () {
         input.setAttribute('step', '60');
     });
 
-    // ---------- Form Validasyon Geri Bildirimi ----------
+    // ---------- Form Validasyon Geri Bildirimi ve Submit Spinner ----------
     const forms = document.querySelectorAll('form');
     forms.forEach(function (form) {
         form.addEventListener('submit', function (e) {
@@ -162,6 +162,26 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (digits.length < 10 || digits.length > 11) {
                     telefonInput.classList.add('is-invalid');
                     hasError = true;
+                }
+            }
+            
+            // Hata varsa veya jQuery validasyonu başarısızsa spinner gösterme
+            if (hasError || (typeof $(form).valid === 'function' && !$(form).valid())) {
+                e.preventDefault();
+                return;
+            }
+
+            // Sorun yoksa butonu disable et ve yükleme animasyonu ekle
+            const submitBtn = form.querySelector('button[type="submit"]');
+            if (submitBtn && !submitBtn.disabled) {
+                // Sadece buton içeriğinde ikon yoksa veya özel metin yoksa değiştir
+                if(!submitBtn.hasAttribute('data-no-spinner')) {
+                    const orgText = submitBtn.innerHTML;
+                    submitBtn.setAttribute('data-org-text', orgText);
+                    submitBtn.disabled = true;
+                    submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>İşleniyor...';
+                    
+                    // Formu asıl olarak gönder (çünkü disabled butonlar form'u tetiklemeyebilir, ancak form eventinin içindeyiz)
                 }
             }
         });

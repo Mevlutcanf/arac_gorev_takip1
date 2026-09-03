@@ -1,0 +1,203 @@
+@model AracGorevFormu.Models.ViewModels.MakineDashboardViewModel
+@{
+    ViewData["Title"] = "Makine Bakım Dashboard";
+}
+
+<div class="d-flex align-items-center justify-content-between mb-4">
+    <div>
+        <h1 class="h4 fw-bold text-slate-900 mb-1">
+            <i class="bi bi-speedometer text-indigo-600 me-2"></i>Makine Bakım & Gider Dashboard
+        </h1>
+        <p class="text-slate-500 small mb-0">Tüm makinelerin bakım maliyetleri, periyotları ve arıza dağılım özetleri.</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a asp-action="Index" class="btn btn-outline-secondary shadow-sm hover-lift">
+            <i class="bi bi-list me-1"></i> Tüm Makineler
+        </a>
+        <a asp-action="BakimEkle" class="btn btn-primary shadow-sm hover-lift">
+            <i class="bi bi-tools me-1"></i> Yeni Bakım Ekle
+        </a>
+    </div>
+</div>
+
+<!-- Özet Kartları -->
+<div class="row g-3 mb-4">
+    <div class="col-xl-3 col-sm-6">
+        <div class="card p-3 shadow-sm border h-100" style="background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);">
+            <div class="d-flex align-items-center justify-content-between">
+                <div>
+                    <span class="text-slate-500 extra-small fw-bold text-uppercase">Toplam Makine</span>
+                    <div class="fs-2 fw-bold text-slate-900 mt-1">@Model.ToplamMakineSayisi</div>
+                </div>
+                <div class="p-3 bg-indigo-100 text-indigo-700 rounded-circle fs-4"><i class="bi bi-gear-wide-connected"></i></div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-sm-6">
+        <div class="card p-3 shadow-sm border h-100" style="background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);">
+            <div class="d-flex align-items-center justify-content-between">
+                <div>
+                    <span class="text-slate-500 extra-small fw-bold text-uppercase">Toplam Bakım</span>
+                    <div class="fs-2 fw-bold text-slate-900 mt-1">@Model.ToplamBakimSayisi</div>
+                </div>
+                <div class="p-3 bg-amber-100 text-amber-700 rounded-circle fs-4"><i class="bi bi-tools"></i></div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-sm-6">
+        <div class="card p-3 shadow-sm border h-100" style="background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);">
+            <div class="d-flex align-items-center justify-content-between">
+                <div>
+                    <span class="text-slate-500 extra-small fw-bold text-uppercase">Bu Ayki Bakımlar</span>
+                    <div class="fs-2 fw-bold text-slate-900 mt-1">@Model.BuAykiBakimSayisi</div>
+                </div>
+                <div class="p-3 bg-emerald-100 text-emerald-700 rounded-circle fs-4"><i class="bi bi-calendar-check"></i></div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-sm-6">
+        <div class="card p-3 shadow-sm border border-red-200 h-100" style="background: linear-gradient(135deg, #ffffff 0%, #fef2f2 100%);">
+            <div class="d-flex align-items-center justify-content-between">
+                <div>
+                    <span class="text-red-700 extra-small fw-bold text-uppercase">Toplam Bakım Maliyeti</span>
+                    <div class="fs-2 fw-bold text-red-900 mt-1">@Model.ToplamBakimMaliyeti.ToString("N0") ₺</div>
+                </div>
+                <div class="p-3 bg-red-200 text-red-700 rounded-circle fs-4"><i class="bi bi-wallet2"></i></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4 mb-4">
+    <!-- Lokasyon Dağılımı -->
+    <div class="col-lg-6">
+        <div class="card shadow-sm border h-100">
+            <div class="card-header bg-white border-bottom py-3">
+                <h5 class="card-title fw-bold text-slate-800 mb-0"><i class="bi bi-geo-alt-fill text-primary me-2"></i>Lokasyon & Kategorilere Göre Makineler</h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="bg-light text-slate-600 extra-small text-uppercase">
+                            <tr>
+                                <th class="ps-3 border-0">Kategori / Lokasyon</th>
+                                <th class="border-0 text-center">Makine Sayısı</th>
+                                <th class="pe-3 border-0">İşlem</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var kat in Model.KategoriDagilimi)
+                            {
+                                <tr>
+                                    <td class="ps-3 fw-semibold text-slate-800">
+                                        <i class="bi bi-building me-2 text-slate-400"></i>@kat.Key
+                                    </td>
+                                    <td class="text-center">
+                                        <span class="badge bg-slate-200 text-slate-800">@kat.Value Adet</span>
+                                    </td>
+                                    <td class="text-end pe-3">
+                                        <a asp-action="Index" asp-route-kategori="@kat.Key" class="btn btn-sm btn-outline-secondary rounded-pill px-3">
+                                            Listele <i class="bi bi-arrow-right ms-1"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                            }
+                            @if (!Model.KategoriDagilimi.Any())
+                            {
+                                <tr><td colspan="3" class="text-center text-slate-500 py-4">Kayıtlı makine bulunmuyor.</td></tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- En Çok Maliyet Çıkaran Makineler -->
+    <div class="col-lg-6">
+        <div class="card shadow-sm border h-100">
+            <div class="card-header bg-white border-bottom py-3">
+                <h5 class="card-title fw-bold text-slate-800 mb-0"><i class="bi bi-exclamation-triangle-fill text-danger me-2"></i>En Yüksek Bakım Maliyeti Olan 5 Makine</h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="bg-light text-slate-600 extra-small text-uppercase">
+                            <tr>
+                                <th class="ps-3 border-0">Makine Adı</th>
+                                <th class="pe-3 border-0 text-end">Toplam Maliyet</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var makine in Model.EnCokMaliyetliMakineler)
+                            {
+                                <tr>
+                                    <td class="ps-3 fw-semibold text-slate-800">
+                                        <i class="bi bi-gear-fill me-2 text-slate-400"></i>@makine.Key
+                                    </td>
+                                    <td class="text-end pe-3">
+                                        <span class="fw-bold text-red-600">@makine.Value.ToString("C2")</span>
+                                    </td>
+                                </tr>
+                            }
+                            @if (!Model.EnCokMaliyetliMakineler.Any())
+                            {
+                                <tr><td colspan="2" class="text-center text-slate-500 py-4">Maliyetli bakım kaydı bulunmuyor.</td></tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Son Bakım Kayıtları -->
+<div class="card shadow-sm border mb-4">
+    <div class="card-header bg-slate-900 text-white d-flex align-items-center justify-content-between py-3">
+        <div class="d-flex align-items-center gap-2">
+            <i class="bi bi-clock-history text-amber-500 fs-5"></i>
+            <span class="fs-6 fw-bold">Sisteme İşlenen Son 5 Bakım Kaydı</span>
+        </div>
+    </div>
+    <div class="table-responsive p-3">
+        <table class="table table-hover align-middle mb-0" id="sonBakimlarTable">
+            <thead>
+                <tr>
+                    <th class="ps-3">Tarih</th>
+                    <th>Makine</th>
+                    <th>Bakım Türü</th>
+                    <th>İşlemler</th>
+                    <th>Ç. Saati</th>
+                    <th class="text-end pe-3">Maliyet</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var bakim in Model.SonBakimlar)
+                {
+                    <tr>
+                        <td class="ps-3 text-slate-600">@bakim.BakimTarihi.ToString("dd.MM.yyyy")</td>
+                        <td class="fw-semibold text-slate-800">@(bakim.Makine != null ? bakim.Makine.Ad : "Silinmiş Makine")</td>
+                        <td><span class="badge badge-bakim-turu">@bakim.BakimTuru</span></td>
+                        <td class="text-slate-600 small" style="max-width: 250px;">
+                            <div class="text-truncate" title="@bakim.YapilanIslemler">@bakim.YapilanIslemler</div>
+                        </td>
+                        <td class="text-slate-500"><i class="bi bi-stopwatch me-1"></i>@bakim.CalismaSaati</td>
+                        <td class="text-end pe-3 fw-bold @(bakim.Maliyet > 0 ? "text-red-600" : "text-slate-500")">
+                            @(bakim.Maliyet > 0 ? bakim.Maliyet.ToString("C2") : "Ücretsiz / -")
+                        </td>
+                    </tr>
+                }
+                @if (!Model.SonBakimlar.Any())
+                {
+                    <tr><td colspan="6" class="text-center py-5 text-slate-500">Henüz bakım kaydı eklenmemiş.</td></tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<style>
+    .hover-lift { transition: transform 0.2s ease, box-shadow 0.2s ease; }
+    .hover-lift:hover { transform: translateY(-2px); box-shadow: 0 4px 6px rgba(0,0,0,0.1) !important; }
+</style>

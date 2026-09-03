@@ -33,7 +33,7 @@
 
     <div class="card shadow-sm border-0 mb-4">
         <div class="card-body p-0">
-            <div class="table-responsive">
+            <div class="table-responsive p-3">
                 <table class="table table-hover align-middle mb-0" id="bakimTable">
                     <thead class="bg-light">
                         <tr>
@@ -71,9 +71,24 @@
                                 <td class="text-center">
                                     @if (!string.IsNullOrEmpty(item.MakbuzDosyaYolu))
                                     {
-                                        <a href="@item.MakbuzDosyaYolu" target="_blank" class="btn btn-sm btn-outline-secondary" title="Makbuzu Görüntüle">
-                                            <i class="bi bi-file-earmark-text"></i>
-                                        </a>
+                                        var makbuzParts = item.MakbuzDosyaYolu.Split(',', StringSplitOptions.RemoveEmptyEntries);
+                                        foreach (var part in makbuzParts)
+                                        {
+                                            if (part.Trim().StartsWith("db:"))
+                                            {
+                                                var dosyaId = part.Trim().Replace("db:", "");
+                                                <a href="@Url.Action("MakbuzIndir", "Makine", new { id = dosyaId })" target="_blank" class="btn btn-sm btn-outline-secondary me-1" title="Makbuzu İndir">
+                                                    <i class="bi bi-file-earmark-text"></i>
+                                                </a>
+                                            }
+                                            else
+                                            {
+                                                <a href="@part.Trim()" target="_blank" class="btn btn-sm btn-outline-secondary me-1" title="Makbuzu Görüntüle">
+                                                    <i class="bi bi-file-earmark-text"></i>
+                                                </a>
+                                            }
+                                        }
+                                    }
                                         @if (!string.IsNullOrEmpty(item.MakbuzMetni))
                                         {
                                             <button type="button" class="btn btn-sm btn-outline-info ms-1" data-bs-toggle="modal" data-bs-target="#ocrModal-@item.Id" title="Okunan Yazılar (OCR)">
@@ -100,6 +115,10 @@
                                     {
                                         <span class="text-muted small">-</span>
                                     }
+                                    <form asp-action="BakimSil" asp-route-id="@item.Id" method="post" class="d-inline ms-1" onsubmit="return confirm('Bu bakım kaydını silmek istediğinize emin misiniz?');">
+                                        @Html.AntiForgeryToken()
+                                        <button type="submit" class="btn btn-sm btn-outline-danger" title="Sil"><i class="bi bi-trash"></i></button>
+                                    </form>
                                 </td>
                             </tr>
                         }
@@ -119,6 +138,16 @@
     </div>
 
 @section Scripts {
+    <!-- DataTables Export Buttons Libraries -->
+    <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.2/css/buttons.bootstrap5.min.css">
+    <script src="https://cdn.datatables.net/buttons/2.4.2/js/dataTables.buttons.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.bootstrap5.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/pdfmake.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/vfs_fonts.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.html5.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.print.min.js"></script>
+
     <script>
         $(document).ready(function () {
             if ($('#bakimTable tbody tr').length > 0 && !$('#bakimTable tbody tr td').hasClass('dataTables_empty')) {
@@ -128,7 +157,39 @@
                     },
                     "order": [[0, "desc"]],
                     "pageLength": 25,
-                    "dom": '<"row align-items-center mb-3"<"col-md-6"l><"col-md-6"f>>rt<"row align-items-center mt-3"<"col-md-6"i><"col-md-6"p>>'
+                    "dom": '<"d-flex flex-column flex-md-row justify-content-between align-items-center mb-3"Bf>rt<"d-flex flex-column flex-md-row justify-content-between align-items-center mt-3"ip>',
+                    "buttons": [
+                        {
+                            extend: 'excelHtml5',
+                            text: '<i class="bi bi-file-earmark-excel"></i> Excel',
+                            className: 'btn btn-success btn-sm me-2',
+                            title: 'Makine Bakım Geçmişi',
+                            exportOptions: { 
+                                columns: [0, 1, 2, 3, 4],
+                                format: {
+                                    body: function (data, row, column, node) {
+                                        return data.toString().replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+                                    }
+                                }
+                            }
+                        },
+                        {
+                            extend: 'pdfHtml5',
+                            text: '<i class="bi bi-file-earmark-pdf"></i> PDF',
+                            className: 'btn btn-danger btn-sm',
+                            title: 'Makine Bakım Geçmişi',
+                            orientation: 'portrait',
+                            pageSize: 'A4',
+                            exportOptions: { 
+                                columns: [0, 1, 2, 3, 4],
+                                format: {
+                                    body: function (data, row, column, node) {
+                                        return data.toString().replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+                                    }
+                                }
+                            }
+                        }
+                    ]
                 });
             }
         });

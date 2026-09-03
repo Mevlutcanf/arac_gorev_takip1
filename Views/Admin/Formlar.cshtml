@@ -7,7 +7,7 @@
 <div class="d-flex flex-column flex-sm-row align-items-sm-center justify-content-between gap-3 mb-4">
     <div>
         <h1 class="h4 fw-bold text-slate-900 mb-1">Tüm Görev Formları</h1>
-        <p class="text-slate-500 small mb-0">Sistemde oluşturulan tüm araç görev talepleri ve durum geçmişi.</p>
+        <p class="text-slate-500 small mb-0">Sistemde oluşturulan tüm Fleon görev formları ve durum geçmişi.</p>
     </div>
     <div class="d-flex gap-1 bg-slate-200 p-1 rounded-3">
         <a asp-action="Formlar" class="btn btn-sm @(seciliDurum == null ? "btn-white shadow-sm text-slate-900 fw-bold" : "text-slate-600")">
@@ -29,7 +29,7 @@
 </div>
 
 <div class="card shadow-sm border-0">
-    <div class="table-responsive">
+    <div class="table-responsive p-3">
         <table class="table table-hover align-middle mb-0" id="formlarTable">
             <thead>
                 <tr>
@@ -37,7 +37,6 @@
                     <th>Araç Bilgisi</th>
                     <th>Kullanan Personel</th>
                     <th>Çıkış Tarihi</th>
-                    <th>Planlanan Dönüş</th>
                     <th>Durum</th>
                     <th class="text-end no-print">İşlem</th>
                 </tr>
@@ -60,10 +59,6 @@
                         <td>
                             <div class="text-slate-700">@form.CikisZamani.ToString("dd.MM.yyyy")</div>
                             <div class="text-slate-500 small">@form.CikisZamani.ToString("HH:mm")</div>
-                        </td>
-                        <td>
-                            <div class="text-slate-700">@form.PlanlananDonusZamani.ToString("dd.MM.yyyy")</div>
-                            <div class="text-slate-500 small">@form.PlanlananDonusZamani.ToString("HH:mm")</div>
                         </td>
                         <td>
                             @if (form.Durum == GorevDurumu.Beklemede)
@@ -103,6 +98,10 @@
                                         <button type="submit" class="btn btn-primary btn-sm" data-bs-toggle="tooltip" title="Araç Döndü"><i class="bi bi-box-arrow-in-left"></i></button>
                                     </form>
                                 }
+                                <form asp-action="FormSil" asp-route-id="@form.Id" method="post" class="d-inline" onsubmit="return confirm('Bu görev formunu silmek istediğinize emin misiniz? Bu işlem geri alınamaz.');">
+                                    @Html.AntiForgeryToken()
+                                    <button type="submit" class="btn btn-outline-danger btn-sm" data-bs-toggle="tooltip" title="Sil"><i class="bi bi-trash"></i></button>
+                                </form>
                             </div>
                         </td>
                     </tr>
@@ -159,9 +158,16 @@
                         {
                             extend: 'excelHtml5',
                             text: '<i class="bi bi-file-earmark-excel"></i> Excel',
-                            className: 'btn btn-success btn-sm',
+                            className: 'btn btn-success btn-sm me-2',
                             title: 'Gorev Formlari',
-                            exportOptions: { columns: [0, 1, 2, 3, 4, 5] }
+                            exportOptions: { 
+                                columns: [0, 1, 2, 3, 4, 5],
+                                format: {
+                                    body: function (data, row, column, node) {
+                                        return data.toString().replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+                                    }
+                                }
+                            }
                         },
                         {
                             extend: 'pdfHtml5',
@@ -170,7 +176,14 @@
                             title: 'Gorev Formlari',
                             orientation: 'landscape',
                             pageSize: 'A4',
-                            exportOptions: { columns: [0, 1, 2, 3, 4, 5] }
+                            exportOptions: { 
+                                columns: [0, 1, 2, 3, 4, 5],
+                                format: {
+                                    body: function (data, row, column, node) {
+                                        return data.toString().replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+                                    }
+                                }
+                            }
                         }
                     ]
                 });

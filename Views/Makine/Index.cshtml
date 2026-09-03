@@ -4,133 +4,213 @@
     ViewData["Title"] = "Makine Yönetimi";
 }
 
-    <div class="row mb-4 align-items-center">
-        <div class="col-md-6">
-            <h2 class="fw-bold mb-1">Fabrika Makine Yönetimi</h2>
-            <p class="text-muted mb-0">Makineleri ve çalışma saatlerini takip edin.</p>
-        </div>
-        <div class="col-md-6 text-md-end mt-3 mt-md-0">
-            <a asp-action="Ekle" class="btn btn-primary px-4 py-2 hover-lift">
-                <i class="bi bi-plus-lg me-2"></i> Yeni Makine Ekle
+<div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between mb-4 gap-3">
+    <div>
+        <h1 class="h4 fw-bold text-slate-900 mb-1">
+            <i class="bi bi-gear-wide-connected text-indigo-600 me-2"></i>Fabrika Makine Yönetimi
+        </h1>
+        <p class="text-slate-500 small mb-0">Makineleri, çalışma saatlerini ve lokasyonlarını takip edin.</p>
+    </div>
+    <div class="d-flex gap-2 flex-wrap">
+        <a asp-action="TumBakimlar" class="btn btn-outline-amber shadow-sm hover-lift">
+            <i class="bi bi-list-check me-1"></i> Tüm Bakımlar
+        </a>
+        <a asp-action="BakimEkle" class="btn btn-outline-primary shadow-sm hover-lift">
+            <i class="bi bi-tools me-1"></i> Yeni Bakım Ekle
+        </a>
+        <a asp-action="Ekle" class="btn btn-accent shadow-sm hover-lift">
+            <i class="bi bi-plus-lg me-1"></i> Yeni Makine Ekle
+        </a>
+    </div>
+</div>
+
+<!-- Filtreleme Sekmeleri -->
+<div class="mb-4 bg-white p-2 rounded-3 border shadow-sm">
+    <ul class="nav nav-pills custom-settings-tabs">
+        <li class="nav-item">
+            <a class="nav-link @(string.IsNullOrEmpty(ViewBag.SeciliKategori as string) ? "active" : "")" asp-action="Index">
+                <i class="bi bi-grid-fill me-1"></i>Tümü
             </a>
-            <a asp-action="BakimEkle" class="btn btn-outline-primary px-4 py-2 hover-lift ms-2">
-                <i class="bi bi-tools me-2"></i> Yeni Bakım Ekle
-            </a>
-        </div>
-    </div>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link @((ViewBag.SeciliKategori as string) == "Tadıbu" ? "active" : "")" asp-action="Index" asp-route-kategori="Tadıbu">Tadıbu</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link @((ViewBag.SeciliKategori as string) == "Lokum" ? "active" : "")" asp-action="Index" asp-route-kategori="Lokum">Lokum</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link @((ViewBag.SeciliKategori as string) == "Helva" ? "active" : "")" asp-action="Index" asp-route-kategori="Helva">Helva</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link @((ViewBag.SeciliKategori as string) == "Depo" ? "active" : "")" asp-action="Index" asp-route-kategori="Depo">Depo</a>
+        </li>
+    </ul>
+</div>
 
-    <!-- Filtreleme Sekmeleri -->
-    <div class="mb-4">
-        <ul class="nav nav-pills custom-pills">
-            <li class="nav-item">
-                <a class="nav-link @(string.IsNullOrEmpty(ViewBag.SeciliKategori as string) ? "active" : "")" asp-action="Index">Tümü</a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link @((ViewBag.SeciliKategori as string) == "Tadıbu" ? "active" : "")" asp-action="Index" asp-route-kategori="Tadıbu">Tadıbu</a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link @((ViewBag.SeciliKategori as string) == "Lokum" ? "active" : "")" asp-action="Index" asp-route-kategori="Lokum">Lokum</a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link @((ViewBag.SeciliKategori as string) == "Helva" ? "active" : "")" asp-action="Index" asp-route-kategori="Helva">Helva</a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link @((ViewBag.SeciliKategori as string) == "Depo" ? "active" : "")" asp-action="Index" asp-route-kategori="Depo">Depo</a>
-            </li>
-        </ul>
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show shadow-sm border-0" role="alert">
+        <i class="bi bi-check-circle-fill me-2"></i> @TempData["SuccessMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
+}
 
-    @if (TempData["SuccessMessage"] != null)
-    {
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
-            <i class="bi bi-check-circle-fill me-2"></i> @TempData["SuccessMessage"]
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+<div class="card shadow-sm border mb-4">
+    <div class="card-header bg-slate-900 text-white d-flex align-items-center justify-content-between py-3">
+        <div class="d-flex align-items-center gap-2">
+            <i class="bi bi-nut-fill text-amber-500 fs-5"></i>
+            <span class="fs-6 fw-bold">Makine Envanter Listesi</span>
         </div>
-    }
-
-    <div class="card shadow-sm border-0 mb-4">
-        <div class="card-body p-0">
-            <div class="table-responsive">
-                <table class="table table-hover align-middle mb-0" id="makineTable">
-                    <thead class="bg-light">
-                        <tr>
-                            <th class="border-0">Makine Adı</th>
-                            <th class="border-0">Marka / Model</th>
-                            <th class="border-0">Seri No / Kod</th>
-                            <th class="border-0">Lokasyon</th>
-                            <th class="border-0 text-center">Çalışma Saati</th>
-                            <th class="border-0 text-center">Durum</th>
-                            <th class="border-0 text-end">İşlemler</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var item in Model)
-                        {
-                            <tr>
-                                <td>
-                                    <div class="fw-bold text-dark">@item.Ad</div>
-                                </td>
-                                <td>
-                                    <span class="text-muted">@(string.IsNullOrEmpty(item.Marka) ? "-" : item.Marka) / @(string.IsNullOrEmpty(item.Model) ? "-" : item.Model)</span>
-                                </td>
-                                <td>
-                                    @if (!string.IsNullOrEmpty(item.SeriNo))
-                                    {
-                                        <span class="plate-chip">@item.SeriNo</span>
-                                    }
-                                    else
-                                    {
-                                        <span class="text-muted">-</span>
-                                    }
-                                </td>
-                                <td>
-                                    <span class="text-muted">@(string.IsNullOrEmpty(item.Lokasyon) ? "-" : item.Lokasyon)</span>
-                                </td>
-                                <td class="text-center">
-                                    <span class="badge bg-slate-100 text-slate-800 fs-6">@item.CalismaSaati <small>Saat</small></span>
-                                </td>
-                                <td class="text-center">
-                                    @if (item.Aktif)
-                                    {
-                                        <span class="badge badge-status badge-aktif"><span class="badge-status-dot"></span> Aktif</span>
-                                    }
-                                    else
-                                    {
-                                        <span class="badge badge-status badge-pasif"><span class="badge-status-dot"></span> Pasif</span>
-                                    }
-                                </td>
-                                <td class="text-end">
-                                    <a asp-action="BakimListesi" asp-route-makineId="@item.Id" class="btn btn-sm btn-outline-primary" title="Bakım Geçmişi">
-                                        <i class="bi bi-tools"></i> Bakımlar
-                                    </a>
-                                    <a asp-action="Duzenle" asp-route-id="@item.Id" class="btn btn-sm btn-outline-secondary ms-1" title="Düzenle">
-                                        <i class="bi bi-pencil"></i>
-                                    </a>
-                                    <form asp-action="Sil" asp-route-id="@item.Id" method="post" class="d-inline" onsubmit="return confirm('Bu makineyi silmek istediğinize emin misiniz? (Bağlı bakımlar da silinecektir)');">
-                                        <button type="submit" class="btn btn-sm btn-outline-danger ms-1" title="Sil">
-                                            <i class="bi bi-trash"></i>
-                                        </button>
-                                    </form>
-                                </td>
-                            </tr>
-                        }
-                    </tbody>
-                </table>
-            </div>
-        </div>
+        <span class="badge bg-slate-700 text-white fw-bold">@Model.Count() Kayıt</span>
     </div>
+    <div class="p-3">
+        <table class="table align-middle mb-0 dt-responsive nowrap" id="makineTable" style="width:100%">
+            <thead>
+                <tr>
+                    <th class="ps-3 text-nowrap">Makine Adı</th>
+                    <th class="text-nowrap">Marka / Model</th>
+                    <th class="text-nowrap">Seri No / Kod</th>
+                    <th class="text-nowrap">Lokasyon</th>
+                    <th class="text-center text-nowrap">Çalışma Saati</th>
+                    <th class="text-nowrap">Durum</th>
+                    <th class="text-end pe-3 text-nowrap all">İşlemler</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model)
+                {
+                    <tr>
+                        <td class="ps-3">
+                            <div class="fw-bold text-slate-900 fs-6">@item.Ad</div>
+                        </td>
+                        <td>
+                            <div class="fw-semibold text-slate-800">@(string.IsNullOrEmpty(item.Marka) ? "-" : item.Marka)</div>
+                            <div class="text-slate-500 extra-small">@(string.IsNullOrEmpty(item.Model) ? "-" : item.Model)</div>
+                        </td>
+                        <td>
+                            @if (!string.IsNullOrEmpty(item.SeriNo))
+                            {
+                                <span class="plate-chip">@item.SeriNo</span>
+                            }
+                            else
+                            {
+                                <span class="text-slate-400">-</span>
+                            }
+                        </td>
+                        <td>
+                            <div class="text-slate-600 small"><i class="bi bi-geo-alt me-1"></i>@(string.IsNullOrEmpty(item.Lokasyon) ? "Belirtilmedi" : item.Lokasyon)</div>
+                        </td>
+                        <td class="text-center">
+                            <span class="badge bg-slate-100 text-slate-800 border fs-6">
+                                <i class="bi bi-stopwatch me-1"></i>@item.CalismaSaati <small class="text-slate-500">Saat</small>
+                            </span>
+                        </td>
+                        <td>
+                            @if (item.Aktif)
+                            {
+                                <span class="badge badge-aktif">
+                                    <i class="bi bi-check-circle me-1"></i>Aktif
+                                </span>
+                            }
+                            else
+                            {
+                                <span class="badge badge-pasif">
+                                    <i class="bi bi-dash-circle me-1"></i>Pasif
+                                </span>
+                            }
+                        </td>
+                        <td class="text-end pe-3 no-print">
+                            <div class="d-flex justify-content-end gap-1">
+                                <a asp-action="MakineDetay" asp-route-id="@item.Id" class="btn btn-outline-primary btn-sm" data-bs-toggle="tooltip" title="Detayları Görüntüle">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                                <a asp-action="BakimListesi" asp-route-makineId="@item.Id" class="btn btn-outline-amber btn-sm" data-bs-toggle="tooltip" title="Bakım Geçmişi">
+                                    <i class="bi bi-tools"></i>
+                                </a>
+                                <a asp-action="Duzenle" asp-route-id="@item.Id" class="btn btn-outline-secondary btn-sm" data-bs-toggle="tooltip" title="Düzenle">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                <form asp-action="Sil" asp-route-id="@item.Id" method="post" class="d-inline" onsubmit="return confirm('Bu makineyi silmek istediğinize emin misiniz? (Bağlı bakımlar da silinecektir)');">
+                                    <button type="submit" class="btn btn-outline-danger btn-sm" data-bs-toggle="tooltip" title="Sil">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                }
+                @if (!Model.Any())
+                {
+                    <tr>
+                        <td colspan="7" class="text-center py-5 text-slate-400">Bu kategoride kayıtlı makine bulunmuyor.</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
 
 @section Scripts {
+    <!-- DataTables Export Buttons Libraries -->
+    <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.2/css/buttons.bootstrap5.min.css">
+    <script src="https://cdn.datatables.net/buttons/2.4.2/js/dataTables.buttons.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.bootstrap5.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/pdfmake.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/vfs_fonts.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.html5.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.print.min.js"></script>
+
     <script>
         $(document).ready(function () {
-            $('#makineTable').DataTable({
-                "language": {
-                    "url": "//cdn.datatables.net/plug-ins/1.13.6/i18n/tr.json"
-                },
-                "order": [[0, "asc"]],
-                "pageLength": 25,
-                "dom": '<"row align-items-center mb-3"<"col-md-6"l><"col-md-6"f>>rt<"row align-items-center mt-3"<"col-md-6"i><"col-md-6"p>>'
-            });
+            // Tooltip Initialization
+            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+            var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl)
+            })
+
+            // DataTable Initialization
+            if ($('#makineTable tbody tr td').length > 1) {
+                $('#makineTable').DataTable({
+                    language: { url: '//cdn.datatables.net/plug-ins/1.13.8/i18n/tr.json' },
+                    pageLength: 25,
+                    responsive: true,
+                    ordering: true,
+                    dom: '<"d-flex flex-column flex-md-row justify-content-between align-items-center mb-3"Bf>rt<"d-flex flex-column flex-md-row justify-content-between align-items-center mt-3"ip>',
+                    buttons: [
+                        {
+                            extend: 'excelHtml5',
+                            text: '<i class="bi bi-file-earmark-excel"></i> Excel',
+                            className: 'btn btn-success btn-sm me-2',
+                            title: 'Makine Envanter Listesi',
+                            exportOptions: { 
+                                columns: [0, 1, 2, 3, 4, 5],
+                                format: {
+                                    body: function (data, row, column, node) {
+                                        return data.toString().replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+                                    }
+                                }
+                            }
+                        },
+                        {
+                            extend: 'pdfHtml5',
+                            text: '<i class="bi bi-file-earmark-pdf"></i> PDF',
+                            className: 'btn btn-danger btn-sm',
+                            title: 'Makine Envanter Listesi',
+                            orientation: 'landscape',
+                            pageSize: 'A4',
+                            exportOptions: { 
+                                columns: [0, 1, 2, 3, 4, 5],
+                                format: {
+                                    body: function (data, row, column, node) {
+                                        return data.toString().replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+                                    }
+                                }
+                            }
+                        }
+                    ]
+                });
+            }
         });
     </script>
 }

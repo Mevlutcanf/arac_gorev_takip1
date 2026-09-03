@@ -15,6 +15,8 @@
                     @Html.AntiForgeryToken()
                     <input type="hidden" asp-for="Id" />
                     <input type="hidden" asp-for="RuhsatDosyaYolu" />
+                    <input type="hidden" asp-for="RuhsatDosyaAdi" />
+                    <input type="hidden" asp-for="RuhsatDosyaTipi" />
                     <div asp-validation-summary="ModelOnly" class="text-danger small mb-3"></div>
 
                     <!-- Temel Araç Bilgileri -->
@@ -60,7 +62,7 @@
                         <div class="col-12">
                             <div class="form-check form-switch">
                                 <input asp-for="Aktif" class="form-check-input" type="checkbox" id="aktifAracSwitch" />
-                                <label class="form-check-label fw-semibold" for="aktifAracSwitch">Araç Görev İçin Aktif Kullanımda</label>
+                                <label class="form-check-label fw-semibold" for="aktifAracSwitch">Fleon Görevleri İçin Aktif Kullanımda</label>
                             </div>
                         </div>
                     </div>
@@ -119,8 +121,26 @@
                         </div>
                         <div class="col-12">
                             <label class="form-label">Ruhsat Belge Yükle (Görsel / PDF)</label>
-                            <input type="file" name="ruhsatDosya" class="form-control" accept="image/*,.pdf" />
-                            @if (!string.IsNullOrEmpty(Model.RuhsatDosyaYolu))
+                            <input type="file" id="RuhsatDosya" name="ruhsatDosya" class="form-control" accept="image/*,.pdf" />
+                            
+                            <div class="mt-3 text-center d-none" id="ruhsatPreviewContainer">
+                                <span class="d-block small text-muted mb-2">Seçilen Dosya Önizlemesi</span>
+                                <img id="ruhsatPreview" src="#" alt="Ruhsat Önizleme" class="img-fluid rounded border shadow-sm" style="max-height: 250px; display: none;" />
+                                <div id="pdfPreview" class="p-3 bg-light rounded border text-slate-700" style="display: none;">
+                                    <i class="bi bi-file-earmark-pdf text-danger fs-1"></i><br>
+                                    PDF Dosyası Seçildi
+                                </div>
+                            </div>
+                            
+                            @if (Model.RuhsatDosyaIcerigi != null && Model.RuhsatDosyaIcerigi.Length > 0)
+                            {
+                                <div class="mt-2">
+                                    <a href="@Url.Action("RuhsatDosyaIndir", "Admin", new { id = Model.Id })" target="_blank" class="btn btn-outline-primary btn-sm">
+                                        <i class="bi bi-file-earmark-arrow-down me-1"></i>Yüklü Ruhsat Belgesini İndir (@Model.RuhsatDosyaAdi)
+                                    </a>
+                                </div>
+                            }
+                            else if (!string.IsNullOrEmpty(Model.RuhsatDosyaYolu))
                             {
                                 <div class="mt-2">
                                     <a href="@Model.RuhsatDosyaYolu" target="_blank" class="btn btn-outline-primary btn-sm">
@@ -133,7 +153,7 @@
 
                     <div class="d-flex justify-content-end gap-2 border-top pt-3">
                         <a asp-action="Araclar" class="btn btn-outline-secondary">Vazgeç</a>
-                        <button type="submit" class="btn btn-accent px-4"><i class="bi bi-check-lg me-1"></i>Araç ve Ruhsatı Kaydet</button>
+                        <button type="submit" class="btn btn-warning text-dark fw-bold px-4"><i class="bi bi-check-lg me-1"></i>Araç ve Ruhsatı Kaydet</button>
                     </div>
                 </form>
             </div>
@@ -143,4 +163,29 @@
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+    <script>
+        document.getElementById('RuhsatDosya').addEventListener('change', function(e) {
+            var file = e.target.files[0];
+            if (!file) return;
+
+            var container = document.getElementById('ruhsatPreviewContainer');
+            var imgPreview = document.getElementById('ruhsatPreview');
+            var pdfPreview = document.getElementById('pdfPreview');
+
+            container.classList.remove('d-none');
+            
+            if (file.type.startsWith('image/')) {
+                var reader = new FileReader();
+                reader.onload = function(e) {
+                    imgPreview.src = e.target.result;
+                    imgPreview.style.display = 'inline-block';
+                    pdfPreview.style.display = 'none';
+                }
+                reader.readAsDataURL(file);
+            } else if (file.type === 'application/pdf') {
+                imgPreview.style.display = 'none';
+                pdfPreview.style.display = 'block';
+            }
+        });
+    </script>
 }

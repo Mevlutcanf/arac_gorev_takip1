@@ -5,6 +5,7 @@ using AracGorevFormu.Models.ViewModels;
 using AracGorevFormu.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace AracGorevFormu.Controllers
 {
@@ -18,11 +19,10 @@ namespace AracGorevFormu.Controllers
         private readonly IEmailService _emailService;
         private readonly IHgsService _hgsService;
         private readonly AppDbContext _db;
-        private readonly IWebHostEnvironment _env;
 
         public AdminController(VehicleRepository vehicleRepo, GorevFormuRepository formRepo,
             AdminUserRepository adminRepo, ArventoService arventoService, IEmailService emailService,
-            IHgsService hgsService, AppDbContext db, IWebHostEnvironment env)
+            IHgsService hgsService, AppDbContext db)
         {
             _vehicleRepo = vehicleRepo;
             _formRepo = formRepo;
@@ -31,23 +31,31 @@ namespace AracGorevFormu.Controllers
             _emailService = emailService;
             _hgsService = hgsService;
             _db = db;
-            _env = env;
         }
 
         private string MevcutKullaniciAdi => User.Identity?.Name ?? "Bilinmiyor";
         private int MevcutKullaniciId => int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var id) ? id : 0;
 
-        private void LogIslem(string islemTuru, string detay)
+        private string GetClientIpAddress()
+        {
+            var ip = HttpContext.Request.Headers["X-Forwarded-For"].FirstOrDefault();
+            if (string.IsNullOrEmpty(ip)) ip = HttpContext.Connection.RemoteIpAddress?.ToString();
+            if (ip == "::1" || ip == "127.0.0.1") return "Localhost";
+            return string.IsNullOrEmpty(ip) ? "Bilinmiyor" : ip;
+        }
+
+        private async Task LogIslemAsync(string islemTuru, string detay)
         {
             var log = new SystemLog
             {
                 Tarih = DateTime.Now,
                 KullaniciAdi = MevcutKullaniciAdi,
                 IslemTuru = islemTuru,
-                Detay = detay
+                Detay = detay,
+                IpAdresi = GetClientIpAddress()
             };
             _db.SystemLogs.Add(log);
-            _db.SaveChanges();
+            await _db.SaveChangesAsync();
         }
 
         // ---------------- DASHBOARD ----------------
@@ -55,8 +63,8 @@ namespace AracGorevFormu.Controllers
         [HttpGet]
         public async Task<IActionResult> Index()
         {
-            var tumFormlar = _formRepo.Tumu();
-            var araclar = _vehicleRepo.Tumu();
+            var tumFormlar = await _formRepo.TumuAsync();
+            var araclar = await _vehicleRepo.TumuAsync();
             var disaridakiFormlar = tumFormlar.Where(f => f.AracDisarida).ToList();
             var disaridakiAracIdleri = disaridakiFormlar.Select(f => f.VehicleId).ToHashSet();
 
@@ -128,9 +136,9 @@ namespace AracGorevFormu.Controllers
         // ---------------- GÖREV FORMLARI ----------------
 
         [HttpGet]
-        public IActionResult Formlar(string? durum)
+        public async Task<IActionResult> Formlar(string? durum)
         {
-            var formlar = _formRepo.Tumu();
+            var formlar = await _formRepo.TumuAsync();
 
             if (!string.IsNullOrEmpty(durum) && Enum.TryParse<GorevDurumu>(durum, out var durumFiltre))
             {
@@ -142,9 +150,9 @@ namespace AracGorevFormu.Controllers
         }
 
         [HttpGet]
-        public IActionResult FormDetay(int id)
+        public async Task<IActionResult> FormDetay(int id)
         {
-            var form = _formRepo.GetirById(id);
+            var form = await _formRepo.GetirByIdAsync(id);
             if (form == null) return NotFound();
             return View(form);
         }
@@ -153,9 +161,9 @@ namespace AracGorevFormu.Controllers
         /// Resmi Mevzuata Uyumlu Araç Görev ve Teslim Tutanağı (Baskı & Islak İmza Formatı)
         /// </summary>
         [HttpGet]
-        public IActionResult ResmiTutanak(int id)
+        public async Task<IActionResult> ResmiTutanak(int id)
         {
-            var form = _formRepo.GetirById(id);
+            var form = await _formRepo.GetirByIdAsync(id);
             if (form == null) return NotFound();
             return View(form);
         }
@@ -164,7 +172,7 @@ namespace AracGorevFormu.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> FormOnayla(int id)
         {
-            var form = _formRepo.GetirById(id);
+            var form = await _formRepo.GetirByIdAsync(id);
             if (form == null) return NotFound();
 
             if (form.Durum == GorevDurumu.Beklemede)
@@ -174,7 +182,7 @@ namespace AracGorevFormu.Controllers
                 form.OnayTarihi = DateTime.Now;
 
                 // Aracın anlık konumunu ve KM'sini çekip Çıkış KM'si olarak kaydet
-                var arac = _vehicleRepo.GetirById(form.VehicleId);
+                var arac = await _vehicleRepo.GetirByIdAsync(form.VehicleId);
                 if (arac != null)
                 {
                     var anlikKonum = await _arventoService.AracKonumuGetirAsync(arac.Plaka);
@@ -188,9 +196,9 @@ namespace AracGorevFormu.Controllers
                     }
                 }
 
-                _formRepo.Guncelle(form);
+                await _formRepo.GuncelleAsync(form);
                 await _emailService.FormDurumDegisiklikBildirimiGonderAsync(form, onaylandi: true);
-                LogIslem("Form Onaylandı", $"{form.AracPlaka} plakalı aracın görev formu onaylandı.");
+                await LogIslemAsync("Form Onaylandı", $"{form.AracPlaka} plakalı aracın görev formu onaylandı.");
                 TempData["Mesaj"] = $"{form.AracPlaka} plakalı araç için görev formu onaylandı.";
             }
 
@@ -198,9 +206,9 @@ namespace AracGorevFormu.Controllers
         }
 
         [HttpGet]
-        public IActionResult FormReddet(int id)
+        public async Task<IActionResult> FormReddet(int id)
         {
-            var form = _formRepo.GetirById(id);
+            var form = await _formRepo.GetirByIdAsync(id);
             if (form == null) return NotFound();
             return View(new RedViewModel { FormId = id });
         }
@@ -211,7 +219,7 @@ namespace AracGorevFormu.Controllers
         {
             if (!ModelState.IsValid) return View(model);
 
-            var form = _formRepo.GetirById(model.FormId);
+            var form = await _formRepo.GetirByIdAsync(model.FormId);
             if (form == null) return NotFound();
 
             if (form.Durum == GorevDurumu.Beklemede)
@@ -220,9 +228,9 @@ namespace AracGorevFormu.Controllers
                 form.OnaylayanKullaniciAdi = MevcutKullaniciAdi;
                 form.OnayTarihi = DateTime.Now;
                 form.RedNedeni = model.RedNedeni;
-                _formRepo.Guncelle(form);
+                await _formRepo.GuncelleAsync(form);
                 await _emailService.FormDurumDegisiklikBildirimiGonderAsync(form, onaylandi: false);
-                LogIslem("Form Reddedildi", $"{form.AracPlaka} plakalı aracın görev formu reddedildi. Neden: {model.RedNedeni}");
+                await LogIslemAsync("Form Reddedildi", $"{form.AracPlaka} plakalı aracın görev formu reddedildi. Neden: {model.RedNedeni}");
                 TempData["Mesaj"] = "Görev formu reddedildi.";
             }
 
@@ -233,7 +241,7 @@ namespace AracGorevFormu.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> FormDonusIsaretle(int id)
         {
-            var form = _formRepo.GetirById(id);
+            var form = await _formRepo.GetirByIdAsync(id);
             if (form == null) return NotFound();
 
             if (form.Durum == GorevDurumu.Onaylandi && form.GercekDonusZamani == null)
@@ -242,7 +250,7 @@ namespace AracGorevFormu.Controllers
                 form.Durum = GorevDurumu.TamamlandiDondu;
 
                 // Aracın anlık konumunu ve KM'sini çekip Dönüş KM'si olarak kaydet
-                var arac = _vehicleRepo.GetirById(form.VehicleId);
+                var arac = await _vehicleRepo.GetirByIdAsync(form.VehicleId);
                 if (arac != null)
                 {
                     var anlikKonum = await _arventoService.AracKonumuGetirAsync(arac.Plaka);
@@ -256,24 +264,60 @@ namespace AracGorevFormu.Controllers
                     }
                 }
 
-                _formRepo.Guncelle(form);
+                await _formRepo.GuncelleAsync(form);
                 
                 // Araç iade edildi e-postası gönder
                 await _emailService.FormTamamlandiBildirimiGonderAsync(form);
                 
-                LogIslem("Araç Döndü", $"{form.AracPlaka} plakalı aracın dönüşü (görevin tamamlanması) kaydedildi.");
+                await LogIslemAsync("Araç Döndü", $"{form.AracPlaka} plakalı aracın dönüşü (görevin tamamlanması) kaydedildi.");
                 TempData["Mesaj"] = $"{form.AracPlaka} plakalı aracın dönüşü kaydedildi.";
             }
 
             return RedirectToAction(nameof(Formlar));
         }
 
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> FormSil(int id)
+        {
+            var form = await _formRepo.GetirByIdAsync(id);
+            if (form != null)
+            {
+                var takipKodu = form.TakipKodu;
+                await _formRepo.SilAsync(id);
+                await LogIslemAsync("Görev Formu Silindi", $"{takipKodu} numaralı görev formu sistemden silindi.");
+                TempData["Mesaj"] = "Görev formu başarıyla silindi.";
+            }
+            return RedirectToAction(nameof(Formlar));
+        }
+
         // ---------------- ARAÇ VE RUHSAT YÖNETİMİ ----------------
 
         [HttpGet]
-        public IActionResult Araclar()
+        public async Task<IActionResult> Araclar()
         {
-            return View(_vehicleRepo.Tumu());
+            return View(await _vehicleRepo.TumuAsync());
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> AracDetay(int id)
+        {
+            var arac = await _vehicleRepo.GetirByIdAsync(id);
+            if (arac == null) return NotFound();
+
+            var formlar = (await _formRepo.TumuAsync()).Where(f => f.VehicleId == id).OrderByDescending(f => f.OlusturmaTarihi).ToList();
+            var bakimlar = await _db.AracBakimlari.Where(b => b.VehicleId == id).OrderByDescending(b => b.BakimTarihi).ToListAsync();
+            var hgs = await _db.HgsGecisleri.Where(h => h.Plaka == arac.Plaka).OrderByDescending(h => h.GecisTarihi).ToListAsync();
+
+            var model = new AracDetayViewModel
+            {
+                Arac = arac,
+                SonGorevler = formlar,
+                BakimGecmisi = bakimlar,
+                HgsGecisleri = hgs
+            };
+
+            return View(model);
         }
 
         [HttpGet]
@@ -284,25 +328,25 @@ namespace AracGorevFormu.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult AracEkle(Vehicle vehicle)
+        public async Task<IActionResult> AracEkle(Vehicle vehicle)
         {
-            if (_vehicleRepo.PlakaVarMi(vehicle.Plaka))
+            if (await _vehicleRepo.PlakaVarMiAsync(vehicle.Plaka))
             {
                 ModelState.AddModelError(nameof(vehicle.Plaka), "Bu plaka zaten kayıtlı.");
             }
 
             if (!ModelState.IsValid) return View(vehicle);
 
-            _vehicleRepo.Ekle(vehicle);
-            LogIslem("Araç Eklendi", $"{vehicle.Plaka} plakalı yeni araç filoya eklendi.");
+            await _vehicleRepo.EkleAsync(vehicle);
+            await LogIslemAsync("Araç Eklendi", $"{vehicle.Plaka} plakalı yeni araç filoya eklendi.");
             TempData["Mesaj"] = "Araç başarıyla eklendi.";
             return RedirectToAction(nameof(Araclar));
         }
 
         [HttpGet]
-        public IActionResult AracDuzenle(int id)
+        public async Task<IActionResult> AracDuzenle(int id)
         {
-            var arac = _vehicleRepo.GetirById(id);
+            var arac = await _vehicleRepo.GetirByIdAsync(id);
             if (arac == null) return NotFound();
             return View(arac);
         }
@@ -311,51 +355,72 @@ namespace AracGorevFormu.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> AracDuzenle(Vehicle vehicle, IFormFile? ruhsatDosya)
         {
-            if (_vehicleRepo.PlakaVarMi(vehicle.Plaka, vehicle.Id))
+            if (await _vehicleRepo.PlakaVarMiAsync(vehicle.Plaka, vehicle.Id))
             {
                 ModelState.AddModelError(nameof(vehicle.Plaka), "Bu plaka başka bir araca kayıtlı.");
             }
 
             if (!ModelState.IsValid) return View(vehicle);
 
-            // Ruhsat Dosyası Yükleme
+            // Ruhsat Dosyası Yükleme — Veritabanına kaydet (diske değil)
             if (ruhsatDosya != null && ruhsatDosya.Length > 0)
             {
-                var uploadDir = Path.Combine(_env.WebRootPath, "uploads", "ruhsatlar");
-                Directory.CreateDirectory(uploadDir);
+                using var ms = new MemoryStream();
+                await ruhsatDosya.CopyToAsync(ms);
 
-                var extension = Path.GetExtension(ruhsatDosya.FileName);
-                var fileName = $"Ruhsat_{vehicle.Plaka.Replace(" ", "_")}_{DateTime.Now:yyyyMMddHHmmss}{extension}";
-                var filePath = Path.Combine(uploadDir, fileName);
-
-                using (var stream = new FileStream(filePath, FileMode.Create))
+                vehicle.RuhsatDosyaIcerigi = ms.ToArray();
+                vehicle.RuhsatDosyaAdi = ruhsatDosya.FileName;
+                vehicle.RuhsatDosyaTipi = ruhsatDosya.ContentType;
+                vehicle.RuhsatDosyaYolu = null; // Artık disk yolu kullanılmıyor
+            }
+            else
+            {
+                // Dosya yüklenmemişse mevcut DB'deki dosyayı koru
+                var mevcutArac = await _vehicleRepo.GetirByIdAsync(vehicle.Id);
+                if (mevcutArac != null)
                 {
-                    await ruhsatDosya.CopyToAsync(stream);
+                    vehicle.RuhsatDosyaIcerigi = mevcutArac.RuhsatDosyaIcerigi;
+                    vehicle.RuhsatDosyaAdi = mevcutArac.RuhsatDosyaAdi;
+                    vehicle.RuhsatDosyaTipi = mevcutArac.RuhsatDosyaTipi;
+                    vehicle.RuhsatDosyaYolu = mevcutArac.RuhsatDosyaYolu;
                 }
-
-                vehicle.RuhsatDosyaYolu = $"/uploads/ruhsatlar/{fileName}";
             }
 
-            _vehicleRepo.Guncelle(vehicle);
-            LogIslem("Araç Güncellendi", $"{vehicle.Plaka} plakalı aracın bilgileri güncellendi.");
+            await _vehicleRepo.GuncelleAsync(vehicle);
+            await LogIslemAsync("Araç Güncellendi", $"{vehicle.Plaka} plakalı aracın bilgileri güncellendi.");
             TempData["Mesaj"] = "Araç ve ruhsat bilgileri güncellendi.";
             return RedirectToAction(nameof(Araclar));
         }
 
+        /// <summary>
+        /// Ruhsat dosyasını veritabanından indirmek için endpoint
+        /// </summary>
+        [HttpGet]
+        public async Task<IActionResult> RuhsatDosyaIndir(int id)
+        {
+            var arac = await _vehicleRepo.GetirByIdAsync(id);
+            if (arac == null || arac.RuhsatDosyaIcerigi == null || arac.RuhsatDosyaIcerigi.Length == 0)
+                return NotFound();
+
+            return File(arac.RuhsatDosyaIcerigi, arac.RuhsatDosyaTipi ?? "application/octet-stream", arac.RuhsatDosyaAdi ?? $"Ruhsat_{arac.Plaka}.dat");
+        }
+
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult AracSil(int id)
+        public async Task<IActionResult> AracSil(int id)
         {
-            var kullanimda = _formRepo.Tumu().Any(f => f.VehicleId == id && f.AracDisarida);
+            var tumFormlar = await _formRepo.TumuAsync();
+            var kullanimda = tumFormlar.Any(f => f.VehicleId == id && f.AracDisarida);
             if (kullanimda)
             {
                 TempData["Hata"] = "Bu araç şu anda kullanımda (dışarıda) olduğu için silinemez.";
                 return RedirectToAction(nameof(Araclar));
             }
 
-            var aracSilPlaka = _vehicleRepo.GetirById(id)?.Plaka ?? "Bilinmeyen";
-            _vehicleRepo.Sil(id);
-            LogIslem("Araç Silindi", $"{aracSilPlaka} plakalı araç silindi.");
+            var target = await _vehicleRepo.GetirByIdAsync(id);
+            var aracSilPlaka = target?.Plaka ?? "Bilinmeyen";
+            await _vehicleRepo.SilAsync(id);
+            await LogIslemAsync("Araç Silindi", $"{aracSilPlaka} plakalı araç silindi.");
             TempData["Mesaj"] = "Araç silindi.";
             return RedirectToAction(nameof(Araclar));
         }
@@ -363,7 +428,7 @@ namespace AracGorevFormu.Controllers
         // ---------------- ARAÇ BAKIM VE SERVİS TAKİBİ ----------------
 
         [HttpGet]
-        public IActionResult Bakimlar(int? vehicleId, DateTime? baslangicTarihi, DateTime? bitisTarihi)
+        public async Task<IActionResult> Bakimlar(int? vehicleId, DateTime? baslangicTarihi, DateTime? bitisTarihi)
         {
             var bakimlar = _db.AracBakimlari.OrderByDescending(b => b.BakimTarihi).AsQueryable();
             
@@ -382,19 +447,19 @@ namespace AracGorevFormu.Controllers
                 bakimlar = bakimlar.Where(b => b.BakimTarihi <= bTarihi);
             }
 
-            ViewBag.Araclar = _vehicleRepo.Tumu();
+            ViewBag.Araclar = await _vehicleRepo.TumuAsync();
             ViewBag.SeciliVehicleId = vehicleId;
             ViewBag.BaslangicTarihi = baslangicTarihi?.ToString("yyyy-MM-dd");
             ViewBag.BitisTarihi = bitisTarihi?.ToString("yyyy-MM-dd");
             
-            return View(bakimlar.ToList());
+            return View(await bakimlar.ToListAsync());
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult BakimEkle(AracBakim bakim)
+        public async Task<IActionResult> BakimEkle(AracBakim bakim)
         {
-            var arac = _vehicleRepo.GetirById(bakim.VehicleId);
+            var arac = await _vehicleRepo.GetirByIdAsync(bakim.VehicleId);
             if (arac == null)
             {
                 TempData["Hata"] = "Geçersiz araç seçim.";
@@ -405,31 +470,31 @@ namespace AracGorevFormu.Controllers
             bakim.EklenmeTarihi = DateTime.Now;
 
             _db.AracBakimlari.Add(bakim);
-            _db.SaveChanges();
+            await _db.SaveChangesAsync();
 
-            LogIslem("Bakım Eklendi", $"{arac.Plaka} plakalı araç için {bakim.BakimTuru} eklendi.");
+            await LogIslemAsync("Bakım Eklendi", $"{arac.Plaka} plakalı araç için {bakim.BakimTuru} eklendi.");
             TempData["Mesaj"] = $"{arac.Plaka} plakalı araç için bakım kaydı eklendi.";
             return RedirectToAction(nameof(Bakimlar));
         }
 
         [HttpGet]
-        public IActionResult BakimDuzenle(int id)
+        public async Task<IActionResult> BakimDuzenle(int id)
         {
-            var bakim = _db.AracBakimlari.FirstOrDefault(b => b.Id == id);
+            var bakim = await _db.AracBakimlari.FirstOrDefaultAsync(b => b.Id == id);
             if (bakim == null) return NotFound();
             
-            ViewBag.Araclar = _vehicleRepo.Tumu();
+            ViewBag.Araclar = await _vehicleRepo.TumuAsync();
             return View(bakim);
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult BakimDuzenle(AracBakim model)
+        public async Task<IActionResult> BakimDuzenle(AracBakim model)
         {
-            var mevcut = _db.AracBakimlari.FirstOrDefault(b => b.Id == model.Id);
+            var mevcut = await _db.AracBakimlari.FirstOrDefaultAsync(b => b.Id == model.Id);
             if (mevcut == null) return NotFound();
 
-            var arac = _vehicleRepo.GetirById(model.VehicleId);
+            var arac = await _vehicleRepo.GetirByIdAsync(model.VehicleId);
             if (arac != null) mevcut.Plaka = arac.Plaka;
             
             mevcut.VehicleId = model.VehicleId;
@@ -442,23 +507,23 @@ namespace AracGorevFormu.Controllers
             mevcut.YapilanIslemler = model.YapilanIslemler;
             mevcut.ServisAdi = model.ServisAdi;
 
-            _db.SaveChanges();
-            LogIslem("Bakım Güncellendi", $"{mevcut.Plaka} aracı için bakım kaydı güncellendi.");
+            await _db.SaveChangesAsync();
+            await LogIslemAsync("Bakım Güncellendi", $"{mevcut.Plaka} aracı için bakım kaydı güncellendi.");
             TempData["Mesaj"] = "Bakım kaydı başarıyla güncellendi.";
             return RedirectToAction(nameof(Bakimlar));
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult BakimSil(int id)
+        public async Task<IActionResult> BakimSil(int id)
         {
-            var mevcut = _db.AracBakimlari.FirstOrDefault(b => b.Id == id);
+            var mevcut = await _db.AracBakimlari.FirstOrDefaultAsync(b => b.Id == id);
             if (mevcut != null)
             {
                 var plaka = mevcut.Plaka;
                 _db.AracBakimlari.Remove(mevcut);
-                _db.SaveChanges();
-                LogIslem("Bakım Silindi", $"{plaka} aracı için bakım kaydı silindi.");
+                await _db.SaveChangesAsync();
+                await LogIslemAsync("Bakım Silindi", $"{plaka} aracı için bakım kaydı silindi.");
                 TempData["Mesaj"] = "Bakım kaydı silindi.";
             }
             return RedirectToAction(nameof(Bakimlar));
@@ -469,7 +534,7 @@ namespace AracGorevFormu.Controllers
         [HttpGet]
         public async Task<IActionResult> HgsBorc(string? plaka)
         {
-            var araclar = _vehicleRepo.Tumu();
+            var araclar = await _vehicleRepo.TumuAsync();
             ViewBag.Araclar = araclar;
             ViewBag.SeciliPlaka = plaka;
 
@@ -479,12 +544,12 @@ namespace AracGorevFormu.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult HgsGecisEkle(HgsGecis gecis)
+        public async Task<IActionResult> HgsGecisEkle(HgsGecis gecis)
         {
             if (ModelState.IsValid)
             {
                 _db.HgsGecisleri.Add(gecis);
-                _db.SaveChanges();
+                await _db.SaveChangesAsync();
                 TempData["Mesaj"] = $"{gecis.Plaka} plakalı araç için HGS geçiş/ceza kaydı eklendi.";
             }
             else
@@ -496,14 +561,29 @@ namespace AracGorevFormu.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult HgsOde(int id, string plaka)
+        public async Task<IActionResult> HgsOde(int id, string plaka)
         {
-            var item = _db.HgsGecisleri.FirstOrDefault(h => h.Id == id);
+            var item = await _db.HgsGecisleri.FirstOrDefaultAsync(h => h.Id == id);
             if (item != null)
             {
                 item.OdediMi = true;
-                _db.SaveChanges();
+                await _db.SaveChangesAsync();
                 TempData["Mesaj"] = "HGS borç kaydı ödendi olarak işaretlendi.";
+            }
+            return RedirectToAction(nameof(HgsBorc), new { plaka });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> HgsSil(int id, string plaka)
+        {
+            var item = await _db.HgsGecisleri.FirstOrDefaultAsync(h => h.Id == id);
+            if (item != null)
+            {
+                _db.HgsGecisleri.Remove(item);
+                await _db.SaveChangesAsync();
+                await LogIslemAsync("HGS Kaydı Silindi", $"{item.Plaka} plakalı araç için HGS kaydı silindi.");
+                TempData["Mesaj"] = "HGS kaydı silindi.";
             }
             return RedirectToAction(nameof(HgsBorc), new { plaka });
         }
@@ -535,24 +615,24 @@ namespace AracGorevFormu.Controllers
         // ---------------- TEK BİRLEŞİK SİSTEM AYARLARI ----------------
 
         [HttpGet]
-        public IActionResult SistemKayitlari()
+        public async Task<IActionResult> SistemKayitlari()
         {
-            var logs = _db.SystemLogs.OrderByDescending(l => l.Tarih).ToList();
+            var logs = await _db.SystemLogs.OrderByDescending(l => l.Tarih).ToListAsync();
             return View(logs);
         }
 
         [HttpGet]
-        public IActionResult Ayarlar(string tab = "yoneticiler")
+        public async Task<IActionResult> Ayarlar(string tab = "yoneticiler")
         {
-            var me = _adminRepo.GetirById(MevcutKullaniciId);
+            var me = await _adminRepo.GetirByIdAsync(MevcutKullaniciId);
             var smtp = _emailService.AyarlariGetir();
             var arvento = _arventoService.AyarlariGetir();
-            ViewBag.Araclar = _vehicleRepo.Tumu();
+            ViewBag.Araclar = await _vehicleRepo.TumuAsync();
 
             var model = new SistemAyarlariPageViewModel
             {
                 AktifTab = tab,
-                Yoneticiler = _adminRepo.Tumu(),
+                Yoneticiler = await _adminRepo.TumuAsync(),
                 YeniYoneticiModel = new YeniAdminViewModel(),
                 SmtpModel = new SmtpAyarlarViewModel
                 {
@@ -578,9 +658,9 @@ namespace AracGorevFormu.Controllers
         }
 
         [HttpGet]
-        public IActionResult Profil()
+        public async Task<IActionResult> Profil()
         {
-            var me = _adminRepo.GetirById(MevcutKullaniciId);
+            var me = await _adminRepo.GetirByIdAsync(MevcutKullaniciId);
             var model = new ProfilViewModel
             {
                 KullaniciAdi = me?.KullaniciAdi ?? "",
@@ -591,9 +671,9 @@ namespace AracGorevFormu.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult Profil(ProfilViewModel model)
+        public async Task<IActionResult> Profil(ProfilViewModel model)
         {
-            var admin = _adminRepo.GetirById(MevcutKullaniciId);
+            var admin = await _adminRepo.GetirByIdAsync(MevcutKullaniciId);
             if (admin != null)
             {
                 if (!string.IsNullOrWhiteSpace(model.YeniSifre))
@@ -609,8 +689,8 @@ namespace AracGorevFormu.Controllers
                 }
 
                 admin.AdSoyad = model.AdSoyad;
-                _adminRepo.Guncelle(admin);
-                LogIslem("Profil Güncellendi", "Yönetici kendi profil bilgilerini güncelledi.");
+                await _adminRepo.GuncelleAsync(admin);
+                await LogIslemAsync("Profil Güncellendi", "Yönetici kendi profil bilgilerini güncelledi.");
                 TempData["Mesaj"] = "Profil bilgileriniz güncellendi.";
             }
             return RedirectToAction(nameof(Profil));
@@ -618,16 +698,16 @@ namespace AracGorevFormu.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult AyarlarYoneticiEkle([Bind(Prefix = "YeniYoneticiModel")] YeniAdminViewModel model)
+        public async Task<IActionResult> AyarlarYoneticiEkle([Bind(Prefix = "YeniYoneticiModel")] YeniAdminViewModel model)
         {
-            if (_adminRepo.KullaniciAdiVarMi(model.KullaniciAdi))
+            if (await _adminRepo.KullaniciAdiVarMiAsync(model.KullaniciAdi))
             {
                 TempData["Hata"] = "Bu kullanıcı adı zaten kullanılıyor.";
                 return RedirectToAction(nameof(Ayarlar), new { tab = "yoneticiler" });
             }
 
             var (hash, salt) = PasswordHasher.Hashle(model.Sifre);
-            _adminRepo.Ekle(new AdminUser
+            await _adminRepo.EkleAsync(new AdminUser
             {
                 KullaniciAdi = model.KullaniciAdi,
                 AdSoyad = model.AdSoyad,
@@ -636,23 +716,23 @@ namespace AracGorevFormu.Controllers
                 PasswordSalt = salt
             });
 
-            LogIslem("Yönetici Eklendi", $"{model.KullaniciAdi} kullanıcı adıyla yeni yönetici eklendi.");
+            await LogIslemAsync("Yönetici Eklendi", $"{model.KullaniciAdi} kullanıcı adıyla yeni yönetici eklendi.");
             TempData["Mesaj"] = "Yeni yönetici hesabı oluşturuldu.";
             return RedirectToAction(nameof(Ayarlar), new { tab = "yoneticiler" });
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult AyarlarYoneticiSil(int id)
+        public async Task<IActionResult> AyarlarYoneticiSil(int id)
         {
-            var hedef = _adminRepo.GetirById(id);
+            var hedef = await _adminRepo.GetirByIdAsync(id);
             var mevcutId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
             if (hedef != null && !hedef.AnaYonetici && hedef.Id.ToString() != mevcutId)
             {
                 var kullAd = hedef.KullaniciAdi;
-                _adminRepo.Sil(id);
-                LogIslem("Yönetici Silindi", $"{kullAd} kullanıcısı silindi.");
+                await _adminRepo.SilAsync(id);
+                await LogIslemAsync("Yönetici Silindi", $"{kullAd} kullanıcısı silindi.");
                 TempData["Mesaj"] = "Yönetici hesabı silindi.";
             }
             else
