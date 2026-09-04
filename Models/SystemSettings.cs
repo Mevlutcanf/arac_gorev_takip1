@@ -2,7 +2,7 @@ namespace AracGorevFormu.Models
 {
     public class SmtpAyari
     {
-        public int Id { get; set; } = 1;
+        public int Id { get; set; }
         public string SmtpServer { get; set; } = "smtp.gmail.com";
         public int Port { get; set; } = 587;
         public bool EnableSsl { get; set; } = true;
@@ -14,7 +14,7 @@ namespace AracGorevFormu.Models
 
     public class ArventoAyari
     {
-        public int Id { get; set; } = 1;
+        public int Id { get; set; }
         public string ApiUrl { get; set; } = "https://ws.arvento.com/v1/report.asmx";
         public string? KullaniciAdi { get; set; }
         public string? Sifre { get; set; }
