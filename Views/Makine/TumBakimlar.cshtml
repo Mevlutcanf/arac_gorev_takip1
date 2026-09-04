@@ -17,22 +17,49 @@
 </div>
 
 <div class="card shadow-sm border-0 mb-4">
-    <div class="card-header bg-white py-3 border-bottom d-flex align-items-center justify-content-between">
-        <h5 class="mb-0 fw-bold text-slate-800">
-            <i class="bi bi-list-ul me-2"></i>Kayıtlı Tüm Bakımlar
+    <div class="card-header bg-slate-900 py-3 border-bottom d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3">
+        <h5 class="mb-0 fw-bold text-white d-flex align-items-center">
+            <i class="bi bi-list-ul text-amber-500 me-2"></i>Kayıtlı Tüm Bakımlar
         </h5>
         
-        <!-- Özel Filtreleme Alanı -->
-        <div class="d-flex align-items-center gap-2">
-            <label class="small text-slate-500 fw-bold mb-0">Tür Filtresi:</label>
-            <select id="bakimTuruFilter" class="form-select form-select-sm" style="width: auto;">
-                <option value="">Tümü</option>
-                <option value="Periyodik Bakım">Periyodik Bakım</option>
-                <option value="Arıza/Tamir">Arıza/Tamir</option>
-                <option value="Kurulum">Kurulum</option>
-                <option value="Kalibrasyon">Kalibrasyon</option>
-            </select>
-        </div>
+        <!-- Detaylı Filtreleme Alanı -->
+        <form method="get" asp-action="TumBakimlar" class="row g-2 align-items-center m-0">
+            <div class="col-auto">
+                <input type="text" name="makineAdi" class="form-control form-control-sm bg-slate-800 text-white border-slate-700" placeholder="Makine Adı Ara..." value="@ViewBag.MakineAdi" />
+            </div>
+            <div class="col-auto">
+                <select name="lokasyon" class="form-select form-select-sm bg-slate-800 text-white border-slate-700" onchange="this.form.submit()">
+                    <option value="">-- Tüm Lokasyonlar --</option>
+                    @if(ViewBag.Lokasyonlar != null)
+                    {
+                        foreach (var l in (List<string>)ViewBag.Lokasyonlar)
+                        {
+                            <option value="@l" selected="@(ViewBag.Lokasyon == l)">@l</option>
+                        }
+                    }
+                </select>
+            </div>
+            <div class="col-auto">
+                <div class="input-group input-group-sm">
+                    <span class="input-group-text bg-slate-800 text-slate-400 border-slate-700"><i class="bi bi-calendar3"></i></span>
+                    <input type="date" name="baslangicTarihi" class="form-control bg-slate-800 text-white border-slate-700" value="@ViewBag.BaslangicTarihi" title="Başlangıç Tarihi" onchange="this.form.submit()" />
+                    <span class="input-group-text bg-slate-800 text-slate-400 border-slate-700 border-start-0 border-end-0">-</span>
+                    <input type="date" name="bitisTarihi" class="form-control bg-slate-800 text-white border-slate-700" value="@ViewBag.BitisTarihi" title="Bitiş Tarihi" onchange="this.form.submit()" />
+                </div>
+            </div>
+            <div class="col-auto d-flex align-items-center gap-2">
+                <label class="small text-slate-400 mb-0 ms-2">Tür:</label>
+                <select id="bakimTuruFilter" class="form-select form-select-sm bg-slate-800 text-white border-slate-700" style="width: auto;">
+                    <option value="">Tümü</option>
+                    <option value="Periyodik Bakım">Periyodik Bakım</option>
+                    <option value="Arıza/Tamir">Arıza/Tamir</option>
+                    <option value="Kurulum">Kurulum</option>
+                    <option value="Kalibrasyon">Kalibrasyon</option>
+                </select>
+                <button type="submit" class="btn btn-sm btn-primary ms-1"><i class="bi bi-search"></i></button>
+                <a asp-action="TumBakimlar" class="btn btn-sm btn-outline-secondary" title="Filtreleri Temizle"><i class="bi bi-x-circle"></i></a>
+            </div>
+        </form>
     </div>
     <div class="card-body p-0">
         <div class="table-responsive p-3">
@@ -56,9 +83,13 @@
                                 <div class="fw-bold text-dark">@item.BakimTarihi.ToString("dd.MM.yyyy")</div>
                             </td>
                             <td>
-                                <a asp-action="MakineDetay" asp-route-id="@item.MakineId" class="fw-bold text-primary text-decoration-none">
+                                <a asp-action="MakineDetay" asp-route-id="@item.MakineId" class="fw-bold text-primary text-decoration-none d-block">
                                     @(item.Makine?.Ad ?? "Bilinmiyor")
                                 </a>
+                                @if (!string.IsNullOrEmpty(item.Makine?.Lokasyon))
+                                {
+                                    <span class="small text-muted"><i class="bi bi-geo-alt me-1"></i>@item.Makine.Lokasyon</span>
+                                }
                             </td>
                             <td>
                                 <span class="badge badge-bakim-turu fs-6">@item.BakimTuru</span>

@@ -23,48 +23,56 @@
 <!-- Özet Kartları -->
 <div class="row g-3 mb-4">
     <div class="col-xl-3 col-sm-6">
-        <div class="card p-3 shadow-sm border h-100" style="background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);">
-            <div class="d-flex align-items-center justify-content-between">
-                <div>
-                    <span class="text-slate-500 extra-small fw-bold text-uppercase">Toplam Makine</span>
-                    <div class="fs-2 fw-bold text-slate-900 mt-1">@Model.ToplamMakineSayisi</div>
+        <a asp-action="Index" class="text-decoration-none">
+            <div class="card p-3 shadow-sm border h-100 hover-lift" style="background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <span class="text-slate-500 extra-small fw-bold text-uppercase">Toplam Makine</span>
+                        <div class="fs-2 fw-bold text-slate-900 mt-1">@Model.ToplamMakineSayisi</div>
+                    </div>
+                    <div class="p-3 bg-indigo-100 text-indigo-700 rounded-circle fs-4"><i class="bi bi-gear-wide-connected"></i></div>
                 </div>
-                <div class="p-3 bg-indigo-100 text-indigo-700 rounded-circle fs-4"><i class="bi bi-gear-wide-connected"></i></div>
             </div>
-        </div>
+        </a>
     </div>
     <div class="col-xl-3 col-sm-6">
-        <div class="card p-3 shadow-sm border h-100" style="background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);">
-            <div class="d-flex align-items-center justify-content-between">
-                <div>
-                    <span class="text-slate-500 extra-small fw-bold text-uppercase">Toplam Bakım</span>
-                    <div class="fs-2 fw-bold text-slate-900 mt-1">@Model.ToplamBakimSayisi</div>
+        <a asp-action="TumBakimlar" class="text-decoration-none">
+            <div class="card p-3 shadow-sm border h-100 hover-lift" style="background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <span class="text-slate-500 extra-small fw-bold text-uppercase">Toplam Bakım</span>
+                        <div class="fs-2 fw-bold text-slate-900 mt-1">@Model.ToplamBakimSayisi</div>
+                    </div>
+                    <div class="p-3 bg-amber-100 text-amber-700 rounded-circle fs-4"><i class="bi bi-tools"></i></div>
                 </div>
-                <div class="p-3 bg-amber-100 text-amber-700 rounded-circle fs-4"><i class="bi bi-tools"></i></div>
             </div>
-        </div>
+        </a>
     </div>
     <div class="col-xl-3 col-sm-6">
-        <div class="card p-3 shadow-sm border h-100" style="background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);">
-            <div class="d-flex align-items-center justify-content-between">
-                <div>
-                    <span class="text-slate-500 extra-small fw-bold text-uppercase">Bu Ayki Bakımlar</span>
-                    <div class="fs-2 fw-bold text-slate-900 mt-1">@Model.BuAykiBakimSayisi</div>
+        <a asp-action="TumBakimlar" class="text-decoration-none">
+            <div class="card p-3 shadow-sm border h-100 hover-lift" style="background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <span class="text-slate-500 extra-small fw-bold text-uppercase">Bu Ayki Bakımlar</span>
+                        <div class="fs-2 fw-bold text-slate-900 mt-1">@Model.BuAykiBakimSayisi</div>
+                    </div>
+                    <div class="p-3 bg-emerald-100 text-emerald-700 rounded-circle fs-4"><i class="bi bi-calendar-check"></i></div>
                 </div>
-                <div class="p-3 bg-emerald-100 text-emerald-700 rounded-circle fs-4"><i class="bi bi-calendar-check"></i></div>
             </div>
-        </div>
+        </a>
     </div>
     <div class="col-xl-3 col-sm-6">
-        <div class="card p-3 shadow-sm border border-red-200 h-100" style="background: linear-gradient(135deg, #ffffff 0%, #fef2f2 100%);">
-            <div class="d-flex align-items-center justify-content-between">
-                <div>
-                    <span class="text-red-700 extra-small fw-bold text-uppercase">Toplam Bakım Maliyeti</span>
-                    <div class="fs-2 fw-bold text-red-900 mt-1">@Model.ToplamBakimMaliyeti.ToString("N0") ₺</div>
+        <a asp-action="TumBakimlar" class="text-decoration-none">
+            <div class="card p-3 shadow-sm border border-red-200 h-100 hover-lift" style="background: linear-gradient(135deg, #ffffff 0%, #fef2f2 100%);">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <span class="text-red-700 extra-small fw-bold text-uppercase">Toplam Bakım Maliyeti</span>
+                        <div class="fs-2 fw-bold text-red-900 mt-1">@Model.ToplamBakimMaliyeti.ToString("N0") ₺</div>
+                    </div>
+                    <div class="p-3 bg-red-200 text-red-700 rounded-circle fs-4"><i class="bi bi-wallet2"></i></div>
                 </div>
-                <div class="p-3 bg-red-200 text-red-700 rounded-circle fs-4"><i class="bi bi-wallet2"></i></div>
             </div>
-        </div>
+        </a>
     </div>
 </div>
 

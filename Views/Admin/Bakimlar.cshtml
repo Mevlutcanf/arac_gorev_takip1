@@ -29,22 +29,29 @@
             <span>Servis Geçmişi ve Planlanan Bakımlar</span>
         </div>
         <div>
-            <form method="get" asp-action="Bakimlar" class="d-flex flex-wrap align-items-center gap-2">
-                <input type="date" name="baslangicTarihi" class="form-control form-control-sm bg-slate-800 text-white border-slate-700" value="@ViewBag.BaslangicTarihi" title="Başlangıç Tarihi" onchange="this.form.submit()" />
-                <span class="text-slate-400">-</span>
-                <input type="date" name="bitisTarihi" class="form-control form-control-sm bg-slate-800 text-white border-slate-700" value="@ViewBag.BitisTarihi" title="Bitiş Tarihi" onchange="this.form.submit()" />
-                
-                <select name="vehicleId" class="form-select form-select-sm bg-slate-800 text-white border-slate-700" onchange="this.form.submit()">
-                    <option value="">-- Tüm Araçlar --</option>
-                    @foreach (var v in araclar)
-                    {
-                        <option value="@v.Id" selected="@(seciliVehicleId == v.Id)">@v.Plaka — @v.Marka @v.Model</option>
-                    }
-                </select>
-                
-                <a asp-action="Bakimlar" class="btn btn-sm btn-outline-secondary" title="Filtreleri Temizle">
-                    <i class="bi bi-x-circle"></i>
-                </a>
+            <form method="get" asp-action="Bakimlar" class="row g-2 align-items-center m-0">
+                <div class="col-auto">
+                    <div class="input-group input-group-sm">
+                        <span class="input-group-text bg-slate-800 text-slate-400 border-slate-700"><i class="bi bi-calendar3"></i></span>
+                        <input type="date" name="baslangicTarihi" class="form-control bg-slate-800 text-white border-slate-700" value="@ViewBag.BaslangicTarihi" title="Başlangıç Tarihi" onchange="this.form.submit()" />
+                        <span class="input-group-text bg-slate-800 text-slate-400 border-slate-700 border-start-0 border-end-0">-</span>
+                        <input type="date" name="bitisTarihi" class="form-control bg-slate-800 text-white border-slate-700" value="@ViewBag.BitisTarihi" title="Bitiş Tarihi" onchange="this.form.submit()" />
+                    </div>
+                </div>
+                <div class="col-auto">
+                    <select name="vehicleId" class="form-select form-select-sm bg-slate-800 text-white border-slate-700" onchange="this.form.submit()">
+                        <option value="">-- Tüm Araçlar --</option>
+                        @foreach (var v in araclar)
+                        {
+                            <option value="@v.Id" selected="@(seciliVehicleId == v.Id)">@v.Plaka — @v.Marka @v.Model</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-auto">
+                    <a asp-action="Bakimlar" class="btn btn-sm btn-outline-secondary" title="Filtreleri Temizle">
+                        <i class="bi bi-x-circle"></i>
+                    </a>
+                </div>
             </form>
         </div>
     </div>

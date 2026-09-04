@@ -180,12 +180,31 @@ namespace AracGorevFormu.Controllers
 
         // GET: /Makine/TumBakimlar
         [HttpGet]
-        public async Task<IActionResult> TumBakimlar()
+        public async Task<IActionResult> TumBakimlar(string? makineAdi, string? lokasyon, DateTime? baslangicTarihi, DateTime? bitisTarihi)
         {
-            var bakimlar = await _context.MakineBakimlari
-                                         .Include(b => b.Makine)
-                                         .OrderByDescending(b => b.BakimTarihi)
-                                         .ToListAsync();
+            var query = _context.MakineBakimlari
+                                .Include(b => b.Makine)
+                                .AsQueryable();
+
+            if (!string.IsNullOrEmpty(makineAdi))
+                query = query.Where(b => b.Makine != null && b.Makine.Ad.Contains(makineAdi));
+
+            if (!string.IsNullOrEmpty(lokasyon))
+                query = query.Where(b => b.Makine != null && b.Makine.Lokasyon == lokasyon);
+
+            if (baslangicTarihi.HasValue)
+                query = query.Where(b => b.BakimTarihi >= baslangicTarihi.Value);
+
+            if (bitisTarihi.HasValue)
+                query = query.Where(b => b.BakimTarihi <= bitisTarihi.Value);
+
+            var bakimlar = await query.OrderByDescending(b => b.BakimTarihi).ToListAsync();
+
+            ViewBag.Lokasyonlar = await _context.Makineler.Select(m => m.Lokasyon).Where(l => l != null && l != "").Distinct().ToListAsync();
+            ViewBag.MakineAdi = makineAdi;
+            ViewBag.Lokasyon = lokasyon;
+            ViewBag.BaslangicTarihi = baslangicTarihi?.ToString("yyyy-MM-dd");
+            ViewBag.BitisTarihi = bitisTarihi?.ToString("yyyy-MM-dd");
 
             return View(bakimlar);
         }
