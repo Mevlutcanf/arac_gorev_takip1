@@ -56,7 +56,6 @@ namespace AracGorevFormu.Data
                 context.Vehicles.AddRange(
                     new Vehicle
                     {
-                        Id = 1,
                         Plaka = "06 AB 123",
                         Marka = "Ford",
                         Model = "Transit",
@@ -73,7 +72,6 @@ namespace AracGorevFormu.Data
                     },
                     new Vehicle
                     {
-                        Id = 2,
                         Plaka = "06 CD 456",
                         Marka = "Volkswagen",
                         Model = "Caddy",
@@ -90,7 +88,6 @@ namespace AracGorevFormu.Data
                     },
                     new Vehicle
                     {
-                        Id = 3,
                         Plaka = "06 EF 789",
                         Marka = "Renault",
                         Model = "Clio",
@@ -107,7 +104,6 @@ namespace AracGorevFormu.Data
                     },
                     new Vehicle
                     {
-                        Id = 4,
                         Plaka = "06 GH 321",
                         Marka = "Toyota",
                         Model = "Corolla",
@@ -132,7 +128,6 @@ namespace AracGorevFormu.Data
                 context.AracBakimlari.AddRange(
                     new AracBakim
                     {
-                        Id = 1,
                         VehicleId = 1,
                         Plaka = "06 AB 123",
                         BakimTarihi = DateTime.Now.AddMonths(-3),
@@ -146,7 +141,6 @@ namespace AracGorevFormu.Data
                     },
                     new AracBakim
                     {
-                        Id = 2,
                         VehicleId = 2,
                         Plaka = "06 CD 456",
                         BakimTarihi = DateTime.Now.AddMonths(-1),
@@ -171,7 +165,7 @@ namespace AracGorevFormu.Data
             // 5. SMTP ve Arvento Ayarları Tohumlama
             if (!context.SmtpAyarlari.Any())
             {
-                context.SmtpAyarlari.Add(new SmtpAyari { Id = 1, SmtpServer = "smtp.gmail.com", Port = 587, EnableSsl = true, Aktif = false });
+                context.SmtpAyarlari.Add(new SmtpAyari { SmtpServer = "smtp.gmail.com", Port = 587, EnableSsl = true, Aktif = false });
                 context.SaveChanges();
             }
 
@@ -179,7 +173,6 @@ namespace AracGorevFormu.Data
             {
                 context.ArventoAyarlari.Add(new ArventoAyari
                 {
-                    Id = 1,
                     ApiUrl = "https://ws.arvento.com/v1/report.asmx",
                     KullaniciAdi = "2a8c3b606478c8525c5a4dcbd187d76a",
                     Sifre = "30907e1b96aafaeb26b65270d271457b",
