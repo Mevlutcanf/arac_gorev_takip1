@@ -58,17 +58,29 @@
 <body>
     <div class="no-print floating-action-bar">
         <button onclick="printAndRedirect()" class="btn btn-dark btn-lg shadow-sm"><i class="bi bi-printer me-2"></i>Resmî Çıktı Al & İmzalat</button>
-        <button onclick="window.close()" class="btn btn-outline-secondary shadow-sm">Kapat</button>
+        <button onclick="closePage()" class="btn btn-outline-secondary shadow-sm">Kapat</button>
         <a href="/Admin/Formlar" class="btn btn-outline-primary shadow-sm">Listeye Dön</a>
     </div>
 
     <script>
         function printAndRedirect() {
-            window.print();
-            // Yazdırma ekranı kapandığında otomatik detay sayfasına yönlendirir
+            // Event listener'ı print çağrılmadan hemen önce atıyoruz
             window.onafterprint = function() {
-                window.location.href = '/Admin/FormDetay/@Model.Id';
+                // Tüm formlar listesine yönlendir
+                window.location.href = '/Admin/Formlar';
             };
+            
+            // Yazdırma penceresini aç (İptal edilse veya PDF kaydedilse bile onafterprint tetiklenir)
+            window.print();
+        }
+
+        function closePage() {
+            // Eğer sayfa yeni sekmede açıldıysa kapatır, değilse listeye yönlendirir.
+            if (window.opener) {
+                window.close();
+            } else {
+                window.location.href = '/Admin/Formlar';
+            }
         }
     </script>
 

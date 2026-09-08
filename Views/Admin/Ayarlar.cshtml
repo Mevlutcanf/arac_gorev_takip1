@@ -30,6 +30,11 @@
             <i class="bi bi-geo-alt-fill me-1"></i>Arvento GPS
         </a>
     </li>
+    <li class="nav-item">
+        <a class="nav-link @(activeTab == "veritabani" ? "active" : "")" href="#tab-veritabani" data-bs-toggle="tab">
+            <i class="bi bi-database-fill me-1"></i>Veritabanı
+        </a>
+    </li>
 </ul>
 
 <div class="tab-content">
@@ -262,6 +267,44 @@
                     </div>
                     <div class="card-body p-3">
                         <div id="arvento-map"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TAB 5: VERİTABANI BAĞLANTISI -->
+    <div class="tab-pane fade @(activeTab == "veritabani" ? "show active" : "")" id="tab-veritabani">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="card shadow-sm border mb-4">
+                    <div class="card-header bg-slate-900 text-white">
+                        <i class="bi bi-database-fill-check me-1 text-amber-500"></i>Veritabanı Sunucu Bağlantısı
+                    </div>
+                    <div class="card-body p-4">
+                        <div class="alert alert-modern-pastel mb-4">
+                            <i class="bi bi-info-circle-fill alert-icon"></i>
+                            <div>
+                                <h4>Canlı Sunucu Bağlantısı</h4>
+                                <p>Sistem şu anda aşağıda belirtilen veritabanı sunucusuna (Production) bağlı olarak çalışmaktadır.</p>
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label">Aktif Connection String (Şifre Gizli)</label>
+                            @{
+                                var rawConnStr = ViewBag.DbConnectionString as string ?? "";
+                                var maskedConnStr = System.Text.RegularExpressions.Regex.Replace(rawConnStr, @"Password=[^;]+;", "Password=********;");
+                            }
+                            <input type="text" class="form-control font-monospace text-muted" value="@maskedConnStr" readonly />
+                        </div>
+
+                        <form asp-action="AyarlarVeritabaniTest" method="post">
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="btn btn-outline-primary btn-lg w-100">
+                                <i class="bi bi-lightning-charge-fill me-1"></i>Bağlantıyı Test Et
+                            </button>
+                        </form>
                     </div>
                 </div>
             </div>

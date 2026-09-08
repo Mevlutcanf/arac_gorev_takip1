@@ -27,11 +27,27 @@ namespace AracGorevFormu.Data
             catch (Exception ex)
             {
                 // Eğer veritabanı dosyası eski kolon/tablo şemasına sahipse sıfırdan OLUŞTURMA!
-                // DİKKAT: EnsureDeleted işlemi mevcut verileri sileceği için KALDIRILMIŞTIR.
-                // Lütfen eksik kolonları veritabanına manuel olarak veya Migration ile ekleyin.
                 logger.LogWarning(ex, "Veritabanı şeması uyumsuz. Ancak veri kaybını önlemek için veritabanı SİLİNMEYECEKTİR.");
-                // context.Database.EnsureDeleted(); // VERİ KAYBINA SEBEP OLDUĞU İÇİN İPTAL EDİLDİ
-                // context.Database.EnsureCreated(); // Tablolar varsa hata vermez, ama kolon eklemez.
+            }
+
+            try
+            {
+                // Eksik kolonları (MuayeneBildirimGonderildi ve SigortaBildirimGonderildi) manuel olarak ekle
+                context.Database.ExecuteSqlRaw(@"
+                    IF COL_LENGTH('Vehicles', 'MuayeneBildirimGonderildi') IS NULL
+                    BEGIN
+                        ALTER TABLE Vehicles ADD MuayeneBildirimGonderildi bit NOT NULL DEFAULT 0;
+                    END
+                    
+                    IF COL_LENGTH('Vehicles', 'SigortaBildirimGonderildi') IS NULL
+                    BEGIN
+                        ALTER TABLE Vehicles ADD SigortaBildirimGonderildi bit NOT NULL DEFAULT 0;
+                    END
+                ");
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Yeni kolonlar eklenirken bir hata oluştu.");
             }
 
             // 1. Yönetici Hesabı Tohumlama

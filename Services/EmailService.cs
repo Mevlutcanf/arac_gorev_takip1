@@ -13,6 +13,7 @@ namespace AracGorevFormu.Services
         Task FormBildirimiGonderAsync(GorevFormu form);
         Task FormDurumDegisiklikBildirimiGonderAsync(GorevFormu form, bool onaylandi);
         Task FormTamamlandiBildirimiGonderAsync(GorevFormu form);
+        Task AracVadeBildirimiGonderAsync(Vehicle arac, string vadeTipi, int kalanGun);
         SmtpAyari AyarlariGetir();
         void AyarlariKaydet(SmtpAyarlarViewModel model);
     }
@@ -394,6 +395,81 @@ namespace AracGorevFormu.Services
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Araç teslim edildi bildirim e-postası gönderilirken hata oluştu: {Hata}", ex.Message);
+            }
+        }
+
+        public async Task AracVadeBildirimiGonderAsync(Vehicle arac, string vadeTipi, int kalanGun)
+        {
+            var ayar = AyarlariGetir();
+            if (!ayar.Aktif || string.IsNullOrWhiteSpace(ayar.SenderEmail) || string.IsNullOrWhiteSpace(ayar.SenderPassword))
+            {
+                return;
+            }
+
+            try
+            {
+                var alicilar = (ayar.NotificationEmails ?? string.Empty)
+                    .Split(new[] { ',', ';' }, StringSplitOptions.RemoveEmptyEntries)
+                    .Select(e => e.Trim())
+                    .Where(e => !string.IsNullOrEmpty(e))
+                    .ToList();
+
+                if (alicilar.Count == 0)
+                {
+                    alicilar.Add(ayar.SenderEmail);
+                }
+
+                var message = new MimeMessage();
+                message.From.Add(new MailboxAddress("Abdurrahman Tatlıcı | Fleon", ayar.SenderEmail));
+
+                foreach (var alici in alicilar)
+                {
+                    message.To.Add(new MailboxAddress(null, alici));
+                }
+
+                string icon = vadeTipi == "Muayene" ? "🔧" : "🛡️";
+                string konu = $"[{icon} Yaklaşan {vadeTipi} Bitişi] {arac.Plaka} - {arac.Marka} {arac.Model}";
+                message.Subject = konu;
+
+                var bodyBuilder = new BodyBuilder
+                {
+                    HtmlBody = $@"
+                        <div style='font-family: ""Segoe UI"", Arial, sans-serif; padding: 20px; color: #1e293b; max-width: 600px; margin: 0 auto; background-color: #f8fafc;'>
+                            <div style='background: #0f172a; padding: 20px 25px; border-radius: 12px 12px 0 0; border-bottom: 4px solid #ef4444;'>
+                                <h2 style='color: #f8fafc; margin: 0; font-size: 20px;'><span>{icon}</span> Araç {vadeTipi} Bitiş Bildirimi</h2>
+                            </div>
+                            <div style='background: #ffffff; padding: 25px; border: 1px solid #e2e8f0;'>
+                                <div style='background: #fef2f2; color: #b91c1c; padding: 12px 15px; border-radius: 6px; font-weight: bold; margin-bottom: 20px;'>
+                                    DİKKAT: Araç {vadeTipi.ToLower()} bitiş tarihine {kalanGun} gün kalmıştır.
+                                </div>
+                                <table style='width: 100%; border-collapse: collapse;'>
+                                    <tr style='background: #f8fafc;'><td style='padding: 10px 12px; border: 1px solid #cbd5e1; font-weight: bold; width: 40%;'>Araç:</td><td style='padding: 10px 12px; border: 1px solid #cbd5e1;'><b style='color: #d97706; font-size: 16px;'>{arac.Plaka}</b> — {arac.Marka} {arac.Model}</td></tr>
+                                    <tr><td style='padding: 10px 12px; border: 1px solid #cbd5e1; font-weight: bold;'>Bitiş Tarihi:</td><td style='padding: 10px 12px; border: 1px solid #cbd5e1;'>{((vadeTipi == "Muayene" ? arac.MuayeneBitisTarihi : arac.SigortaBitisTarihi)?.ToString("dd.MM.yyyy"))}</td></tr>
+                                    <tr style='background: #f8fafc;'><td style='padding: 10px 12px; border: 1px solid #cbd5e1; font-weight: bold;'>Kalan Süre:</td><td style='padding: 10px 12px; border: 1px solid #cbd5e1;'><b style='color: #ef4444;'>{kalanGun} Gün</b></td></tr>
+                                    <tr><td style='padding: 10px 12px; border: 1px solid #cbd5e1; font-weight: bold;'>Zimmetli/Sabit Sürücü:</td><td style='padding: 10px 12px; border: 1px solid #cbd5e1;'>{arac.SabitSurucu ?? "Yok (Havuz Aracı)"}</td></tr>
+                                </table>
+                            </div>
+                        </div>"
+                };
+                message.Body = bodyBuilder.ToMessageBody();
+
+                using var client = new SmtpClient();
+                client.Timeout = 15000;
+
+                var secureSocketOptions = ayar.EnableSsl
+                    ? (ayar.Port == 465 ? SecureSocketOptions.SslOnConnect : SecureSocketOptions.StartTls)
+                    : SecureSocketOptions.None;
+
+                await client.ConnectAsync(ayar.SmtpServer, ayar.Port, secureSocketOptions);
+                await client.AuthenticateAsync(ayar.SenderEmail, ayar.SenderPassword);
+                await client.SendAsync(message);
+                await client.DisconnectAsync(true);
+
+                _logger.LogInformation("{VadeTipi} bildirim e-postası gönderildi -> {Plaka}", vadeTipi, arac.Plaka);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "{VadeTipi} bildirim e-postası gönderilirken hata oluştu: {Hata}", vadeTipi, ex.Message);
             }
         }
     }

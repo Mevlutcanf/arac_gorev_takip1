@@ -514,6 +514,9 @@ namespace AracGorevFormu.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
 
+                    b.Property<bool>("MuayeneBildirimGonderildi")
+                        .HasColumnType("bit");
+
                     b.Property<DateTime?>("MuayeneBitisTarihi")
                         .HasColumnType("datetime2");
 
@@ -553,6 +556,9 @@ namespace AracGorevFormu.Migrations
                     b.Property<string>("SasiNo")
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
+
+                    b.Property<bool>("SigortaBildirimGonderildi")
+                        .HasColumnType("bit");
 
                     b.Property<DateTime?>("SigortaBitisTarihi")
                         .HasColumnType("datetime2");

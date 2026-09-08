@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using AracGorevFormu.Models.ViewModels;
+using AracGorevFormu.Services;
 
 namespace AracGorevFormu.Controllers
 {
@@ -12,43 +13,23 @@ namespace AracGorevFormu.Controllers
     {
         private readonly AppDbContext _context;
         private readonly ILogger<MakineController> _logger;
+        private readonly ISystemLogService _logService;
 
-        public MakineController(AppDbContext context, ILogger<MakineController> logger)
+        public MakineController(AppDbContext context, ILogger<MakineController> logger, ISystemLogService logService)
         {
             _context = context;
             _logger = logger;
+            _logService = logService;
         }
 
-        private string MevcutKullaniciAdi => User.Identity?.Name ?? "Bilinmiyor";
 
-        private string GetClientIpAddress()
-        {
-            var ip = HttpContext.Request.Headers["X-Forwarded-For"].FirstOrDefault();
-            if (string.IsNullOrEmpty(ip)) ip = HttpContext.Connection.RemoteIpAddress?.ToString();
-            if (ip == "::1" || ip == "127.0.0.1") return "Localhost";
-            return string.IsNullOrEmpty(ip) ? "Bilinmiyor" : ip;
-        }
-
-        private async Task LogIslemAsync(string islemTuru, string detay)
-        {
-            var log = new SystemLog
-            {
-                Tarih = DateTime.Now,
-                KullaniciAdi = MevcutKullaniciAdi,
-                IslemTuru = islemTuru,
-                Detay = detay,
-                IpAdresi = GetClientIpAddress()
-            };
-            _context.SystemLogs.Add(log);
-            await _context.SaveChangesAsync();
-        }
 
         // GET: /Makine/Dashboard
         public async Task<IActionResult> Dashboard()
         {
             var model = new MakineDashboardViewModel();
 
-            var makineler = await _context.Makineler.ToListAsync();
+            var makineler = await _context.Makineler.Where(m => m.Aktif).ToListAsync();
             var bakimlar = await _context.MakineBakimlari.Include(b => b.Makine).ToListAsync();
 
             model.ToplamMakineSayisi = makineler.Count;
@@ -78,7 +59,7 @@ namespace AracGorevFormu.Controllers
         // GET: /Makine/Index
         public async Task<IActionResult> Index(string kategori)
         {
-            var query = _context.Makineler.AsQueryable();
+            var query = _context.Makineler.Where(m => m.Aktif).AsQueryable();
 
             if (!string.IsNullOrEmpty(kategori))
             {
@@ -108,7 +89,7 @@ namespace AracGorevFormu.Controllers
                 _context.Add(makine);
                 await _context.SaveChangesAsync();
                 
-                await LogIslemAsync("Makine Eklendi", $"{makine.Ad} adlı makine sisteme eklendi.");
+                await _logService.LogIslemWithHttpContextAsync("Makine Eklendi", $"{makine.Ad} adlı makine sisteme eklendi.", HttpContext);
                 
                 TempData["SuccessMessage"] = "Makine başarıyla eklendi.";
                 return RedirectToAction(nameof(Index));
@@ -141,7 +122,7 @@ namespace AracGorevFormu.Controllers
                     _context.Update(makine);
                     await _context.SaveChangesAsync();
                     
-                    await LogIslemAsync("Makine Güncellendi", $"{makine.Ad} adlı makinenin bilgileri güncellendi.");
+                    await _logService.LogIslemWithHttpContextAsync("Makine Güncellendi", $"{makine.Ad} adlı makinenin bilgileri güncellendi.", HttpContext);
                     
                     TempData["SuccessMessage"] = "Makine başarıyla güncellendi.";
                 }
@@ -164,10 +145,11 @@ namespace AracGorevFormu.Controllers
             if (makine != null)
             {
                 var makineAdi = makine.Ad;
-                _context.Makineler.Remove(makine);
+                makine.Aktif = false;
+                _context.Makineler.Update(makine);
                 await _context.SaveChangesAsync();
                 
-                await LogIslemAsync("Makine Silindi", $"{makineAdi} adlı makine sistemden silindi.");
+                await _logService.LogIslemWithHttpContextAsync("Makine Silindi (Pasife Alındı)", $"{makineAdi} adlı makine sistemden pasife alındı.", HttpContext);
                 
                 TempData["SuccessMessage"] = "Makine silindi.";
             }
@@ -200,7 +182,7 @@ namespace AracGorevFormu.Controllers
 
             var bakimlar = await query.OrderByDescending(b => b.BakimTarihi).ToListAsync();
 
-            ViewBag.Lokasyonlar = await _context.Makineler.Select(m => m.Lokasyon).Where(l => l != null && l != "").Distinct().ToListAsync();
+            ViewBag.Lokasyonlar = await _context.Makineler.Where(m => m.Aktif).Select(m => m.Lokasyon).Where(l => l != null && l != "").Distinct().ToListAsync();
             ViewBag.MakineAdi = makineAdi;
             ViewBag.Lokasyon = lokasyon;
             ViewBag.BaslangicTarihi = baslangicTarihi?.ToString("yyyy-MM-dd");
@@ -312,7 +294,7 @@ namespace AracGorevFormu.Controllers
 
                 if (makine != null)
                 {
-                    await LogIslemAsync("Makine Bakımı Eklendi", $"{makine.Ad} makinesine yeni bakım/servis kaydı eklendi.");
+                    await _logService.LogIslemWithHttpContextAsync("Makine Bakımı Eklendi", $"{makine.Ad} makinesine yeni bakım/servis kaydı eklendi.", HttpContext);
                 }
 
                 TempData["SuccessMessage"] = "Makine bakım kaydı eklendi.";
@@ -346,7 +328,7 @@ namespace AracGorevFormu.Controllers
 
                 _context.MakineBakimlari.Remove(bakim);
                 await _context.SaveChangesAsync();
-                await LogIslemAsync("Makine Bakımı Silindi", $"ID'si {id} olan makine bakım kaydı silindi.");
+                await _logService.LogIslemWithHttpContextAsync("Makine Bakımı Silindi", $"ID'si {id} olan makine bakım kaydı silindi.", HttpContext);
                 TempData["SuccessMessage"] = "Makine bakım kaydı başarıyla silindi.";
                 return RedirectToAction(nameof(BakimListesi), new { makineId = makineId });
             }

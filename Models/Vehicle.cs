@@ -60,6 +60,10 @@ namespace AracGorevFormu.Models
         [Display(Name = "Kasko/Zorunlu Trafik Sigortası Bitiş Tarihi")]
         public DateTime? SigortaBitisTarihi { get; set; }
 
+        public bool MuayeneBildirimGonderildi { get; set; } = false;
+        
+        public bool SigortaBildirimGonderildi { get; set; } = false;
+
         [StringLength(255)]
         [Display(Name = "Ruhsat Belge Dosya Yolu")]
         public string? RuhsatDosyaYolu { get; set; }

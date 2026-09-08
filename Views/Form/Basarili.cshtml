@@ -60,7 +60,25 @@
 <script>
     function copyTrackingCode() {
         var copyText = document.getElementById("trackingCodeText").innerText;
+        var titleElement = document.querySelector(".tracking-code-title");
+        var container = document.querySelector(".tracking-code-badge-container");
+        
+        var originalTitle = titleElement.innerHTML;
+        
         navigator.clipboard.writeText(copyText).then(function() {
+            // Görsel Geri Bildirim
+            titleElement.innerHTML = "<i class='bi bi-check-circle-fill me-1'></i> KOPYALANDI!";
+            titleElement.classList.replace("text-primary", "text-success");
+            container.classList.replace("border-primary", "border-success");
+            container.classList.replace("bg-primary", "bg-success");
+            
+            setTimeout(function() {
+                titleElement.innerHTML = originalTitle;
+                titleElement.classList.replace("text-success", "text-primary");
+                container.classList.replace("border-success", "border-primary");
+                container.classList.replace("bg-success", "bg-primary");
+            }, 2500);
+
             if (typeof Swal !== 'undefined') {
                 Swal.fire({
                     toast: true,
@@ -70,8 +88,6 @@
                     showConfirmButton: false,
                     timer: 2000
                 });
-            } else {
-                alert("Takip Kodu Kopyalandı: " + copyText);
             }
         });
     }

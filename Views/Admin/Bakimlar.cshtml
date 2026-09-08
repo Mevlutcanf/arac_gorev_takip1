@@ -23,23 +23,16 @@
 </div>
 
 <div class="card shadow-sm border mb-4">
-    <div class="card-header bg-slate-900 text-white d-flex align-items-center justify-content-between py-3">
-        <div class="d-flex align-items-center gap-2">
-            <i class="bi bi-list-stars text-amber-500"></i>
-            <span>Servis Geçmişi ve Planlanan Bakımlar</span>
-        </div>
-        <div>
-            <form method="get" asp-action="Bakimlar" class="row g-2 align-items-center m-0">
-                <div class="col-auto">
-                    <div class="input-group input-group-sm">
-                        <span class="input-group-text bg-slate-800 text-slate-400 border-slate-700"><i class="bi bi-calendar3"></i></span>
-                        <input type="date" name="baslangicTarihi" class="form-control bg-slate-800 text-white border-slate-700" value="@ViewBag.BaslangicTarihi" title="Başlangıç Tarihi" onchange="this.form.submit()" />
-                        <span class="input-group-text bg-slate-800 text-slate-400 border-slate-700 border-start-0 border-end-0">-</span>
-                        <input type="date" name="bitisTarihi" class="form-control bg-slate-800 text-white border-slate-700" value="@ViewBag.BitisTarihi" title="Bitiş Tarihi" onchange="this.form.submit()" />
-                    </div>
-                </div>
-                <div class="col-auto">
-                    <select name="vehicleId" class="form-select form-select-sm bg-slate-800 text-white border-slate-700" onchange="this.form.submit()">
+    <div class="card-header bg-slate-900 text-white d-flex align-items-center py-3">
+        <i class="bi bi-list-stars text-amber-500 me-2"></i>
+        <span class="fw-bold mb-0">Servis Geçmişi ve Planlanan Bakımlar</span>
+    </div>
+    <div class="bg-light border-bottom p-3">
+        <form method="get" asp-action="Bakimlar">
+            <div class="row g-3">
+                <div class="col-md-5">
+                    <label class="form-label small fw-bold text-muted mb-1">Araç Seçimi</label>
+                    <select name="vehicleId" class="form-select form-select-sm" onchange="this.form.submit()">
                         <option value="">-- Tüm Araçlar --</option>
                         @foreach (var v in araclar)
                         {
@@ -47,13 +40,22 @@
                         }
                     </select>
                 </div>
-                <div class="col-auto">
-                    <a asp-action="Bakimlar" class="btn btn-sm btn-outline-secondary" title="Filtreleri Temizle">
-                        <i class="bi bi-x-circle"></i>
+                <div class="col-md-5">
+                    <label class="form-label small fw-bold text-muted mb-1">Tarih Aralığı</label>
+                    <div class="input-group input-group-sm">
+                        <span class="input-group-text bg-white text-muted"><i class="bi bi-calendar3"></i></span>
+                        <input type="date" name="baslangicTarihi" class="form-control" value="@ViewBag.BaslangicTarihi" title="Başlangıç Tarihi" onchange="this.form.submit()" />
+                        <span class="input-group-text bg-white text-muted border-start-0 border-end-0">-</span>
+                        <input type="date" name="bitisTarihi" class="form-control" value="@ViewBag.BitisTarihi" title="Bitiş Tarihi" onchange="this.form.submit()" />
+                    </div>
+                </div>
+                <div class="col-md-2 d-flex align-items-end justify-content-md-end mt-3 mt-md-0">
+                    <a asp-action="Bakimlar" class="btn btn-sm btn-outline-secondary px-3 w-100" title="Filtreleri Temizle">
+                        <i class="bi bi-x-circle me-1"></i>Temizle
                     </a>
                 </div>
-            </form>
-        </div>
+            </div>
+        </form>
     </div>
     <div class="table-responsive p-3">
         <table class="table align-middle mb-0" id="bakimlarTable">

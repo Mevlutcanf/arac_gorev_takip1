@@ -13,13 +13,15 @@ namespace AracGorevFormu.Controllers
         private readonly GorevFormuRepository _formRepo;
         private readonly IEmailService _emailService;
         private readonly IServiceScopeFactory _scopeFactory;
+        private readonly ISystemLogService _logService;
 
-        public FormController(VehicleRepository vehicleRepo, GorevFormuRepository formRepo, IEmailService emailService, IServiceScopeFactory scopeFactory)
+        public FormController(VehicleRepository vehicleRepo, GorevFormuRepository formRepo, IEmailService emailService, IServiceScopeFactory scopeFactory, ISystemLogService logService)
         {
             _vehicleRepo = vehicleRepo;
             _formRepo = formRepo;
             _emailService = emailService;
             _scopeFactory = scopeFactory;
+            _logService = logService;
         }
 
         [HttpGet]
@@ -85,6 +87,8 @@ namespace AracGorevFormu.Controllers
             };
 
             await _formRepo.EkleAsync(form);
+            
+            await _logService.LogIslemWithHttpContextAsync("Yeni Form Oluşturuldu", $"{form.KullananAdSoyad}, {form.AracPlaka} aracı için görev formu doldurdu. (Takip Kodu: {form.TakipKodu})", HttpContext, form.KullananAdSoyad);
 
             // Kullanıcı görsel bir geçiş/yükleme ekranı görmek istediği için e-posta gönderimi tamamlanana kadar (senkron) bekliyoruz
             await _emailService.FormBildirimiGonderAsync(form);
@@ -173,6 +177,8 @@ namespace AracGorevFormu.Controllers
                 form.GercekDonusZamani = DateTime.Now;
                 form.Durum = GorevDurumu.TamamlandiDondu;
                 await _formRepo.GuncelleAsync(form);
+                
+                await _logService.LogIslemWithHttpContextAsync("Araç Dönüş Bildirimi (Şoför)", $"{form.AracPlaka} aracının dönüşü personel tarafından form ekranından bildirildi. (Takip Kodu: {form.TakipKodu})", HttpContext, form.KullananAdSoyad);
                 
                 // Araç iade edildi (teslim edildi) e-postası gönder
                 await _emailService.FormTamamlandiBildirimiGonderAsync(form);

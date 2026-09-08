@@ -21,17 +21,7 @@ builder.Services.Configure<ForwardedHeadersOptions>(options =>
 builder.Services.AddDbContext<AppDbContext>(options =>
 {
     var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
-    
-    // Eğer Geliştirme (Development) ortamındaysak kendi bilgisayarımızdaki SQLite'ı kullan
-    if (builder.Environment.IsDevelopment())
-    {
-        options.UseSqlite(connectionString);
-    }
-    else
-    {
-        // Canlı (Production) sunucudaysak MSSQL kullan
-        options.UseSqlServer(connectionString);
-    }
+    options.UseSqlServer(connectionString);
 });
 
 // Repository Katmani (EF Core Scoped Injection)
@@ -45,6 +35,10 @@ builder.Services.AddScoped<ArventoService>();
 builder.Services.AddScoped<IArventoService>(sp => sp.GetRequiredService<ArventoService>());
 builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<IHgsService, HgsService>();
+builder.Services.AddScoped<ISystemLogService, SystemLogService>();
+
+// Arka plan servisleri
+builder.Services.AddHostedService<AracVadeBildirimService>();
 
 // Kimlik dogrulama: Sadece admin panelini korumak icin Cookie tabanli auth.
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
