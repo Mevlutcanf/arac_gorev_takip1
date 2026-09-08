@@ -8,6 +8,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 // MVC
 builder.Services.AddControllersWithViews();
+builder.Services.AddWindowsService();
 
 // IP adresi dogru alinmasi icin proxy/forwarded headers destegi
 builder.Services.Configure<ForwardedHeadersOptions>(options =>
