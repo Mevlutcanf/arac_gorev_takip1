@@ -839,6 +839,72 @@ namespace AracGorevFormu.Controllers
             
             return Json(result);
         }
+
+        // ---------------- ÖZEL MAİL GÖNDERİMİ & TASLAKLAR ----------------
+        
+        [HttpGet]
+        public async Task<IActionResult> MailModulu()
+        {
+            var taslaklar = await _db.MailTaslaklari.OrderByDescending(t => t.EklenmeTarihi).ToListAsync();
+            ViewBag.Taslaklar = taslaklar;
+            return View();
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> MailGonder(MailGonderViewModel model)
+        {
+            if (ModelState.IsValid)
+            {
+                await _emailService.OzelMailGonderAsync(model.AliciEmail, model.Konu, model.Icerik);
+                await _logService.LogIslemWithHttpContextAsync("Özel Mail Gönderildi", $"{model.AliciEmail} adresine '{model.Konu}' konulu mail gönderildi.", HttpContext);
+                TempData["Mesaj"] = "E-Posta başarıyla gönderildi.";
+                return RedirectToAction(nameof(MailModulu));
+            }
+            
+            var taslaklar = await _db.MailTaslaklari.OrderByDescending(t => t.EklenmeTarihi).ToListAsync();
+            ViewBag.Taslaklar = taslaklar;
+            return View(nameof(MailModulu), model);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> TaslakKaydet(string taslakBaslik, string konu, string icerik)
+        {
+            if (string.IsNullOrWhiteSpace(taslakBaslik) || string.IsNullOrWhiteSpace(konu) || string.IsNullOrWhiteSpace(icerik))
+            {
+                TempData["Hata"] = "Taslak kaydetmek için başlık, konu ve içerik alanları zorunludur.";
+                return RedirectToAction(nameof(MailModulu));
+            }
+
+            var yeniTaslak = new MailTaslak
+            {
+                Baslik = taslakBaslik,
+                Konu = konu,
+                Icerik = icerik,
+                EklenmeTarihi = DateTime.Now
+            };
+
+            _db.MailTaslaklari.Add(yeniTaslak);
+            await _db.SaveChangesAsync();
+            
+            TempData["Mesaj"] = $"'{taslakBaslik}' adlı taslak başarıyla kaydedildi.";
+            return RedirectToAction(nameof(MailModulu));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> TaslakSil(int id)
+        {
+            var taslak = await _db.MailTaslaklari.FindAsync(id);
+            if (taslak != null)
+            {
+                _db.MailTaslaklari.Remove(taslak);
+                await _db.SaveChangesAsync();
+                TempData["Mesaj"] = "Taslak silindi.";
+            }
+            return RedirectToAction(nameof(MailModulu));
+        }
     }
 }
 

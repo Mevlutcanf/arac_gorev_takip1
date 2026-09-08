@@ -1,0 +1,170 @@
+@model AracGorevFormu.Models.ViewModels.MailGonderViewModel
+@{
+    ViewData["Title"] = "Özel E-Posta Gönderimi";
+    var taslaklar = ViewBag.Taslaklar as List<AracGorevFormu.Models.MailTaslak>;
+}
+
+<div class="container-fluid px-4">
+    <h1 class="mt-4">✉️ Özel E-Posta Gönderimi</h1>
+    <ol class="breadcrumb mb-4">
+        <li class="breadcrumb-item"><a asp-action="Index">Dashboard</a></li>
+        <li class="breadcrumb-item active">Mail Modülü</li>
+    </ol>
+
+    @if (TempData["Mesaj"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="fas fa-check-circle me-2"></i> @TempData["Mesaj"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+    @if (TempData["Hata"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="fas fa-exclamation-circle me-2"></i> @TempData["Hata"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <div class="row">
+        <!-- Mail Gönderme Formu -->
+        <div class="col-lg-8">
+            <div class="card shadow-sm mb-4 border-0">
+                <div class="card-header bg-white py-3">
+                    <h5 class="m-0 font-weight-bold text-primary">Yeni Mesaj Oluştur</h5>
+                </div>
+                <div class="card-body">
+                    <form asp-action="MailGonder" method="post" id="mailForm">
+                        <div class="mb-3">
+                            <label asp-for="AliciEmail" class="form-label fw-bold">Alıcı E-Posta Adresi <span class="text-danger">*</span></label>
+                            <input asp-for="AliciEmail" type="email" class="form-control" placeholder="ornek@firma.com" required />
+                            <span asp-validation-for="AliciEmail" class="text-danger"></span>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label asp-for="Konu" class="form-label fw-bold">Konu <span class="text-danger">*</span></label>
+                            <input asp-for="Konu" class="form-control" id="txtKonu" placeholder="E-Posta konusu..." required />
+                            <span asp-validation-for="Konu" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-4">
+                            <label asp-for="Icerik" class="form-label fw-bold">Mesajınız <span class="text-danger">*</span></label>
+                            <textarea asp-for="Icerik" class="form-control" id="txtIcerik" rows="8" placeholder="Göndermek istediğiniz mesajı buraya yazın..." required></textarea>
+                            <span asp-validation-for="Icerik" class="text-danger"></span>
+                        </div>
+
+                        <div class="d-flex justify-content-between">
+                            <button type="button" class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#taslakKaydetModal">
+                                <i class="fas fa-save me-1"></i> Bu Mesajı Taslak Olarak Kaydet
+                            </button>
+                            <button type="submit" class="btn btn-primary px-4">
+                                <i class="fas fa-paper-plane me-1"></i> Gönder
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Taslaklar Listesi -->
+        <div class="col-lg-4">
+            <div class="card shadow-sm mb-4 border-0">
+                <div class="card-header bg-white py-3">
+                    <h5 class="m-0 font-weight-bold text-success"><i class="fas fa-clipboard-list me-2"></i>Kayıtlı Taslaklar</h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="list-group list-group-flush">
+                        @if (taslaklar != null && taslaklar.Any())
+                        {
+                            foreach (var taslak in taslaklar)
+                            {
+                                <div class="list-group-item d-flex justify-content-between align-items-center p-3">
+                                    <div class="d-flex flex-column" style="cursor:pointer;" onclick="taslakYukle('@Html.Raw(System.Web.HttpUtility.JavaScriptStringEncode(taslak.Konu))', '@Html.Raw(System.Web.HttpUtility.JavaScriptStringEncode(taslak.Icerik))')">
+                                        <span class="fw-bold text-primary">@taslak.Baslik</span>
+                                        <small class="text-muted text-truncate" style="max-width: 200px;">@taslak.Konu</small>
+                                    </div>
+                                    <form asp-action="TaslakSil" method="post" onsubmit="return confirm('Bu taslağı silmek istediğinize emin misiniz?');">
+                                        <input type="hidden" name="id" value="@taslak.Id" />
+                                        <button type="submit" class="btn btn-sm btn-outline-danger" title="Sil">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                            }
+                        }
+                        else
+                        {
+                            <div class="p-4 text-center text-muted">
+                                <i class="fas fa-inbox fa-3x mb-3 opacity-25"></i>
+                                <p class="mb-0">Henüz kaydedilmiş bir taslak bulunmuyor.</p>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Taslak Kaydet Modal -->
+<div class="modal fade" id="taslakKaydetModal" tabindex="-1" aria-labelledby="taslakKaydetModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="taslakKaydetModalLabel">Taslak Kaydet</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form asp-action="TaslakKaydet" method="post">
+                <div class="modal-body">
+                    <div class="alert alert-info py-2">
+                        <small>Ekranda yazılı olan Konu ve Mesaj veritabanına kaydedilecektir.</small>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="taslakBaslik" class="form-label fw-bold">Taslak Adı (Örn: İşe Alım Reddi, Uyarı Mesajı)</label>
+                        <input type="text" class="form-control" id="taslakBaslik" name="taslakBaslik" required />
+                    </div>
+                    
+                    <!-- Formdaki verileri gizli olarak taşıyoruz -->
+                    <input type="hidden" id="hiddenKonu" name="konu" />
+                    <input type="hidden" id="hiddenIcerik" name="icerik" />
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
+                    <button type="submit" class="btn btn-success" onclick="verileriTasi()">Kaydet</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        // Taslağa tıklandığında formu dolduran fonksiyon
+        function taslakYukle(konu, icerik) {
+            document.getElementById('txtKonu').value = konu;
+            document.getElementById('txtIcerik').value = icerik;
+            
+            // Kullanıcıya küçük bir bildirim (opsiyonel)
+            const aliciInput = document.getElementById('AliciEmail');
+            aliciInput.focus();
+            
+            // Butonu renklendirip geri çevirelim (görsel efekt)
+            const submitBtn = document.querySelector('button[type="submit"]');
+            const oldHtml = submitBtn.innerHTML;
+            submitBtn.innerHTML = '<i class="fas fa-check"></i> Taslak Yüklendi';
+            submitBtn.classList.replace('btn-primary', 'btn-success');
+            setTimeout(() => {
+                submitBtn.innerHTML = oldHtml;
+                submitBtn.classList.replace('btn-success', 'btn-primary');
+            }, 1500);
+        }
+
+        // Taslak kaydedileceği zaman ana formdaki verileri gizli inputlara aktaran fonksiyon
+        function verileriTasi() {
+            document.getElementById('hiddenKonu').value = document.getElementById('txtKonu').value;
+            document.getElementById('hiddenIcerik').value = document.getElementById('txtIcerik').value;
+        }
+    </script>
+}

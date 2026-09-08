@@ -43,6 +43,17 @@ namespace AracGorevFormu.Data
                     BEGIN
                         ALTER TABLE Vehicles ADD SigortaBildirimGonderildi bit NOT NULL DEFAULT 0;
                     END
+                    
+                    IF OBJECT_ID('MailTaslaklari', 'U') IS NULL
+                    BEGIN
+                        CREATE TABLE MailTaslaklari (
+                            Id int IDENTITY(1,1) PRIMARY KEY,
+                            Baslik nvarchar(100) NOT NULL,
+                            Konu nvarchar(200) NOT NULL,
+                            Icerik nvarchar(max) NOT NULL,
+                            EklenmeTarihi datetime2 NOT NULL
+                        );
+                    END
                 ");
             }
             catch (Exception ex)

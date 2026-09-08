@@ -14,6 +14,7 @@ namespace AracGorevFormu.Services
         Task FormDurumDegisiklikBildirimiGonderAsync(GorevFormu form, bool onaylandi);
         Task FormTamamlandiBildirimiGonderAsync(GorevFormu form);
         Task AracVadeBildirimiGonderAsync(Vehicle arac, string vadeTipi, int kalanGun);
+        Task OzelMailGonderAsync(string aliciEmail, string konu, string icerik);
         SmtpAyari AyarlariGetir();
         void AyarlariKaydet(SmtpAyarlarViewModel model);
     }
@@ -470,6 +471,53 @@ namespace AracGorevFormu.Services
             catch (Exception ex)
             {
                 _logger.LogError(ex, "{VadeTipi} bildirim e-postası gönderilirken hata oluştu: {Hata}", vadeTipi, ex.Message);
+            }
+        }
+
+        public async Task OzelMailGonderAsync(string aliciEmail, string konu, string icerik)
+        {
+            var ayarlar = AyarlariGetir();
+            if (!ayarlar.Aktif) return;
+
+            string gonderenEmail = string.IsNullOrWhiteSpace(ayarlar.SenderEmail) ? "noreply@fleon.com" : ayarlar.SenderEmail;
+            string gonderenAd = "Fleon Sistem";
+
+            var message = new MimeMessage();
+            message.From.Add(new MailboxAddress(gonderenAd, gonderenEmail));
+            message.To.Add(new MailboxAddress("", aliciEmail));
+            message.Subject = konu;
+
+            string htmlIcerik = $@"
+            <html>
+            <body style='font-family: Arial, sans-serif; background-color: #f4f7f6; margin: 0; padding: 20px;'>
+                <div style='max-width: 600px; margin: auto; background: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1);'>
+                    <div style='background-color: #0f172a; color: #ffffff; padding: 20px; text-align: center;'>
+                        <h2 style='margin: 0;'>{konu}</h2>
+                    </div>
+                    <div style='padding: 30px; color: #333333; line-height: 1.6;'>
+                        {icerik.Replace("\n", "<br/>")}
+                    </div>
+                    <div style='background-color: #f8fafc; color: #64748b; text-align: center; padding: 15px; font-size: 12px; border-top: 1px solid #e2e8f0;'>
+                        <p style='margin: 0;'>Bu e-posta <strong>Fleon</strong> sisteminden otomatik gönderilmiştir.</p>
+                    </div>
+                </div>
+            </body>
+            </html>";
+
+            var bodyBuilder = new BodyBuilder { HtmlBody = htmlIcerik };
+            message.Body = bodyBuilder.ToMessageBody();
+
+            try
+            {
+                using var client = new SmtpClient();
+                await client.ConnectAsync(ayarlar.SmtpServer, ayarlar.Port, ayarlar.EnableSsl ? SecureSocketOptions.StartTls : SecureSocketOptions.None);
+                await client.AuthenticateAsync(ayarlar.SenderEmail, ayarlar.SenderPassword);
+                await client.SendAsync(message);
+                await client.DisconnectAsync(true);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Mail gönderilirken hata oluştu: {aliciEmail}");
             }
         }
     }
