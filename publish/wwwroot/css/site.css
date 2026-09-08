@@ -47,6 +47,19 @@ body {
 /* --------------------------------------------------------------------------
    2. APP HEADER & NAVBAR (Glassmorphism Pill)
    -------------------------------------------------------------------------- */
+/* Tüm sayfalardaki üst başlık ve alt açıklamaların noktalarla çakışmasını önleyen okunabilirlik filtresi */
+.row.mb-4.align-items-center h2,
+.row.mb-4.align-items-center p.text-muted,
+.page-title-readable {
+    text-shadow: 
+        -2px -2px 4px var(--bg-color),
+         2px -2px 4px var(--bg-color),
+        -2px  2px 4px var(--bg-color),
+         2px  2px 4px var(--bg-color),
+         0    0   10px var(--bg-color),
+         0    0   15px var(--bg-color);
+}
+
 .app-header {
   position: sticky;
   top: 1rem;
