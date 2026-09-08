@@ -4,7 +4,16 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.EntityFrameworkCore;
 
-var builder = WebApplication.CreateBuilder(args);
+using Microsoft.Extensions.Hosting.WindowsServices;
+
+var options = new WebApplicationOptions
+{
+    Args = args,
+    ContentRootPath = WindowsServiceHelpers.IsWindowsService() ? AppContext.BaseDirectory : default
+};
+var builder = WebApplication.CreateBuilder(options);
+
+builder.Host.UseWindowsService();
 
 // MVC
 builder.Services.AddControllersWithViews();
