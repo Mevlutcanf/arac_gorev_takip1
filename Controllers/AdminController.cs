@@ -88,13 +88,17 @@ namespace AracGorevFormu.Controllers
                 }
                 else
                 {
-                    // Arvento eşleşmesi yoksa, DB'de görevi olanları 'Dışarıda', görevi olmayanları 'Bilinmiyor/Beklemede' sayacağız.
-                    // Şimdilik listeleri kirletmemesi adına 'Şirkette' listesine de, 'Dışarıda' listesine de EKLEMİYORUZ 
-                    // Yalnızca DB'de aktif bir görevi varsa onu Dışarıda listesine ekliyoruz.
+                    // Arvento eşleşmesi yoksa (veya kapalıysa):
+                    // Eğer veritabanında aktif (onaylanmış) bir görevi varsa Dışarıda say.
+                    // Yoksa İçeride (Müsait) say.
                     var form = disaridakiFormlar.FirstOrDefault(f => f.VehicleId == arac.Id);
                     if (form != null)
                     {
                         gercekDisaridakiFormlar.Add(form);
+                    }
+                    else
+                    {
+                        gercekIceridekiAraclar.Add(arac);
                     }
                 }
             }
@@ -152,6 +156,7 @@ namespace AracGorevFormu.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Ana Yönetici,Operatör")]
         public async Task<IActionResult> FormOnayla(int id)
         {
             var form = await _formRepo.GetirByIdAsync(id);
@@ -188,6 +193,7 @@ namespace AracGorevFormu.Controllers
         }
 
         [HttpGet]
+        [Authorize(Roles = "Ana Yönetici,Operatör")]
         public async Task<IActionResult> FormReddet(int id)
         {
             var form = await _formRepo.GetirByIdAsync(id);
@@ -197,6 +203,7 @@ namespace AracGorevFormu.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Ana Yönetici,Operatör")]
         public async Task<IActionResult> FormReddet(RedViewModel model)
         {
             if (!ModelState.IsValid) return View(model);
@@ -303,6 +310,7 @@ namespace AracGorevFormu.Controllers
         }
 
         [HttpGet]
+        [Authorize(Roles = "Ana Yönetici,Operatör")]
         public IActionResult AracEkle()
         {
             return View(new Vehicle { Aktif = true });
@@ -310,6 +318,7 @@ namespace AracGorevFormu.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Ana Yönetici,Operatör")]
         public async Task<IActionResult> AracEkle(Vehicle vehicle)
         {
             if (await _vehicleRepo.PlakaVarMiAsync(vehicle.Plaka))
@@ -326,6 +335,7 @@ namespace AracGorevFormu.Controllers
         }
 
         [HttpGet]
+        [Authorize(Roles = "Ana Yönetici,Operatör")]
         public async Task<IActionResult> AracDuzenle(int id)
         {
             var arac = await _vehicleRepo.GetirByIdAsync(id);
@@ -335,6 +345,7 @@ namespace AracGorevFormu.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Ana Yönetici,Operatör")]
         public async Task<IActionResult> AracDuzenle(Vehicle vehicle, IFormFile? ruhsatDosya)
         {
             if (await _vehicleRepo.PlakaVarMiAsync(vehicle.Plaka, vehicle.Id))
@@ -389,6 +400,7 @@ namespace AracGorevFormu.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Ana Yönetici")]
         public async Task<IActionResult> AracSil(int id)
         {
             var tumFormlar = await _formRepo.TumuAsync();
@@ -443,6 +455,7 @@ namespace AracGorevFormu.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Ana Yönetici,Operatör")]
         public async Task<IActionResult> BakimEkle(AracBakim bakim)
         {
             var arac = await _vehicleRepo.GetirByIdAsync(bakim.VehicleId);
@@ -464,6 +477,7 @@ namespace AracGorevFormu.Controllers
         }
 
         [HttpGet]
+        [Authorize(Roles = "Ana Yönetici,Operatör")]
         public async Task<IActionResult> BakimDuzenle(int id)
         {
             var bakim = await _db.AracBakimlari.FirstOrDefaultAsync(b => b.Id == id);
@@ -475,6 +489,7 @@ namespace AracGorevFormu.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Ana Yönetici,Operatör")]
         public async Task<IActionResult> BakimDuzenle(AracBakim model)
         {
             var mevcut = await _db.AracBakimlari.FirstOrDefaultAsync(b => b.Id == model.Id);
@@ -501,6 +516,7 @@ namespace AracGorevFormu.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Ana Yönetici")]
         public async Task<IActionResult> BakimSil(int id)
         {
             var mevcut = await _db.AracBakimlari.FirstOrDefaultAsync(b => b.Id == id);
@@ -530,6 +546,7 @@ namespace AracGorevFormu.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Ana Yönetici,Operatör")]
         public async Task<IActionResult> HgsGecisEkle(HgsGecis gecis)
         {
             if (ModelState.IsValid)
@@ -547,6 +564,7 @@ namespace AracGorevFormu.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Ana Yönetici,Operatör")]
         public async Task<IActionResult> HgsOde(int id, string plaka)
         {
             var item = await _db.HgsGecisleri.FirstOrDefaultAsync(h => h.Id == id);
@@ -561,6 +579,7 @@ namespace AracGorevFormu.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Ana Yönetici")]
         public async Task<IActionResult> HgsSil(int id, string plaka)
         {
             var item = await _db.HgsGecisleri.FirstOrDefaultAsync(h => h.Id == id);
@@ -601,6 +620,7 @@ namespace AracGorevFormu.Controllers
         // ---------------- TEK BİRLEŞİK SİSTEM AYARLARI ----------------
 
         [HttpGet]
+        [Authorize(Roles = "Ana Yönetici")]
         public async Task<IActionResult> SistemKayitlari()
         {
             var logs = await _db.SystemLogs.OrderByDescending(l => l.Tarih).ToListAsync();
@@ -608,6 +628,7 @@ namespace AracGorevFormu.Controllers
         }
 
         [HttpGet]
+        [Authorize(Roles = "Ana Yönetici")]
         public async Task<IActionResult> Ayarlar(string tab = "yoneticiler")
         {
             var me = await _adminRepo.GetirByIdAsync(MevcutKullaniciId);
@@ -646,6 +667,7 @@ namespace AracGorevFormu.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Ana Yönetici")]
         public async Task<IActionResult> AyarlarVeritabaniTest()
         {
             try
@@ -709,6 +731,7 @@ namespace AracGorevFormu.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Ana Yönetici")]
         public async Task<IActionResult> AyarlarYoneticiEkle([Bind(Prefix = "YeniYoneticiModel")] YeniAdminViewModel model)
         {
             if (await _adminRepo.KullaniciAdiVarMiAsync(model.KullaniciAdi))
@@ -734,6 +757,7 @@ namespace AracGorevFormu.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Ana Yönetici")]
         public async Task<IActionResult> AyarlarYoneticiSil(int id)
         {
             var hedef = await _adminRepo.GetirByIdAsync(id);
@@ -756,6 +780,7 @@ namespace AracGorevFormu.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Ana Yönetici")]
         public async Task<IActionResult> AyarlarSmtp([Bind(Prefix = "SmtpModel")] SmtpAyarlarViewModel model, string? aksiyon)
         {
             var mevcutAyar = _emailService.AyarlariGetir();
@@ -782,6 +807,7 @@ namespace AracGorevFormu.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Ana Yönetici")]
         public async Task<IActionResult> AyarlarArvento([Bind(Prefix = "ArventoModel")] ArventoAyarlarViewModel model, string? aksiyon)
         {
             var mevcutAyar = _arventoService.AyarlariGetir();
@@ -843,6 +869,7 @@ namespace AracGorevFormu.Controllers
         // ---------------- ÖZEL MAİL GÖNDERİMİ & TASLAKLAR ----------------
         
         [HttpGet]
+        [Authorize(Roles = "Ana Yönetici")]
         public async Task<IActionResult> MailModulu()
         {
             var taslaklar = await _db.MailTaslaklari.OrderByDescending(t => t.EklenmeTarihi).ToListAsync();
@@ -852,6 +879,7 @@ namespace AracGorevFormu.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Ana Yönetici")]
         public async Task<IActionResult> MailGonder(MailGonderViewModel model)
         {
             if (ModelState.IsValid)
@@ -869,6 +897,7 @@ namespace AracGorevFormu.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Ana Yönetici")]
         public async Task<IActionResult> TaslakKaydet(string taslakBaslik, string konu, string icerik)
         {
             if (string.IsNullOrWhiteSpace(taslakBaslik) || string.IsNullOrWhiteSpace(konu) || string.IsNullOrWhiteSpace(icerik))
@@ -894,6 +923,7 @@ namespace AracGorevFormu.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Ana Yönetici")]
         public async Task<IActionResult> TaslakSil(int id)
         {
             var taslak = await _db.MailTaslaklari.FindAsync(id);

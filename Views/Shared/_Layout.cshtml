@@ -166,39 +166,42 @@
                             </li>
 
                             <!-- Kategori 3: Sistem & Ayarlar -->
-                            <li class="nav-item dropdown">
-                                <a class="nav-link dropdown-toggle text-nowrap" href="#" id="ayarlarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                    <i class="bi bi-gear-wide-connected me-1"></i>Sistem Ayarları
-                                </a>
-                                <ul class="dropdown-menu shadow" aria-labelledby="ayarlarDropdown">
-                                    <li>
-                                        <a class="dropdown-item py-2" asp-controller="Admin" asp-action="Ayarlar" asp-route-tab="yoneticiler">
-                                            <i class="bi bi-people me-2 text-slate-800"></i>Yönetici Hesapları
-                                        </a>
-                                    </li>
-                                    <li>
-                                        <a class="dropdown-item py-2" asp-controller="Admin" asp-action="Ayarlar" asp-route-tab="smtp">
-                                            <i class="bi bi-envelope me-2 text-slate-800"></i>E-Posta (SMTP) Bildirim
-                                        </a>
-                                    </li>
-                                    <li>
-                                        <a class="dropdown-item py-2" asp-controller="Admin" asp-action="Ayarlar" asp-route-tab="arvento">
-                                            <i class="bi bi-geo-alt me-2 text-slate-800"></i>Arvento GPS Entegrasyonu
-                                        </a>
-                                    </li>
-                                    <li>
-                                        <a class="dropdown-item py-2" asp-controller="Admin" asp-action="MailModulu">
-                                            <i class="bi bi-envelope-paper me-2 text-slate-800"></i>Özel Mail Gönder
-                                        </a>
-                                    </li>
-                                    <li><hr class="dropdown-divider"></li>
-                                    <li>
-                                        <a class="dropdown-item py-2" asp-controller="Admin" asp-action="SistemKayitlari">
-                                            <i class="bi bi-clock-history me-2 text-slate-800"></i>Sistem Logları
-                                        </a>
-                                    </li>
-                                </ul>
-                            </li>
+                            @if (User.IsInRole("Ana Yönetici"))
+                            {
+                                <li class="nav-item dropdown">
+                                    <a class="nav-link dropdown-toggle text-nowrap" href="#" id="ayarlarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                        <i class="bi bi-gear-wide-connected me-1"></i>Sistem Ayarları
+                                    </a>
+                                    <ul class="dropdown-menu shadow" aria-labelledby="ayarlarDropdown">
+                                        <li>
+                                            <a class="dropdown-item py-2" asp-controller="Admin" asp-action="Ayarlar" asp-route-tab="yoneticiler">
+                                                <i class="bi bi-people me-2 text-slate-800"></i>Yönetici Hesapları
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a class="dropdown-item py-2" asp-controller="Admin" asp-action="Ayarlar" asp-route-tab="smtp">
+                                                <i class="bi bi-envelope me-2 text-slate-800"></i>E-Posta (SMTP) Bildirim
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a class="dropdown-item py-2" asp-controller="Admin" asp-action="Ayarlar" asp-route-tab="arvento">
+                                                <i class="bi bi-geo-alt me-2 text-slate-800"></i>Arvento GPS Entegrasyonu
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a class="dropdown-item py-2" asp-controller="Admin" asp-action="MailModulu">
+                                                <i class="bi bi-envelope-paper me-2 text-slate-800"></i>Özel Mail Gönder
+                                            </a>
+                                        </li>
+                                        <li><hr class="dropdown-divider"></li>
+                                        <li>
+                                            <a class="dropdown-item py-2" asp-controller="Admin" asp-action="SistemKayitlari">
+                                                <i class="bi bi-clock-history me-2 text-slate-800"></i>Sistem Logları
+                                            </a>
+                                        </li>
+                                    </ul>
+                                </li>
+                            }
                         }
                     </ul>
 

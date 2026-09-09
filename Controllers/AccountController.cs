@@ -60,7 +60,7 @@ namespace AracGorevFormu.Controllers
                 new Claim(ClaimTypes.NameIdentifier, admin.Id.ToString()),
                 new Claim(ClaimTypes.Name, admin.KullaniciAdi),
                 new Claim("AdSoyad", admin.AdSoyad),
-                new Claim(ClaimTypes.Role, "Admin")
+                new Claim(ClaimTypes.Role, string.IsNullOrWhiteSpace(admin.Rol) ? "İzleyici" : admin.Rol)
             };
 
             var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
