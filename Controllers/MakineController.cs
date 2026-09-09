@@ -69,12 +69,17 @@ namespace AracGorevFormu.Controllers
             var makineler = await query.OrderBy(m => m.Ad).ToListAsync();
             
             ViewBag.SeciliKategori = kategori;
+            ViewBag.LokasyonKategorileri = await _context.Kategoriler.Where(k => k.Tur == "MakineLokasyon").OrderBy(k => k.Ad).ToListAsync();
             return View(makineler);
         }
 
         // GET: /Makine/Ekle
-        public IActionResult Ekle()
+        public async Task<IActionResult> Ekle()
         {
+            ViewBag.LokasyonKategorileri = await _context.Kategoriler
+                .Where(k => k.Tur == "MakineLokasyon")
+                .OrderBy(k => k.Ad)
+                .ToListAsync();
             return View(new Makine());
         }
 
@@ -94,6 +99,7 @@ namespace AracGorevFormu.Controllers
                 TempData["SuccessMessage"] = "Makine başarıyla eklendi.";
                 return RedirectToAction(nameof(Index));
             }
+            ViewBag.LokasyonKategorileri = await _context.Kategoriler.Where(k => k.Tur == "MakineLokasyon").OrderBy(k => k.Ad).ToListAsync();
             return View(makine);
         }
 
@@ -105,6 +111,7 @@ namespace AracGorevFormu.Controllers
             var makine = await _context.Makineler.FindAsync(id);
             if (makine == null) return NotFound();
 
+            ViewBag.LokasyonKategorileri = await _context.Kategoriler.Where(k => k.Tur == "MakineLokasyon").OrderBy(k => k.Ad).ToListAsync();
             return View(makine);
         }
 
@@ -133,6 +140,7 @@ namespace AracGorevFormu.Controllers
                 }
                 return RedirectToAction(nameof(Index));
             }
+            ViewBag.LokasyonKategorileri = await _context.Kategoriler.Where(k => k.Tur == "MakineLokasyon").OrderBy(k => k.Ad).ToListAsync();
             return View(makine);
         }
 
@@ -182,7 +190,7 @@ namespace AracGorevFormu.Controllers
 
             var bakimlar = await query.OrderByDescending(b => b.BakimTarihi).ToListAsync();
 
-            ViewBag.Lokasyonlar = await _context.Makineler.Where(m => m.Aktif).Select(m => m.Lokasyon).Where(l => l != null && l != "").Distinct().ToListAsync();
+            ViewBag.LokasyonKategorileri = await _context.Kategoriler.Where(k => k.Tur == "MakineLokasyon").OrderBy(k => k.Ad).ToListAsync();
             ViewBag.MakineAdi = makineAdi;
             ViewBag.Lokasyon = lokasyon;
             ViewBag.BaslangicTarihi = baslangicTarihi?.ToString("yyyy-MM-dd");

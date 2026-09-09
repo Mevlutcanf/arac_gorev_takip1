@@ -35,11 +35,11 @@
                     <label class="form-label small fw-bold text-muted mb-1">Lokasyon</label>
                     <select name="lokasyon" class="form-select form-select-sm" onchange="this.form.submit()">
                         <option value="">-- Tüm Lokasyonlar --</option>
-                        @if(ViewBag.Lokasyonlar != null)
+                        @if(ViewBag.LokasyonKategorileri != null)
                         {
-                            foreach (var l in (List<string>)ViewBag.Lokasyonlar)
+                            foreach (var k in (IEnumerable<Kategori>)ViewBag.LokasyonKategorileri)
                             {
-                                <option value="@l" selected="@(ViewBag.Lokasyon == l)">@l</option>
+                                <option value="@k.Ad" selected="@(ViewBag.Lokasyon == k.Ad)">@k.Ad</option>
                             }
                         }
                     </select>

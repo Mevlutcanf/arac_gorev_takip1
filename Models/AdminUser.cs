@@ -30,5 +30,10 @@ namespace AracGorevFormu.Models
         /// İlk oluşturulan admin hesabı bu şekilde işaretlenir.
         /// </summary>
         public bool AnaYonetici { get; set; } = false;
+
+        /// <summary>
+        /// Kullanıcının yetkilerini JSON dizisi olarak tutar (Örn: ["FormGoruntule", "AracEkle"]).
+        /// </summary>
+        public string YetkilerJson { get; set; } = "[]";
     }
 }

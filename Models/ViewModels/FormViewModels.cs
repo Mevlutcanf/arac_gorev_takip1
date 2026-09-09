@@ -98,15 +98,43 @@ namespace AracGorevFormu.Models.ViewModels
         [Display(Name = "Ad Soyad")]
         public string AdSoyad { get; set; } = string.Empty;
 
-        [Required(ErrorMessage = "Yetki Rolü seçimi zorunludur.")]
-        [Display(Name = "Yetki Rolü")]
-        public string Rol { get; set; } = "Yönetici";
+        [Required(ErrorMessage = "Rol seçimi zorunludur.")]
+        [Display(Name = "Rol")]
+        public string Rol { get; set; } = "Operatör";
+
+        public List<string> Yetkiler { get; set; } = new List<string>();
 
         [Required(ErrorMessage = "Şifre zorunludur.")]
         [MinLength(6, ErrorMessage = "Şifre en az 6 karakter olmalıdır.")]
         [DataType(DataType.Password)]
         [Display(Name = "Şifre")]
         public string Sifre { get; set; } = string.Empty;
+    }
+
+    public class DuzenleAdminViewModel
+    {
+        public int Id { get; set; }
+
+        [Required(ErrorMessage = "Kullanıcı adı zorunludur.")]
+        [StringLength(50)]
+        [Display(Name = "Kullanıcı Adı")]
+        public string KullaniciAdi { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Ad Soyad zorunludur.")]
+        [StringLength(100)]
+        [Display(Name = "Ad Soyad")]
+        public string AdSoyad { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Rol seçimi zorunludur.")]
+        [Display(Name = "Rol")]
+        public string Rol { get; set; } = "Operatör";
+
+        public List<string> Yetkiler { get; set; } = new List<string>();
+
+        [MinLength(6, ErrorMessage = "Şifre en az 6 karakter olmalıdır.")]
+        [DataType(DataType.Password)]
+        [Display(Name = "Şifre (Değiştirmek istemiyorsanız boş bırakın)")]
+        public string? Sifre { get; set; }
     }
 
     public class RedViewModel

@@ -48,7 +48,21 @@
                         </div>
                         <div class="col-md-6">
                             <label asp-for="Lokasyon" class="form-label">Araç Bulunduğu Şehir / Lokasyon</label>
-                            <input asp-for="Lokasyon" class="form-control" placeholder="Ankara Genel Merkez, İstanbul Şube..." />
+                            <div class="input-group">
+                                <select asp-for="Lokasyon" class="form-select" id="lokasyonSelect">
+                                    <option value="">-- Seçiniz --</option>
+                                    @if (ViewBag.LokasyonKategorileri != null)
+                                    {
+                                        foreach (var kat in ViewBag.LokasyonKategorileri)
+                                        {
+                                            <option value="@kat.Ad">@kat.Ad</option>
+                                        }
+                                    }
+                                </select>
+                                <button class="btn btn-outline-secondary" type="button" onclick="yeniKategoriEkle('AracLokasyon', 'lokasyonSelect')">
+                                    <i class="bi bi-plus"></i>
+                                </button>
+                            </div>
                         </div>
                         <div class="col-12">
                             <label asp-for="SabitSurucu" class="form-label">Zimmetli / Sabit Personel (Şahsa Özel Atama)</label>
@@ -75,4 +89,32 @@
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+    <script>
+        function yeniKategoriEkle(tur, selectId) {
+            var yeniAd = prompt("Yeni kategori adını girin:");
+            if (yeniAd) {
+                fetch('/api/Kategori', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ ad: yeniAd, tur: tur })
+                })
+                .then(response => {
+                    if (!response.ok) throw new Error('Ekleme başarısız');
+                    return response.json();
+                })
+                .then(data => {
+                    var select = document.getElementById(selectId);
+                    var option = document.createElement("option");
+                    option.text = data.ad;
+                    option.value = data.ad;
+                    select.add(option);
+                    select.value = data.ad;
+                    alert("Kategori eklendi: " + data.ad);
+                })
+                .catch(error => alert("Kategori eklenirken hata oluştu veya zaten mevcut."));
+            }
+        }
+    </script>
 }

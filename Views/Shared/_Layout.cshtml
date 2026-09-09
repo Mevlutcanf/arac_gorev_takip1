@@ -88,7 +88,7 @@
                                         <i class="bi bi-search me-2 text-slate-800"></i>Form Durumu Sorgula
                                     </a>
                                 </li>
-                                @if (User.Identity != null && User.Identity.IsAuthenticated)
+                                @if (User.Identity != null && User.Identity.IsAuthenticated && (User.IsInRole("Ana Yönetici") || User.IsInRole("FormOnaylama")))
                                 {
                                     <li><hr class="dropdown-divider"></li>
                                     <li>
@@ -102,36 +102,41 @@
 
                         @if (User.Identity != null && User.Identity.IsAuthenticated)
                         {
-                            <!-- Kategori 2: Filo & Bakım Yönetimi -->
-                            <li class="nav-item dropdown">
-                                <a class="nav-link dropdown-toggle text-nowrap" href="#" id="filoDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                    <i class="bi bi-car-front-fill me-1"></i>Filo & Bakım
-                                </a>
-                                <ul class="dropdown-menu shadow" aria-labelledby="filoDropdown">
-                                    <li>
-                                        <a class="dropdown-item py-2" asp-controller="Admin" asp-action="Index">
-                                            <i class="bi bi-grid-1x2-fill me-2 text-slate-800"></i>Filo Dashboard
-                                        </a>
-                                    </li>
-                                    <li>
-                                        <a class="dropdown-item py-2" asp-controller="Admin" asp-action="Araclar">
-                                            <i class="bi bi-car-front me-2 text-slate-800"></i>Araç Filosu & Ruhsatlar
-                                        </a>
-                                    </li>
-                                    <li>
-                                        <a class="dropdown-item py-2" asp-controller="Admin" asp-action="Bakimlar">
-                                            <i class="bi bi-tools me-2 text-slate-800"></i>Bakım & Servis Takibi
-                                        </a>
-                                    </li>
-                                    <li>
-                                        <a class="dropdown-item py-2" asp-controller="Admin" asp-action="HgsBorc">
-                                            <i class="bi bi-credit-card-2-front me-2 text-slate-800"></i>HGS & Ceza Sorgulama
-                                        </a>
-                                    </li>
-                                </ul>
-                            </li>
+                            @if (User.IsInRole("Ana Yönetici") || User.IsInRole("AracIslemleri"))
+                            {
+                                <!-- Kategori 2: Filo & Bakım Yönetimi -->
+                                <li class="nav-item dropdown">
+                                    <a class="nav-link dropdown-toggle text-nowrap" href="#" id="filoDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                        <i class="bi bi-car-front-fill me-1"></i>Filo & Bakım
+                                    </a>
+                                    <ul class="dropdown-menu shadow" aria-labelledby="filoDropdown">
+                                        <li>
+                                            <a class="dropdown-item py-2" asp-controller="Admin" asp-action="Index">
+                                                <i class="bi bi-grid-1x2-fill me-2 text-slate-800"></i>Filo Dashboard
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a class="dropdown-item py-2" asp-controller="Admin" asp-action="Araclar">
+                                                <i class="bi bi-car-front me-2 text-slate-800"></i>Araç Filosu & Ruhsatlar
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a class="dropdown-item py-2" asp-controller="Admin" asp-action="Bakimlar">
+                                                <i class="bi bi-tools me-2 text-slate-800"></i>Bakım & Servis Takibi
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a class="dropdown-item py-2" asp-controller="Admin" asp-action="HgsBorc">
+                                                <i class="bi bi-credit-card-2-front me-2 text-slate-800"></i>HGS & Ceza Sorgulama
+                                            </a>
+                                        </li>
+                                    </ul>
+                                </li>
+                            }
 
-                            <!-- Kategori: Makine Yönetimi -->
+                            @if (User.IsInRole("Ana Yönetici") || User.IsInRole("MakineIslemleri"))
+                            {
+                                <!-- Kategori: Makine Yönetimi -->
                             <li class="nav-item dropdown">
                                 <a class="nav-link dropdown-toggle text-nowrap" href="#" id="makineDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                                     <i class="bi bi-nut-fill me-1"></i>Fabrika & Makine
@@ -164,9 +169,10 @@
                                     </li>
                                 </ul>
                             </li>
+                            }
 
                             <!-- Kategori 3: Sistem & Ayarlar -->
-                            @if (User.IsInRole("Ana Yönetici"))
+                            @if (User.IsInRole("Ana Yönetici") || User.IsInRole("AyarlarYonetimi"))
                             {
                                 <li class="nav-item dropdown">
                                     <a class="nav-link dropdown-toggle text-nowrap" href="#" id="ayarlarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">

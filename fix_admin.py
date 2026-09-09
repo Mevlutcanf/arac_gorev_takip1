@@ -1,63 +1,52 @@
-import re
+﻿import re
 
-with open('Controllers/AdminController.cs', 'r', encoding='utf-8') as f:
+file_path = r'c:\Users\tatlicipc\Desktop\AracGorevFormu\Controllers\AdminController.cs'
+
+with open(file_path, 'r', encoding='utf-8') as f:
     content = f.read()
 
-content = content.replace('''        private readonly AppDbContext _db;
+# Fix the broken 
+ strings
+content = content.replace(']
+        public', ']\n        public')
 
-        public AdminController(VehicleRepository vehicleRepo, GorevFormuRepository formRepo,
-            AdminUserRepository adminRepo, ArventoService arventoService, IEmailService emailService,
-            IHgsService hgsService, AppDbContext db)
-        {
-            _vehicleRepo = vehicleRepo;
-            _formRepo = formRepo;
-            _adminRepo = adminRepo;
-            _arventoService = arventoService;
-            _emailService = emailService;
-            _hgsService = hgsService;
-            _db = db;
-        }''', '''        private readonly AppDbContext _db;
-        private readonly ISystemLogService _logService;
+# Roles to update
+replacements = {
+    'Index': 'Ana Yönetici,AracIslemleri,MakineIslemleri,FormOnaylama,AyarlarYonetimi',
+    'Araclar': 'Ana Yönetici,AracIslemleri',
+    'AracEkle': 'Ana Yönetici,AracIslemleri',
+    'AracDuzenle': 'Ana Yönetici,AracIslemleri',
+    'AracSil': 'Ana Yönetici,AracIslemleri',
+    'HgsBorc': 'Ana Yönetici,AracIslemleri',
+    'HgsEkle': 'Ana Yönetici,AracIslemleri',
+    'HgsSil': 'Ana Yönetici,AracIslemleri',
+    'Bakimlar': 'Ana Yönetici,AracIslemleri',
+    'BakimEkle': 'Ana Yönetici,AracIslemleri',
+    'BakimSil': 'Ana Yönetici,AracIslemleri',
+    'GorevFormlari': 'Ana Yönetici,AracIslemleri,FormOnaylama',
+    'ResmiTutanak': 'Ana Yönetici,AracIslemleri,FormOnaylama',
+    'TumGorevFormlari': 'Ana Yönetici,AracIslemleri,FormOnaylama',
+    'FormOnayla': 'Ana Yönetici,FormOnaylama',
+    'FormReddet': 'Ana Yönetici,FormOnaylama',
+    'AracIade': 'Ana Yönetici,FormOnaylama,AracIslemleri',
+    'Ayarlar': 'Ana Yönetici,AyarlarYonetimi',
+    'AyarlarYoneticiEkle': 'Ana Yönetici,AyarlarYonetimi',
+    'AyarlarYoneticiSil': 'Ana Yönetici,AyarlarYonetimi',
+    'AyarlarSmtp': 'Ana Yönetici,AyarlarYonetimi',
+    'AyarlarArvento': 'Ana Yönetici,AyarlarYonetimi',
+    'MailModulu': 'Ana Yönetici,AyarlarYonetimi',
+    'MailGonder': 'Ana Yönetici,AyarlarYonetimi',
+    'TaslakKaydet': 'Ana Yönetici,AyarlarYonetimi',
+    'TaslakSil': 'Ana Yönetici,AyarlarYonetimi',
+    'AyarlarVeritabaniTest': 'Ana Yönetici,AyarlarYonetimi'
+}
 
-        public AdminController(VehicleRepository vehicleRepo, GorevFormuRepository formRepo,
-            AdminUserRepository adminRepo, ArventoService arventoService, IEmailService emailService,
-            IHgsService hgsService, AppDbContext db, ISystemLogService logService)
-        {
-            _vehicleRepo = vehicleRepo;
-            _formRepo = formRepo;
-            _adminRepo = adminRepo;
-            _arventoService = arventoService;
-            _emailService = emailService;
-            _hgsService = hgsService;
-            _db = db;
-            _logService = logService;
-        }''')
+for func, roles in replacements.items():
+    pattern = r'\[Authorize\([^\]]*\)\](\s+)public\s+async\s+Task<IActionResult>\s+' + func + r'\b'
+    replacement = r'[Authorize(Roles = "' + roles + r'")]\1public async Task<IActionResult> ' + func
+    content = re.sub(pattern, replacement, content)
 
-# 2. Add SystemLogService using directive if needed
-if 'using AracGorevFormu.Services;' not in content:
-    content = content.replace('using Microsoft.EntityFrameworkCore;', 'using Microsoft.EntityFrameworkCore;\nusing AracGorevFormu.Services;')
-
-# 3. Remove GetClientIpAddress and LogIslemAsync
-content = re.sub(r'        private string GetClientIpAddress\(\).*?await _db\.SaveChangesAsync\(\);\n        }', '', content, flags=re.DOTALL)
-
-# 4. Replace LogIslemAsync calls
-content = re.sub(r'await LogIslemAsync\((.*?)\);', r'await _logService.LogIslemWithHttpContextAsync(\1, HttpContext);', content)
-
-# 5. Replace AracSil hard delete with soft delete
-content = content.replace('''            var target = await _vehicleRepo.GetirByIdAsync(id);
-            var aracSilPlaka = target?.Plaka ?? "Bilinmeyen";
-            await _vehicleRepo.SilAsync(id);
-            await _logService.LogIslemWithHttpContextAsync("Araç Silindi", $"{aracSilPlaka} plakalı araç silindi.", HttpContext);
-            TempData["Mesaj"] = "Araç silindi.";''', '''            var target = await _vehicleRepo.GetirByIdAsync(id);
-            if (target != null)
-            {
-                var aracSilPlaka = target.Plaka;
-                target.Aktif = false;
-                await _vehicleRepo.GuncelleAsync(target);
-                await _logService.LogIslemWithHttpContextAsync("Araç Silindi (Pasife Alındı)", $"{aracSilPlaka} plakalı araç sistemden pasife alındı.", HttpContext);
-                TempData["Mesaj"] = "Araç silindi (pasife alındı).";
-            }''')
-
-with open('Controllers/AdminController.cs', 'w', encoding='utf-8') as f:
+with open(file_path, 'w', encoding='utf-8') as f:
     f.write(content)
-print("Done!")
+
+print("Done")

@@ -63,6 +63,23 @@ namespace AracGorevFormu.Controllers
                 new Claim(ClaimTypes.Role, string.IsNullOrWhiteSpace(admin.Rol) ? "İzleyici" : admin.Rol)
             };
 
+            // Yetkileri ekle
+            if (!string.IsNullOrEmpty(admin.YetkilerJson) && admin.YetkilerJson != "[]")
+            {
+                try
+                {
+                    var yetkiler = System.Text.Json.JsonSerializer.Deserialize<List<string>>(admin.YetkilerJson);
+                    if (yetkiler != null)
+                    {
+                        foreach (var yetki in yetkiler)
+                        {
+                            claims.Add(new Claim(ClaimTypes.Role, yetki));
+                        }
+                    }
+                }
+                catch { /* Json deserialize hatası */ }
+            }
+
             var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
             var principal = new ClaimsPrincipal(identity);
 

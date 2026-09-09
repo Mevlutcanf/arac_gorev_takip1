@@ -21,6 +21,7 @@ namespace AracGorevFormu.Data
         public DbSet<MakineBakim> MakineBakimlari { get; set; } = null!;
         public DbSet<DosyaEki> DosyaEkleri { get; set; } = null!;
         public DbSet<MailTaslak> MailTaslaklari { get; set; } = null!;
+        public DbSet<Kategori> Kategoriler { get; set; } = null!;
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -39,10 +40,16 @@ namespace AracGorevFormu.Data
             modelBuilder.Entity<HgsGecis>().ToTable("HgsGecisleri");
             modelBuilder.Entity<SystemLog>().ToTable("SystemLogs");
 
+            modelBuilder.Entity<AracBakim>().Property(b => b.Maliyet).HasColumnType("decimal(18,2)");
+            modelBuilder.Entity<HgsGecis>().Property(h => h.Tutar).HasColumnType("decimal(18,2)");
+            modelBuilder.Entity<MakineBakim>().Property(m => m.Maliyet).HasColumnType("decimal(18,2)");
+
             modelBuilder.Entity<Makine>().ToTable("Makineler");
             modelBuilder.Entity<MakineBakim>().ToTable("MakineBakimlari");
             modelBuilder.Entity<DosyaEki>().ToTable("DosyaEkleri");
             modelBuilder.Entity<MailTaslak>().ToTable("MailTaslaklari");
+            modelBuilder.Entity<Kategori>().ToTable("Kategoriler");
         }
     }
 }
+

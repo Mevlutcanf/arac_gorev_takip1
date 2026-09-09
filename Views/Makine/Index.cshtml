@@ -32,18 +32,15 @@
                 <i class="bi bi-grid-fill me-1"></i>Tümü
             </a>
         </li>
-        <li class="nav-item">
-            <a class="nav-link @((ViewBag.SeciliKategori as string) == "Tadıbu" ? "active" : "")" asp-action="Index" asp-route-kategori="Tadıbu">Tadıbu</a>
-        </li>
-        <li class="nav-item">
-            <a class="nav-link @((ViewBag.SeciliKategori as string) == "Lokum" ? "active" : "")" asp-action="Index" asp-route-kategori="Lokum">Lokum</a>
-        </li>
-        <li class="nav-item">
-            <a class="nav-link @((ViewBag.SeciliKategori as string) == "Helva" ? "active" : "")" asp-action="Index" asp-route-kategori="Helva">Helva</a>
-        </li>
-        <li class="nav-item">
-            <a class="nav-link @((ViewBag.SeciliKategori as string) == "Depo" ? "active" : "")" asp-action="Index" asp-route-kategori="Depo">Depo</a>
-        </li>
+        @if (ViewBag.LokasyonKategorileri != null)
+        {
+            foreach (var kat in ViewBag.LokasyonKategorileri)
+            {
+                <li class="nav-item">
+                    <a class="nav-link @((ViewBag.SeciliKategori as string) == kat.Ad ? "active" : "")" asp-action="Index" asp-route-kategori="@kat.Ad">@kat.Ad</a>
+                </li>
+            }
+        }
     </ul>
 </div>
 

@@ -1,0 +1,91 @@
+@using AracGorevFormu.Models.ViewModels
+@model DuzenleAdminViewModel
+@{
+    ViewData["Title"] = "Yönetici Düzenle";
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card shadow-sm border">
+            <div class="card-header bg-slate-900 text-white">
+                <i class="bi bi-person-fill-gear me-1 text-amber-500"></i>Yönetici Düzenle
+            </div>
+            <div class="card-body">
+                <form asp-action="AyarlarYoneticiDuzenle" method="post">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" asp-for="Id" />
+                    
+                    <div class="mb-3">
+                        <label asp-for="KullaniciAdi" class="form-label fw-semibold text-slate-800"></label>
+                        <input asp-for="KullaniciAdi" class="form-control" />
+                        <span asp-validation-for="KullaniciAdi" class="text-danger small"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="AdSoyad" class="form-label fw-semibold text-slate-800"></label>
+                        <input asp-for="AdSoyad" class="form-control" />
+                        <span asp-validation-for="AdSoyad" class="text-danger small"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Rol" class="form-label fw-semibold text-slate-800">Ana Rol Görünümü</label>
+                        <select asp-for="Rol" class="form-select">
+                            <option value="Operatör">Operatör (Sınırlı)</option>
+                            <option value="Yönetici">Yönetici</option>
+                            <option value="Gözlemci">Sadece Gözlemci</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold text-slate-800 mb-2">Detaylı Yetkiler (Modül İzinleri)</label>
+                        <div class="p-3 border rounded bg-slate-50">
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="checkbox" name="Yetkiler" value="AracIslemleri" id="yetki_arac" @(Model.Yetkiler.Contains("AracIslemleri") ? "checked" : "")>
+                                <label class="form-check-label" for="yetki_arac">
+                                    <i class="bi bi-car-front text-indigo-600 me-1"></i>Araç & Filo İşlemleri
+                                </label>
+                            </div>
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="checkbox" name="Yetkiler" value="MakineIslemleri" id="yetki_makine" @(Model.Yetkiler.Contains("MakineIslemleri") ? "checked" : "")>
+                                <label class="form-check-label" for="yetki_makine">
+                                    <i class="bi bi-nut text-slate-600 me-1"></i>Makine & Fabrika İşlemleri
+                                </label>
+                            </div>
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="checkbox" name="Yetkiler" value="FormOnaylama" id="yetki_form" @(Model.Yetkiler.Contains("FormOnaylama") ? "checked" : "")>
+                                <label class="form-check-label" for="yetki_form">
+                                    <i class="bi bi-check2-square text-green-600 me-1"></i>Görev Formu Onaylama/Reddetme
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="Yetkiler" value="AyarlarYonetimi" id="yetki_ayar" @(Model.Yetkiler.Contains("AyarlarYonetimi") ? "checked" : "")>
+                                <label class="form-check-label" for="yetki_ayar">
+                                    <i class="bi bi-gear text-amber-600 me-1"></i>Sistem Ayarları Yönetimi
+                                </label>
+                            </div>
+                        </div>
+                        <div class="form-text mt-2 text-slate-500">
+                            <i class="bi bi-info-circle me-1"></i>
+                            Eğer kullanıcının sadece görüntüleme (İzleyici) yapmasını istiyorsanız hiçbir kutuyu işaretlemeyin.
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label asp-for="Sifre" class="form-label fw-semibold text-slate-800"></label>
+                        <input asp-for="Sifre" class="form-control" placeholder="Değiştirmek istemiyorsanız boş bırakın" />
+                        <span asp-validation-for="Sifre" class="text-danger small"></span>
+                    </div>
+
+                    <div class="d-flex justify-content-end gap-2 border-top pt-3">
+                        <a asp-action="Ayarlar" class="btn btn-outline-secondary">İptal</a>
+                        <button type="submit" class="btn btn-primary px-4"><i class="bi bi-save me-1"></i>Kaydet</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

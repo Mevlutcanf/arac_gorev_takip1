@@ -40,13 +40,32 @@
 
                             <div class="col-md-6">
                                 <label asp-for="Lokasyon" class="form-label">Lokasyon / Departman</label>
-                                <select asp-for="Lokasyon" class="form-select">
-                                    <option value="">-- Seçiniz --</option>
-                                    <option value="Tadıbu">Tadıbu</option>
-                                    <option value="Lokum">Lokum</option>
-                                    <option value="Helva">Helva</option>
-                                    <option value="Depo">Depo</option>
-                                </select>
+                                <div class="input-group">
+                                    <select asp-for="Lokasyon" class="form-select" id="lokasyonSelect">
+                                        <option value="">-- Seçiniz --</option>
+                                        @if (ViewBag.LokasyonKategorileri != null)
+                                        {
+                                            foreach (var kat in ViewBag.LokasyonKategorileri)
+                                            {
+                                                if (Model.Lokasyon == kat.Ad)
+                                                {
+                                                    <option value="@kat.Ad" selected>@kat.Ad</option>
+                                                }
+                                                else
+                                                {
+                                                    <option value="@kat.Ad">@kat.Ad</option>
+                                                }
+                                            }
+                                        }
+                                        @if (!string.IsNullOrEmpty(Model.Lokasyon) && ViewBag.LokasyonKategorileri != null && !((IEnumerable<Kategori>)ViewBag.LokasyonKategorileri).Any(k => k.Ad == Model.Lokasyon))
+                                        {
+                                            <option value="@Model.Lokasyon" selected>@Model.Lokasyon (Silinmiş/Özel)</option>
+                                        }
+                                    </select>
+                                    <button class="btn btn-outline-secondary" type="button" onclick="yeniKategoriEkle('MakineLokasyon', 'lokasyonSelect')">
+                                        <i class="bi bi-plus"></i>
+                                    </button>
+                                </div>
                             </div>
 
                             <div class="col-md-6">
@@ -79,4 +98,32 @@
 
 @section Scripts {
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    <script>
+        function yeniKategoriEkle(tur, selectId) {
+            var yeniAd = prompt("Yeni kategori adını girin:");
+            if (yeniAd) {
+                fetch('/api/Kategori', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ ad: yeniAd, tur: tur })
+                })
+                .then(response => {
+                    if (!response.ok) throw new Error('Ekleme başarısız');
+                    return response.json();
+                })
+                .then(data => {
+                    var select = document.getElementById(selectId);
+                    var option = document.createElement("option");
+                    option.text = data.ad;
+                    option.value = data.ad;
+                    select.add(option);
+                    select.value = data.ad;
+                    alert("Kategori eklendi: " + data.ad);
+                })
+                .catch(error => alert("Kategori eklenirken hata oluştu veya zaten mevcut."));
+            }
+        }
+    </script>
 }

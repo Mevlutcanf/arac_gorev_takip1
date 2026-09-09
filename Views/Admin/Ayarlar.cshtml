@@ -77,13 +77,18 @@
                                         <td class="text-end pe-3">
                                             @if (!admin.AnaYonetici)
                                             {
-                                                <form asp-action="AyarlarYoneticiSil" asp-route-id="@admin.Id" method="post" class="d-inline"
-                                                      onsubmit="return confirm('Bu yönetici hesabını silmek istediğinize emin misiniz?');">
-                                                    @Html.AntiForgeryToken()
-                                                    <button type="submit" class="btn btn-outline-danger btn-sm">
-                                                        <i class="bi bi-trash"></i>Sil
-                                                    </button>
-                                                </form>
+                                                <div class="d-flex justify-content-end gap-1">
+                                                    <a asp-action="AyarlarYoneticiDuzenle" asp-route-id="@admin.Id" class="btn btn-outline-primary btn-sm">
+                                                        <i class="bi bi-pencil"></i> Düzenle
+                                                    </a>
+                                                    <form asp-action="AyarlarYoneticiSil" asp-route-id="@admin.Id" method="post"
+                                                          onsubmit="return confirm('Bu yönetici hesabını silmek istediğinize emin misiniz?');">
+                                                        @Html.AntiForgeryToken()
+                                                        <button type="submit" class="btn btn-outline-danger btn-sm">
+                                                            <i class="bi bi-trash"></i> Sil
+                                                        </button>
+                                                    </form>
+                                                </div>
                                             }
                                         </td>
                                     </tr>
@@ -116,12 +121,42 @@
 
                             <!-- Rol Seçim Dropdown -->
                             <div class="mb-3">
-                                <label asp-for="YeniYoneticiModel.Rol" class="form-label">Yetki Rolü <span class="text-danger">*</span></label>
+                                <label asp-for="YeniYoneticiModel.Rol" class="form-label">Görünen Rol / Ünvan <span class="text-danger">*</span></label>
                                 <select asp-for="YeniYoneticiModel.Rol" class="form-select">
-                                    <option value="Yönetici">Yönetici (Tam Yetkili)</option>
-                                    <option value="Filo Yöneticisi">Filo Yöneticisi</option>
-                                    <option value="Operatör">Operatör / İzleyici</option>
+                                    <option value="Yönetici">Yönetici</option>
+                                    <option value="Operatör">Operatör</option>
+                                    <option value="İzleyici">İzleyici</option>
                                 </select>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Yetkiler (Detaylı)</label>
+                                <div class="row g-2 border rounded p-2 m-0 bg-light">
+                                    <div class="col-md-6">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="YeniYoneticiModel.Yetkiler" value="AracIslemleri" id="chkArac">
+                                            <label class="form-check-label" for="chkArac">Araç İşlemleri</label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="YeniYoneticiModel.Yetkiler" value="MakineIslemleri" id="chkMakine">
+                                            <label class="form-check-label" for="chkMakine">Makine İşlemleri</label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="YeniYoneticiModel.Yetkiler" value="FormOnaylama" id="chkForm">
+                                            <label class="form-check-label" for="chkForm">Form Onay/Red</label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="YeniYoneticiModel.Yetkiler" value="AyarlarYonetimi" id="chkAyar">
+                                            <label class="form-check-label" for="chkAyar">Ayarlar Yönetimi</label>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
 
                             <div class="mb-4">
