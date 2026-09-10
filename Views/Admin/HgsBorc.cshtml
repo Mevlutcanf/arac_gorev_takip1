@@ -353,7 +353,7 @@ else if (seciliAracOzet != null)
                 @if (!Model.TumGecisler.Any())
                 {
                     <tr>
-                        <td colspan="6" class="text-center py-5 text-slate-400">
+                        <td colspan="6" class="text-center py-5 text-slate-400 dataTables_empty">
                             <i class="bi bi-inbox fs-2 d-block mb-2"></i>
                             Kayıtlı HGS borç veya geçiş hareketi bulunmuyor.
                         </td>
@@ -412,6 +412,29 @@ else if (seciliAracOzet != null)
     </div>
 </div>
 
+<!-- Yakında Sizlerle Modal (Blur Arka Planlı) -->
+<div class="modal fade" id="comingSoonModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-4 text-center overflow-hidden">
+            <div class="modal-header border-0 pb-0 position-absolute end-0 top-0" style="z-index: 10;">
+                <button type="button" class="btn-close m-3" data-bs-dismiss="modal" aria-label="Kapat"></button>
+            </div>
+            <div class="modal-body p-5">
+                <div class="mb-4 mt-2">
+                    <div class="d-inline-flex align-items-center justify-content-center bg-indigo-50 text-indigo-600 rounded-circle" style="width: 90px; height: 90px;">
+                        <i class="bi bi-rocket-takeoff-fill" style="font-size: 3rem;"></i>
+                    </div>
+                </div>
+                <h3 class="fw-bold text-slate-900 mb-3">Yakında Sizlerle! 🚀</h3>
+                <p class="text-slate-500 mb-0" style="font-size: 1.05rem; line-height: 1.6;">
+                    Canlı HGS API Entegrasyonu modülümüzün altyapı çalışmaları devam ediyor. Çok yakında tüm filo araçlarınızın anlık geçişlerini ve borç bakiyelerini bu ekrandan otomatik olarak takip edebileceksiniz.
+                </p>
+            </div>
+            <div style="height: 5px; background: linear-gradient(90deg, #6366f1, #8b5cf6, #d946ef);"></div>
+        </div>
+    </div>
+</div>
+
 @section Scripts {
     <!-- DataTables Export Buttons Libraries -->
     <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.2/css/buttons.bootstrap5.min.css">
@@ -435,6 +458,19 @@ else if (seciliAracOzet != null)
         }
 
         $(document).ready(function () {
+            // Yakında Sizlerle Pop-up'ını otomatik aç
+            var comingSoonModal = new bootstrap.Modal(document.getElementById('comingSoonModal'));
+            comingSoonModal.show();
+            // Blur efekti için arka plan div'ine özel CSS
+            document.getElementById('comingSoonModal').addEventListener('shown.bs.modal', function () {
+                var backdrop = document.querySelector('.modal-backdrop');
+                if (backdrop) {
+                    backdrop.style.backdropFilter = 'blur(6px)';
+                    backdrop.style.backgroundColor = 'rgba(15, 23, 42, 0.4)';
+                    backdrop.style.transition = 'all 0.3s ease';
+                }
+            });
+
             // Ozet Tablosu
             if ($('#hgsOzetTable tbody tr').length > 0 && !$('#hgsOzetTable tbody tr td').hasClass('dataTables_empty')) {
                 $('#hgsOzetTable').DataTable({

@@ -111,7 +111,13 @@ namespace AracGorevFormu.Services
                 var requestUrl = ayar.ApiUrl.TrimEnd('/') + "/GetVehicleStatusJSON";
                 var response = await client.PostAsync(requestUrl, content);
                 
-                return response.IsSuccessStatusCode;
+                if (!response.IsSuccessStatusCode) return false;
+                
+                // Arvento yanlış bilgilerde bazen HTTP 200 ile HTML hata sayfası döner.
+                // Gerçek bir başarı için JSON döndüğünden emin olalım.
+                var jsonStr = await response.Content.ReadAsStringAsync();
+                var trimmed = jsonStr.TrimStart();
+                return !string.IsNullOrWhiteSpace(trimmed) && (trimmed.StartsWith("[") || trimmed.StartsWith("{"));
             }
             catch (Exception ex)
             {

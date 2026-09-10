@@ -35,6 +35,11 @@
             <i class="bi bi-database-fill me-1"></i>Veritabanı
         </a>
     </li>
+    <li class="nav-item ms-lg-auto">
+        <a class="nav-link @(activeTab == "changelog" ? "active" : "")" href="#tab-changelog" data-bs-toggle="tab">
+            <i class="bi bi-stars me-1"></i>Sürüm Notları
+        </a>
+    </li>
 </ul>
 
 <div class="tab-content">
@@ -338,6 +343,91 @@
                             @Html.AntiForgeryToken()
                             <button type="submit" class="btn btn-outline-primary btn-lg w-100">
                                 <i class="bi bi-lightning-charge-fill me-1"></i>Bağlantıyı Test Et
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- TAB 5: SÜRÜM NOTLARI (CHANGELOG) -->
+    <div class="tab-pane fade @(activeTab == "changelog" ? "show active" : "")" id="tab-changelog">
+        <div class="row g-4">
+            <!-- Left: Güncellemeler Listesi -->
+            <div class="col-lg-7">
+                <div class="card shadow-sm border">
+                    <div class="card-header bg-slate-900 text-white d-flex align-items-center justify-content-between">
+                        <span><i class="bi bi-stars me-1 text-amber-500"></i>Geçmiş Güncellemeler</span>
+                        <span class="badge bg-light text-dark">@Model.Guncellemeler.Count Kayıt</span>
+                    </div>
+                    <div class="table-responsive p-3">
+                        <table class="table align-middle mb-0">
+                            <thead>
+                                <tr>
+                                    <th class="ps-3">Sürüm</th>
+                                    <th>Başlık</th>
+                                    <th>Tarih</th>
+                                    <th class="text-end pe-3">İşlem</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var item in Model.Guncellemeler)
+                                {
+                                    <tr>
+                                        <td class="ps-3"><span class="badge bg-primary rounded-pill">@item.Versiyon</span></td>
+                                        <td>@item.Baslik</td>
+                                        <td>@item.EklenmeTarihi.ToString("dd.MM.yyyy HH:mm")</td>
+                                        <td class="text-end pe-3">
+                                            <form asp-action="ChangelogSil" method="post" class="d-inline" onsubmit="return confirm('Bu güncellemeyi silmek istediğinize emin misiniz?');">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="id" value="@item.Id" />
+                                                <button type="submit" class="btn btn-outline-danger btn-sm" title="Sil">
+                                                    <i class="bi bi-trash"></i>
+                                                </button>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                }
+                                @if (!Model.Guncellemeler.Any())
+                                {
+                                    <tr>
+                                        <td colspan="4" class="text-center text-muted py-4">Kayıtlı güncelleme bulunamadı.</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right: Yeni Güncelleme Ekle -->
+            <div class="col-lg-5">
+                <div class="card shadow-sm border">
+                    <div class="card-header bg-primary text-white">
+                        <span><i class="bi bi-plus-circle me-1"></i>Yeni Sürüm Notu Ekle</span>
+                    </div>
+                    <div class="card-body">
+                        <form asp-action="ChangelogEkle" method="post">
+                            @Html.AntiForgeryToken()
+
+                            <div class="mb-3">
+                                <label class="form-label">Sürüm Numarası <span class="text-danger">*</span></label>
+                                <input type="text" name="versiyon" class="form-control" placeholder="Örn: v1.3.0" required />
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Başlık <span class="text-danger">*</span></label>
+                                <input type="text" name="baslik" class="form-control" placeholder="Örn: Hata Düzeltmeleri" required />
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">İçerik (HTML formatında maddeleme yapabilirsiniz) <span class="text-danger">*</span></label>
+                                <textarea name="icerik" class="form-control" rows="5" placeholder="<ul><li>Madde 1</li><li>Madde 2</li></ul>" required></textarea>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary w-100">
+                                <i class="bi bi-check-circle me-1"></i>Güncellemeyi Yayınla
                             </button>
                         </form>
                     </div>

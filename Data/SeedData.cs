@@ -54,6 +54,17 @@ namespace AracGorevFormu.Data
                             EklenmeTarihi datetime2 NOT NULL
                         );
                     END
+                    
+                    IF OBJECT_ID('SistemGuncellemeleri', 'U') IS NULL
+                    BEGIN
+                        CREATE TABLE SistemGuncellemeleri (
+                            Id int IDENTITY(1,1) PRIMARY KEY,
+                            Versiyon nvarchar(20) NOT NULL,
+                            Baslik nvarchar(100) NOT NULL,
+                            Icerik nvarchar(max) NOT NULL,
+                            EklenmeTarihi datetime2 NOT NULL
+                        );
+                    END
                 ");
             }
             catch (Exception ex)
@@ -64,16 +75,37 @@ namespace AracGorevFormu.Data
             // 1. Yönetici Hesabı Tohumlama
             if (!context.AdminUsers.Any())
             {
-                var (hash, salt) = PasswordHasher.Hashle("Admin123!");
                 context.AdminUsers.Add(new AdminUser
                 {
                     KullaniciAdi = "admin",
-                    AdSoyad = "Abdurrahman Tatlıcı",
+                    AdSoyad = "Sistem Yöneticisi",
                     Rol = "Ana Yönetici",
-                    PasswordHash = hash,
-                    PasswordSalt = salt,
-                    AnaYonetici = true
+                    AnaYonetici = true,
+                    EklenmeTarihi = DateTime.Now
                 });
+                // Şifre hashleme vb. logic'i app startup kısmında ayarlandığı için burada sadece record ekliyoruz veya mevcut admini bırakıyoruz
+                context.SaveChanges();
+            }
+
+            // Sistem Güncellemeleri için örnek veri
+            if (!context.SistemGuncellemeleri.Any())
+            {
+                context.SistemGuncellemeleri.AddRange(
+                    new SistemGuncellemesi
+                    {
+                        Versiyon = "v0.6",
+                        Baslik = "Arayüz ve Hata Düzeltmeleri",
+                        Icerik = "<ul><li>Navigasyon (üst menü) açılır listeleri daha modern, kompakt ve pürüzsüz hale getirildi.</li><li>HGS Sayfası'ndaki geçici <strong>DataTables arayüz hatası</strong> giderildi.</li><li>Arvento bağlantı testi algoritması iyileştirildi, API yanıtları JSON doğrulamasından geçirilerek daha güvenilir hale getirildi.</li></ul>",
+                        EklenmeTarihi = DateTime.Now
+                    },
+                    new SistemGuncellemesi
+                    {
+                        Versiyon = "v0.5",
+                        Baslik = "Altyapı Çalışmaları Başladı! 🚀",
+                        Icerik = "<ul><li><strong>Canlı Arvento GPS Haritası</strong> entegrasyonu için altyapı çalışmaları ana sayfaya eklendi.</li><li><strong>HGS & Ceza Takip Paneli</strong> canlı API entegrasyonu hazırlıkları başladı.</li><li>Veritabanı desimal hesaplamalarındaki hassasiyet uyarıları (EF Core) tamamen çözüldü.</li></ul>",
+                        EklenmeTarihi = DateTime.Now.AddDays(-1)
+                    }
+                );
                 context.SaveChanges();
             }
 

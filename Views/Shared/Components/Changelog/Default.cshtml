@@ -1,0 +1,26 @@
+@model IEnumerable<AracGorevFormu.Models.SistemGuncellemesi>
+
+@if (Model != null && Model.Any())
+{
+    foreach (var item in Model)
+    {
+        <!-- Update Item -->
+        <div class="mb-4">
+            <div class="d-flex align-items-center gap-2 mb-2">
+                <span class="badge bg-primary rounded-pill">@item.Versiyon</span>
+                <span class="text-slate-500 extra-small fw-bold">@item.EklenmeTarihi.ToString("dd MMMM yyyy")</span>
+            </div>
+            <h6 class="fw-bold text-slate-900 mb-1">@item.Baslik</h6>
+            <div class="text-slate-700 small mb-0 ps-3">
+                @Html.Raw(item.Icerik)
+            </div>
+        </div>
+    }
+}
+else
+{
+    <div class="text-center text-muted py-4">
+        <i class="bi bi-info-circle fs-3 mb-2 d-block"></i>
+        Henüz bir güncelleme notu bulunmuyor.
+    </div>
+}

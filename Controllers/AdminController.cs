@@ -1,4 +1,4 @@
-﻿using System.Security.Claims;
+using System.Security.Claims;
 using AracGorevFormu.Data;
 using AracGorevFormu.Models;
 using AracGorevFormu.Models.ViewModels;
@@ -355,32 +355,38 @@ namespace AracGorevFormu.Controllers
 
             if (!ModelState.IsValid) return View(vehicle);
 
+            var mevcutArac = await _vehicleRepo.GetirByIdAsync(vehicle.Id);
+            if (mevcutArac == null) return NotFound();
+
+            // Sadece formdan gelen alanları mevcut araca aktarıyoruz (EF Core tracking çakışmasını önlemek için)
+            mevcutArac.Plaka = vehicle.Plaka;
+            mevcutArac.SahiplikTuru = vehicle.SahiplikTuru;
+            mevcutArac.Marka = vehicle.Marka;
+            mevcutArac.Model = vehicle.Model;
+            mevcutArac.Renk = vehicle.Renk;
+            mevcutArac.Lokasyon = vehicle.Lokasyon;
+            mevcutArac.SabitSurucu = vehicle.SabitSurucu;
+            mevcutArac.Aktif = vehicle.Aktif;
+            mevcutArac.SasiNo = vehicle.SasiNo;
+            mevcutArac.MotorNo = vehicle.MotorNo;
+            mevcutArac.TescilTarihi = vehicle.TescilTarihi;
+            mevcutArac.MuayeneBitisTarihi = vehicle.MuayeneBitisTarihi;
+            mevcutArac.SigortaBitisTarihi = vehicle.SigortaBitisTarihi;
+
             // Ruhsat Dosyası Yükleme — Veritabanına kaydet (diske değil)
             if (ruhsatDosya != null && ruhsatDosya.Length > 0)
             {
                 using var ms = new MemoryStream();
                 await ruhsatDosya.CopyToAsync(ms);
 
-                vehicle.RuhsatDosyaIcerigi = ms.ToArray();
-                vehicle.RuhsatDosyaAdi = ruhsatDosya.FileName;
-                vehicle.RuhsatDosyaTipi = ruhsatDosya.ContentType;
-                vehicle.RuhsatDosyaYolu = null; // Artık disk yolu kullanılmıyor
-            }
-            else
-            {
-                // Dosya yüklenmemişse mevcut DB'deki dosyayı koru
-                var mevcutArac = await _vehicleRepo.GetirByIdAsync(vehicle.Id);
-                if (mevcutArac != null)
-                {
-                    vehicle.RuhsatDosyaIcerigi = mevcutArac.RuhsatDosyaIcerigi;
-                    vehicle.RuhsatDosyaAdi = mevcutArac.RuhsatDosyaAdi;
-                    vehicle.RuhsatDosyaTipi = mevcutArac.RuhsatDosyaTipi;
-                    vehicle.RuhsatDosyaYolu = mevcutArac.RuhsatDosyaYolu;
-                }
+                mevcutArac.RuhsatDosyaIcerigi = ms.ToArray();
+                mevcutArac.RuhsatDosyaAdi = ruhsatDosya.FileName;
+                mevcutArac.RuhsatDosyaTipi = ruhsatDosya.ContentType;
+                mevcutArac.RuhsatDosyaYolu = null; // Artık disk yolu kullanılmıyor
             }
 
-            await _vehicleRepo.GuncelleAsync(vehicle);
-            await _logService.LogIslemWithHttpContextAsync("Araç Güncellendi", $"{vehicle.Plaka} plakalı aracın bilgileri güncellendi.", HttpContext);
+            await _vehicleRepo.GuncelleAsync(mevcutArac);
+            await _logService.LogIslemWithHttpContextAsync("Araç Güncellendi", $"{mevcutArac.Plaka} plakalı aracın bilgileri güncellendi.", HttpContext);
             TempData["Mesaj"] = "Araç ve ruhsat bilgileri güncellendi.";
             return RedirectToAction(nameof(Araclar));
         }
@@ -659,7 +665,8 @@ namespace AracGorevFormu.Controllers
                     Sifre = "", // �?ifre alanını güvenlik için her zaman boş gösteriyoruz
                     ApiKey = arvento.ApiKey,
                     Aktif = arvento.Aktif
-                }
+                },
+                Guncellemeler = await _db.SistemGuncellemeleri.OrderByDescending(g => g.EklenmeTarihi).ToListAsync()
             };
 
             return View(model);
@@ -1004,6 +1011,51 @@ namespace AracGorevFormu.Controllers
                 TempData["Mesaj"] = "Taslak silindi.";
             }
             return RedirectToAction(nameof(MailModulu));
+        }
+
+        // ---------------- SİSTEM GÜNCELLEMELERİ (CHANGELOG) ----------------
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Ana Yönetici,AyarlarYonetimi")]
+        public async Task<IActionResult> ChangelogEkle(string versiyon, string baslik, string icerik)
+        {
+            if (string.IsNullOrWhiteSpace(versiyon) || string.IsNullOrWhiteSpace(baslik) || string.IsNullOrWhiteSpace(icerik))
+            {
+                TempData["Hata"] = "Güncelleme eklemek için tüm alanlar doldurulmalıdır.";
+                return RedirectToAction(nameof(Ayarlar), new { tab = "changelog" });
+            }
+
+            var yeniGuncelleme = new SistemGuncellemesi
+            {
+                Versiyon = versiyon,
+                Baslik = baslik,
+                Icerik = icerik,
+                EklenmeTarihi = DateTime.Now
+            };
+
+            _db.SistemGuncellemeleri.Add(yeniGuncelleme);
+            await _db.SaveChangesAsync();
+            await _logService.LogIslemWithHttpContextAsync("Sistem Güncellemesi Eklendi", $"{versiyon} sürümü sisteme eklendi.", HttpContext);
+
+            TempData["Mesaj"] = "Sistem güncellemesi (changelog) başarıyla eklendi.";
+            return RedirectToAction(nameof(Ayarlar), new { tab = "changelog" });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Ana Yönetici,AyarlarYonetimi")]
+        public async Task<IActionResult> ChangelogSil(int id)
+        {
+            var guncelleme = await _db.SistemGuncellemeleri.FindAsync(id);
+            if (guncelleme != null)
+            {
+                _db.SistemGuncellemeleri.Remove(guncelleme);
+                await _db.SaveChangesAsync();
+                await _logService.LogIslemWithHttpContextAsync("Sistem Güncellemesi Silindi", $"{guncelleme.Versiyon} sürümü silindi.", HttpContext);
+                TempData["Mesaj"] = "Sistem güncellemesi silindi.";
+            }
+            return RedirectToAction(nameof(Ayarlar), new { tab = "changelog" });
         }
     }
 }

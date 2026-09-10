@@ -22,6 +22,7 @@ namespace AracGorevFormu.Data
         public DbSet<DosyaEki> DosyaEkleri { get; set; } = null!;
         public DbSet<MailTaslak> MailTaslaklari { get; set; } = null!;
         public DbSet<Kategori> Kategoriler { get; set; } = null!;
+        public DbSet<SistemGuncellemesi> SistemGuncellemeleri { get; set; } = null!;
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -49,6 +50,7 @@ namespace AracGorevFormu.Data
             modelBuilder.Entity<DosyaEki>().ToTable("DosyaEkleri");
             modelBuilder.Entity<MailTaslak>().ToTable("MailTaslaklari");
             modelBuilder.Entity<Kategori>().ToTable("Kategoriler");
+            modelBuilder.Entity<SistemGuncellemesi>().ToTable("SistemGuncellemeleri");
         }
     }
 }

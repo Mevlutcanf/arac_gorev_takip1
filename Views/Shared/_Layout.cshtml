@@ -212,9 +212,10 @@
                     </ul>
 
                     <!-- Sleek Unified User Controls Dropdown -->
-                    <div class="d-flex align-items-center gap-2 mt-3 mt-lg-0">
+                    <div class="d-flex align-items-center gap-3 gap-lg-4 ms-lg-4 mt-3 mt-lg-0">
                         @if (User.Identity != null && User.Identity.IsAuthenticated)
                         {
+
                             @await Component.InvokeAsync("VadeYaklasanAraclar")
                             
                             <div class="dropdown">
@@ -288,11 +289,31 @@
         @RenderBody()
     </main>
 
+    <!-- Sürüm Notları / Changelog Modal -->
+    <div class="modal fade" id="changelogModal" tabindex="-1" aria-labelledby="changelogModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content border-0 shadow-lg rounded-4">
+                <div class="modal-header bg-slate-900 text-white border-0">
+                    <h5 class="modal-title fw-bold" id="changelogModalLabel"><i class="bi bi-stars text-amber-400 me-2"></i>Sistem Güncellemeleri</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Kapat"></button>
+                </div>
+                <div class="modal-body p-4 bg-slate-50">
+                    @await Component.InvokeAsync("Changelog")
+                </div>
+            </div>
+        </div>
+    </div>
+
     <footer class="app-footer">
         <div class="container-fluid px-lg-4">
             <div class="d-flex flex-column flex-sm-row align-items-center justify-content-between gap-2">
                 <div>
                     <strong class="text-slate-800">Fleon</strong> &copy; @DateTime.Now.Year — Filo ve Makine Yönetimi
+                </div>
+                <div>
+                    <a href="#" data-bs-toggle="modal" data-bs-target="#changelogModal" class="text-slate-500 text-decoration-none small">
+                        <i class="bi bi-stars me-1 text-amber-500"></i>Sürüm Notları
+                    </a>
                 </div>
             </div>
         </div>
@@ -320,6 +341,26 @@
                     ordering: true
                 });
             }
+
+            // Changelog Auto-Popup
+            setTimeout(function() {
+                var firstVersionBadge = $('#changelogModal .modal-body .badge.bg-primary').first();
+                if (firstVersionBadge.length > 0) {
+                    var latestVersion = firstVersionBadge.text().trim();
+                    var lastSeen = localStorage.getItem('fleon_last_seen_version');
+                    
+                    // Eğer yeni bir versiyon yayınlanmışsa ve kullanıcı daha önce görmediyse popup aç
+                    if (latestVersion && lastSeen !== latestVersion) {
+                        var modalElement = document.getElementById('changelogModal');
+                        if (modalElement) {
+                            var modal = new bootstrap.Modal(modalElement);
+                            modal.show();
+                            // Görüldü olarak işaretle
+                            localStorage.setItem('fleon_last_seen_version', latestVersion);
+                        }
+                    }
+                }
+            }, 800); // 800ms gecikme ile açılsın
         });
     </script>
     @await RenderSectionAsync("Scripts", required: false)
